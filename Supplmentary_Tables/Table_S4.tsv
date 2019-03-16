@@ -1,0 +1,15 @@
+Gene	HGVSp	Variant Type	Stock VAF (%)
+PIK3CA	p.Glu545Lys	SNV	5.6
+PIK3CA	p.His1047Arg	SNV	16.7
+FBXW7	p.Ser588ValfsTer39	Indel	5.6
+BRAF	p.Val600Glu	SNV	18.2
+EGFR	p.Gly719Ser	SNV	5.3
+EGFR	p.Ala767_Val769dup	Indel	5.6
+EGFR	p.Glu746_Ala750del	Indel	5.3
+MET	p.Leu238TyrfsTer25	Indel	2.5
+NOTCH1	p.Pro668Ser	SNV	5
+KRAS	p.Gly13Asp	SNV	5.6
+BRCA2	p.Lys1691AsnfsTer15	Indel	5.6
+FLT3	p.Pro986AlafsTer27	Indel	5.6
+AKT1	p.Glu17Lys	SNV	5
+GNA11	p.Gln209Leu	SNV	5.6
