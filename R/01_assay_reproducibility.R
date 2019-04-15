@@ -148,14 +148,14 @@ df = df_repro_nonhyper %>%
      mutate(cat_minus = case_when(
        (.$cat_minus == "somatic") ~ "Called in both replicates",
        (.$cat_minus == "bloodier" | .$cat_minus == "bloodish" | .$cat_minus == "blood") ~ 
-         "Not called in one replicate due to WBC-filtered",
+         "Incorrect assignment between replicates",
        (.$cat_minus == "edge" | .$cat_minus == "low_qual") ~ 
          "Not called in one replicate due to low quality",
        (.$cat_minus == "Not_detected") ~ "Not detected in one replicate")) %>%
      mutate(cat_minus = factor(cat_minus,
                               levels = c("Not detected in one replicate",
                                          "Not called in one replicate due to low quality",
-                                         "Not called in one replicate due to WBC-filtered",
+                                         "Incorrect assignment between replicates",
                                          "Called in both replicates"),
                               ordered = TRUE)) %>%
      mutate(MSK = case_when(
@@ -184,7 +184,7 @@ shapes = c("Biopsy-matched"=24,
 		   "Biopsy-unmatched"=21)
 cols = c("Not detected in one replicate"="#D7191C",
 		 "Not called in one replicate due to low quality"="#FDAE61",
-		 "Not called in one replicate due to WBC-filtered"="#ABDDA4",
+		 "Incorrect assignment between replicates"="#ABDDA4",
 		 "Called in both replicates"="#2B83BA")
 plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0, 1), ylim=c(0, 1))
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.25, lwd.ticks=1.35)
@@ -201,11 +201,12 @@ x = df1$af_point_cfdna.1+epsilon
 y = df1$af_point_cfdna.2+epsilon
 z1 = as.character(df1$MSK)
 z2 = as.character(df1$cat_minus)
+z2[which(z1=="Biopsy-matched" & z2=="Incorrect assignment between replicates")] = "Called in both replicates"
 points(x, y, pch=shapes[z1], col="black", bg=cols[z2], cex=1.25)
 mtext(side=3, text="Variant category", line=-.85, at=.13, font=2)
 legend(x=-.01, y=1.01, pch=21, col="black", pt.bg=cols[1], pt.cex=1.35, legend="Not detected in one replicate", box.lwd=-1, cex=.85)
 legend(x=-.01, y=.97, pch=21, col="black", pt.bg=cols[2], pt.cex=1.35, legend="Not called in one replicate\ndue to low quality", box.lwd=-1, cex=.85)
-legend(x=-.01, y=.89, pch=21, col="black", pt.bg=cols[3], pt.cex=1.35, legend="Not called in one replicate\ndue to WBC-filtered", box.lwd=-1, cex=.85)
+legend(x=-.01, y=.89, pch=21, col="black", pt.bg=cols[3], pt.cex=1.35, legend="Incorrect assignment\nbetween replicates", box.lwd=-1, cex=.85)
 legend(x=-.01, y=.80, pch=21, col="black", pt.bg=cols[4], pt.cex=1.35, legend="Called in both replicates", box.lwd=-1, cex=.85)
 mtext(side=3, text="Biopsy concordance", line=-8.5, at=.165, font=2)
 legend(x=-.01, y=.67, pch=21, col="black", pt.bg="black", pt.cex=1.25, legend="Biopsy unmatched", box.lwd=-1, cex=.85)

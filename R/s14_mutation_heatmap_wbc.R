@@ -9,6 +9,9 @@ if (!dir.exists("../res/rebuttal")) {
 	dir.create("../res/rebuttal")
 }
 
+#==================================================
+# Heatmap of CH related variants in WBC
+#==================================================
 maf = read.csv(file="../res/tables/Table_S8.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 	  arrange(Variant_Classification, Hugo_Symbol, Tumor_Sample_Barcode, Chromosome, Start_Position)
 write.table(maf, file="../res/tables/Table_S8_ch_sorted_maftools.maf", sep="\t", col.names=TRUE, row.names=FALSE, quote=FALSE)

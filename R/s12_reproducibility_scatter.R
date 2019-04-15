@@ -611,8 +611,9 @@ for (i in 1:length(patient_ids)) {
 			   mutate(shape = ifelse(bio_source.x=="biopsy_matched" | bio_source.x=="IMPACT-BAM_matched" | bio_source.y=="biopsy_matched" | bio_source.y=="IMPACT-BAM_matched", "Biopsy matched", "Biopsy unmatched")) %>%
 			   mutate(fill = ifelse(bio_source.x!=bio_source.y , "Incorrect assignment between replicates", "Called in both replicates")) %>%
 			   mutate(fill = ifelse((bio_source.x=="unmatched" & bio_source.y!="unmatched") | (bio_source.x!="unmatched" & bio_source.y=="unmatched"), "Not detected in one replicate", "Called in both replicates")) %>%
-			   mutate(fill = ifelse((bio_source.x=="noise" & (bio_source.y!="noise" & bio_source.y!="other")) | (bio_source.y=="noise" & (bio_source.x!="noise" & bio_source.x!="other")), "Not called in one replicate due\nto low quality", fill))
-			   
+			   mutate(fill = ifelse((bio_source.x=="noise" & (bio_source.y!="noise" & bio_source.y!="other")) | (bio_source.y=="noise" & (bio_source.x!="noise" & bio_source.x!="other")), "Not called in one replicate due\nto low quality", fill)) %>%
+			   mutate(fill = ifelse(bio_source.x=="VUSo" & bio_source.y == "WBC_matched", "Incorrect assignment between replicates", fill)) %>%
+			   mutate(fill = ifelse(bio_source.y=="VUSo" & bio_source.x == "WBC_matched", "Incorrect assignment between replicates", fill))
 	
 	plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
@@ -621,7 +622,7 @@ for (i in 1:length(patient_ids)) {
 			 scale_shape_manual(values = c(24, 21)) +
 			 facet_wrap(~patient_id) +
 			 theme_bw(base_size=15) +
-			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.4, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 			 labs(x="\nReplicate 1 (%)\n", y="Replicate 2 (%)\n") +
 			 scale_x_log10(
  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
@@ -681,7 +682,9 @@ for (i in 1:length(patient_ids)) {
 			   mutate(shape = ifelse(bio_source.x=="biopsy_matched" | bio_source.x=="IMPACT-BAM_matched" | bio_source.y=="biopsy_matched" | bio_source.y=="IMPACT-BAM_matched", "Biopsy matched", "Biopsy unmatched")) %>%
 			   mutate(fill = ifelse(bio_source.x!=bio_source.y , "Incorrect assignment between replicates", "Called in both replicates")) %>%
 			   mutate(fill = ifelse((bio_source.x=="unmatched" & bio_source.y!="unmatched") | (bio_source.x!="unmatched" & bio_source.y=="unmatched"), "Not detected in one replicate", "Called in both replicates")) %>%
-			   mutate(fill = ifelse((bio_source.x=="noise" & (bio_source.y!="noise" & bio_source.y!="other")) | (bio_source.y=="noise" & (bio_source.x!="noise" & bio_source.x!="other")), "Not called in one replicate due\nto low quality", fill))
+			   mutate(fill = ifelse((bio_source.x=="noise" & (bio_source.y!="noise" & bio_source.y!="other")) | (bio_source.y=="noise" & (bio_source.x!="noise" & bio_source.x!="other")), "Not called in one replicate due\nto low quality", fill)) %>%
+			   mutate(fill = ifelse(bio_source.x=="VUSo" & bio_source.y == "WBC_matched", "Incorrect assignment between replicates", fill)) %>%
+			   mutate(fill = ifelse(bio_source.y=="VUSo" & bio_source.x == "WBC_matched", "Incorrect assignment between replicates", fill))
 			   	
 	plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
@@ -690,7 +693,7 @@ for (i in 1:length(patient_ids)) {
 			 scale_shape_manual(values = c(24, 21)) +
 			 facet_wrap(~patient_id) +
 			 theme_bw(base_size=15) +
-			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.4, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 			 labs(x="\nReplicate 1 (%)\n", y="Replicate 3 (%)\n") +
 			 scale_x_log10(
  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
@@ -740,7 +743,7 @@ for (i in 1:length(patient_ids)) {
 		tmp_vars$bio_source.y[index] = "biopsy_matched"
 	}
 	
-	# fix biopsy_matched in y
+	# fix IMPACT-BAM_matched in y
 	index = tmp_vars$bio_source.x == "IMPACT-BAM_matched" & (tmp_vars$bio_source.y !="IMPACT-BAM_matched" & tmp_vars$bio_source.y != "unmatched")
 	if (sum(index)!=0) {
 		tmp_vars$bio_source.y[index] = "IMPACT-BAM_matched"
@@ -750,7 +753,10 @@ for (i in 1:length(patient_ids)) {
 			   mutate(shape = ifelse(bio_source.x=="biopsy_matched" | bio_source.x=="IMPACT-BAM_matched" | bio_source.y=="biopsy_matched" | bio_source.y=="IMPACT-BAM_matched", "Biopsy matched", "Biopsy unmatched")) %>%
 			   mutate(fill = ifelse(bio_source.x!=bio_source.y , "Incorrect assignment between replicates", "Called in both replicates")) %>%
 			   mutate(fill = ifelse((bio_source.x=="unmatched" & bio_source.y!="unmatched") | (bio_source.x!="unmatched" & bio_source.y=="unmatched"), "Not detected in one replicate", "Called in both replicates")) %>%
-			   mutate(fill = ifelse((bio_source.x=="noise" & (bio_source.y!="noise" & bio_source.y!="other")) | (bio_source.y=="noise" & (bio_source.x!="noise" & bio_source.x!="other")), "Not called in one replicate due\nto low quality", fill))
+			   mutate(fill = ifelse((bio_source.x=="noise" & (bio_source.y!="noise" & bio_source.y!="other")) | (bio_source.y=="noise" & (bio_source.x!="noise" & bio_source.x!="other")), "Not called in one replicate due\nto low quality", fill)) %>%
+			   mutate(fill = ifelse(bio_source.x=="VUSo" & bio_source.y == "WBC_matched", "Incorrect assignment between replicates", fill)) %>%
+			   mutate(fill = ifelse(bio_source.y=="VUSo" & bio_source.x == "WBC_matched", "Incorrect assignment between replicates", fill))
+			   
 			   	
 	plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
@@ -759,7 +765,7 @@ for (i in 1:length(patient_ids)) {
 			 scale_shape_manual(values = c(24, 21)) +
 			 facet_wrap(~patient_id) +
 			 theme_bw(base_size=15) +
-			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.4, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 			 labs(x="\nReplicate 2 (%)\n", y="Replicate 3 (%)\n") +
 			 scale_x_log10(
  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },

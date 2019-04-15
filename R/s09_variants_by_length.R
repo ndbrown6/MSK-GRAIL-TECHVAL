@@ -13,10 +13,14 @@ clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_characte
 		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
 		   
 snv_vars = read_tsv(snv_file$scored, col_types = cols(.default = col_character())) %>%
-		   type_convert()
+		   type_convert() %>%
+		   mutate(level_2a = as.character(level_2a)) %>%
+		   mutate(level_r1 = as.character(level_r1))
 		   
 indel_vars = read_tsv(indel_file$scored, col_types = cols(.default = col_character())) %>%
-			 type_convert()
+			 type_convert() %>%
+			 mutate(level_2a = as.character(level_2a)) %>%
+		     mutate(level_r1 = as.character(level_r1))
 
 wbc_stack = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character())) %>%
 			type_convert()
