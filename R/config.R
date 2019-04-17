@@ -45,8 +45,8 @@ suppressPackageStartupMessages(library("boot"))
 suppressPackageStartupMessages(library("snow"))
 suppressPackageStartupMessages(library("colorspace"))
 suppressPackageStartupMessages(library("magrittr"))
-suppressPackageStartupMessages(library("eulerr"))
 
+#suppressPackageStartupMessages(library("eulerr"))
 #suppressPackageStartupMessages(library("maftools"))
 #suppressPackageStartupMessages(library("ggrepel"))
 
