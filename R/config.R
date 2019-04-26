@@ -45,10 +45,10 @@ suppressPackageStartupMessages(library("boot"))
 suppressPackageStartupMessages(library("snow"))
 suppressPackageStartupMessages(library("colorspace"))
 suppressPackageStartupMessages(library("magrittr"))
-
+suppressPackageStartupMessages(library("ggrepel"))
 #suppressPackageStartupMessages(library("eulerr"))
 #suppressPackageStartupMessages(library("maftools"))
-#suppressPackageStartupMessages(library("ggrepel"))
+
 
 registerDoMC(32)
 
@@ -270,6 +270,7 @@ url_original <- url_msk.snv
 url_retest <- "../modified_v11/Variants_Calls/Stacked_annotated_retest/TechVal_retest_annotated_stack.tsv"
 url_cell.line <- "../res/etc/2018-01-10/scored/annotated.tsv"
 url_HD753.truth <- "../res/etc/2018-01-10/hd753_manifest.tsv"
+url_qc.metrics <- "../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv"
 
 germline_alpha <- 0.15
 
