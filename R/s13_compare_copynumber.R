@@ -9,164 +9,287 @@ if (!dir.exists("../res/rebuttal")) {
 	dir.create("../res/rebuttal")
 }
 
-'prune_segments_cn' <- function(x, n=10)
+'smooth_' <- function(data)
+{
+	return(invisible(winsorize(data, method="pcf", k=50, gamma=50, verbose=FALSE)))
+}
+
+'absolute_' <- function(rho, psi, gamma=1, x) {
+	rho = ifelse(is.na(rho), 1, rho)
+	psi = ifelse(is.na(psi), 2, psi)
+	return(invisible(((((2^(x/gamma))*(rho*psi+(1-rho)*2)) - ((1-rho)*2))/rho)))
+}
+
+'prune_' <- function(x, n=10)
 {
 		cnm = matrix(NA, nrow=nrow(x), ncol=nrow(x))
 		for (j in 1:nrow(x)) {
-			cnm[,j] = abs(2^x[j,"cnlr.median"] - 2^x[,"cnlr.median"])
+			cnm[,j] = abs(2^x[j,"log2"] - 2^x[,"log2"])
 		}
 		cnt = hclust(as.dist(cnm), "average")
 		cnc = cutree(tree=cnt, k=n)
 		for (j in unique(cnc)) {
 			indx = which(cnc==j)
 			if (length(indx)>2) {
-				mcl = mean(x[indx,"cnlr.median"])
-				scl = sd(x[indx,"cnlr.median"])
-				ind = which(x[indx,"cnlr.median"]<(mcl+1.96*scl) & x[indx,"cnlr.median"]>(mcl-1.96*scl))
-				x[indx[ind],"cnlr.median"] = mean(x[indx[ind],"cnlr.median"])
+ 				mcl = mean(x[indx,"log2"])
+				scl = sd(x[indx,"log2"])
+				ind = which(x[indx,"log2"]<(mcl+1.96*scl) & x[indx,"log2"]>(mcl-1.96*scl))
+				x[indx[ind],"log2"] = mean(x[indx[ind],"log2"])
 			} else {
-				x[indx,"cnlr.median"] = mean(x[indx,"cnlr.median"])
+				x[indx,"log2"] = mean(x[indx,"log2"])
 			}
 		}
 		return(x)
 }
 
-'plot_log2_ratio' <- function(x, y, xlab=FALSE, n=10, facet)
-{
-    segmented = x$jointseg
-    chr = segmented$chrom
-    len = table(chr)
-    tmp = cumsum(len)
-    start = c(1, tmp[-length(len)] + 1)
-    end = tmp
-    mid = start + len/2
-    
-    purity = y$purity
-    ploidy = y$ploidy
-    ki = ky = c(1, 3, 7, 13, 21)
-    for (i in 1:length(ki)) {
-   		ky[i] = (log2(((purity)*ki[i] + (1-purity)*2)/((purity)*ploidy + (1-purity)*2)))
-   	}
-   	
-    
-    
-    tmp = bind_cols(segmented %>%
-    	  				select(chrom, cnlr) %>%
-    	  				rename(Chromosome = chrom, Log2Ratio = cnlr) %>%
-    	  				mutate(Residual = as.factor(Chromosome %% 2)) %>%
-    	  				mutate(Facet = facet),
-    	  			Index = 1:nrow(segmented))
-    	  
-    	  
-    tmp[,"Log2Ratio"] = winsorize(segmented[,c("chrom", "maploc", "cnlr")], method="pcf", gamma=100, verbose = FALSE)[,3]
-    
-    if (xlab) {
-	    plot.0 = ggplot(tmp, aes(x=Index, y=Log2Ratio, fill=Residual, color=Residual)) +
-  		 	 geom_point(alpha=1, size=.3, shape=20) +
-			 geom_hline(yintercept=ky, color="goldenrod3", linetype=3, size=.25) +
-  		 	 geom_vline(xintercept=mid, size=.25) +
-  		 	 scale_fill_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
-  		 	 scale_color_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
-  		 	 facet_wrap(~Facet) +
-		 	 theme_bw(base_size=9) +
-		 	 labs(x="", y=expression(Log[2]~"Ratio")) +
-		 	 coord_cartesian(ylim = c(-4,4)) +
- 		 	 theme(axis.text.y = element_text(size=10),
- 		 	 	   axis.text.x = element_blank(),
- 		 	 	   axis.ticks.x = element_blank(),
- 		 	 	   panel.grid.major = element_blank(),
- 		 	 	   panel.grid.minor = element_blank(),
- 		 	 	   legend.justification = c(1, 0),
-		 	   	   legend.position = c(1, 0),
-		 	   	   legend.title = element_blank(),
-		 	   	   legend.background = element_blank(),
-		 	   	   legend.text=element_text(size=8))
-	} else {
-		plot.0 = ggplot(tmp, aes(x=Index, y=Log2Ratio, fill=Residual, color=Residual)) +
-  		 	 geom_point(alpha=1, size=.3, shape=20) +
-			 geom_hline(yintercept=ky, color="goldenrod3", linetype=3, size=.25) +
-  		 	 scale_fill_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
-  		 	 scale_color_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
-  		 	 facet_wrap(~Facet) +
-		 	 theme_bw(base_size=9) +
-		 	 labs(x="", y=expression(Log[2]~"Ratio")) +
-		 	 coord_cartesian(ylim = c(-4,4)) +
- 		 	 theme(axis.text.y = element_text(size=9),
- 		 	 	   axis.text.x = element_blank(),
- 		 	 	   axis.ticks.x = element_blank(),
- 		 	 	   panel.grid.major = element_blank(),
- 		 	 	   panel.grid.minor = element_blank(),
- 		 	 	   legend.justification = c(1, 0),
-		 	   	   legend.position = c(1, 0),
-		 	   	   legend.title = element_blank(),
-		 	   	   legend.background = element_blank(),
-		 	   	   legend.text=element_text(size=8))
+
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+
+if (FALSE) { for (i in 1:nrow(key_file)) {
+	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
+	impact_data = new.env()
+	load(impact_path, envir=impact_data)
+	
+	impact_cn = impact_data$out2$jointseg %>%
+			    select(chrom, pos = maploc, log2 = cnlr)
+	impact_seg = impact_data$fit$cncf %>%
+				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+	impact_seg = prune_(x=impact_seg) %>%
+				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
+										  psi=key_file$IMPACT_psi[i],
+										  x=impact_seg$log2)) %>%
+				mutate(n = cumsum(n))
+				
+	file_path = paste0("../res/rebuttal/MSK-IMPACT/facets/plots/ext/", key_file$GRAIL_ID[i], ".pdf")
+										
+	pdf(file_path, width=10, height=4)
+	par(mar=c(5, 5, 4, 2)+.1)	
+	plot(impact_cn$log2, type="p", pch=".", cex=1.5, col="grey70", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-2.5,2.5))
+	for (j in 1:nrow(impact_seg)) {
+		if (j == 1) {
+			lines(x=c(1, impact_seg[j,"n"]), y=rep(impact_seg[j,"log2"],2), lty=1, lwd=2.75, col="red")
+		} else {
+			lines(x=c(impact_seg[j-1,"n"], impact_seg[j,"n"]), y=rep(impact_seg[j,"log2"],2), lty=1, lwd=2.75, col="red")
+		}
+ 	}
+ 	axis(2, at = NULL, cex.axis = 1.15, las = 1)
+	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
+	abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	abline(h=0, col="black")
+	for (j in 1:23) {
+		v = max(which(impact_seg[,"chrom"]==j))
+		abline(v=impact_seg[v,"n"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
 	}
-	print(plot.0)
-}
+	start = end = 1:23
+	for (j in 2:23) {
+		start[j] = impact_seg[max(which(impact_seg[,"chrom"]==j-1)),"n"]
+		end[j] = impact_seg[max(which(impact_seg[,"chrom"]==j)),"n"]
+	}
+	start[1] = 1
+	end[1] = start[2]
+	axis(1, at = .5*(start+end), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
+	
+    purity = key_file$IMPACT_alpha[i]
+    ploidy = key_file$IMPACT_psi[i]
+    for (k in c(1, 2, 3, 4, 8, 14)) {
+		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparentRgb("brown", 155), lty=3)
+	}
+    box(lwd=1.5)
+	dev.off()
+} }
+
+if (TRUE) { for (i in 1:nrow(key_file)) {
+	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
+	grail_data = new.env()
+	load(grail_path, envir=grail_data)
+	
+	grail_cn = grail_data$out2$jointseg %>%
+			   select(chrom, pos = maploc, log2 = cnlr)
+	grail_seg = grail_data$fit$cncf %>%
+				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+	grail_seg = prune_(x=grail_seg) %>%
+				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
+										 psi=key_file$GRAIL_psi[i],
+										 x=grail_seg$log2)) %>%
+				mutate(n = cumsum(n))
+				
+	file_path = paste0("../res/rebuttal/GRAIL/facets/plots/ext/", key_file$GRAIL_ID[i], ".pdf")
+										
+	pdf(file_path, width=10, height=4)
+	par(mar=c(5, 5, 4, 2)+.1)	
+	plot(grail_cn$log2, type="p", pch=".", cex=1.5, col="grey70", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-2.5,2.5))
+	for (j in 1:nrow(grail_seg)) {
+		if (j == 1) {
+			lines(x=c(1, grail_seg[j,"n"]), y=rep(grail_seg[j,"log2"],2), lty=1, lwd=2.75, col="red")
+		} else {
+			lines(x=c(grail_seg[j-1,"n"], grail_seg[j,"n"]), y=rep(grail_seg[j,"log2"],2), lty=1, lwd=2.75, col="red")
+		}
+ 	}
+ 	axis(2, at = NULL, cex.axis = 1.15, las = 1)
+	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
+	abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	abline(h=0, col="black")
+	for (j in 1:23) {
+		v = max(which(grail_seg[,"chrom"]==j))
+		abline(v=grail_seg[v,"n"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	}
+	start = end = 1:23
+	for (j in 2:23) {
+		start[j] = grail_seg[max(which(grail_seg[,"chrom"]==j-1)),"n"]
+		end[j] = grail_seg[max(which(grail_seg[,"chrom"]==j)),"n"]
+	}
+	start[1] = 1
+	end[1] = start[2]
+	axis(1, at = .5*(start+end), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
+	
+    purity = key_file$GRAIL_alpha[i]
+    ploidy = key_file$GRAIL_psi[i]
+    for (k in c(1, 2, 3, 4, 8, 14)) {
+		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparentRgb("brown", 155), lty=3)
+	}
+    box(lwd=1.5)
+	dev.off()
+} }
 
 
-#==================================================
-# Examples of GRAIL cfDNA
-#==================================================
-load("../res/rebuttal/GRAIL/facets/cncf/MSK-VB-0069_MSK-VB-0069-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/MSK-VB-0069_MSK-VB-0069-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=4, facet="MSK-VB-0069 | cfDNA")
-dev.off()
-
-load("../res/rebuttal/GRAIL/facets/cncf/MSK-VL-0056_MSK-VL-0056-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/MSK-VL-0056_MSK-VL-0056-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=5, facet="MSK-VL-0056 | cfDNA")
-dev.off()
-
-load("../res/rebuttal/GRAIL/facets/cncf/MSK-VP-0004_MSK-VP-0004-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/MSK-VP-0004_MSK-VP-0004-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=7, facet="MSK-VP-0004 | cfDNA")
-dev.off()
-
-load("../res/rebuttal/GRAIL/facets/cncf/MSK-VB-0023_MSK-VB-0023-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/MSK-VB-0023_MSK-VB-0023-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=7, facet="MSK-VB-0023 | cfDNA")
-dev.off()
-
-#==================================================
-# Examples of MSK-IMPACT tumor biopsies
-#==================================================
-load("../res/rebuttal/MSK-IMPACT/facets/cncf/UE782797-T_TG260267-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/UE782797-T_TG260267-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=6, facet="MSK-VB-0069 | Tumor biopsy")
-dev.off()
-
-load("../res/rebuttal/MSK-IMPACT/facets/cncf/GK457095-T_GK457095-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/GK457095-T_GK457095-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=9, facet="MSK-VL-0056 | Tumor biopsy")
-dev.off()
-
-load("../res/rebuttal/MSK-IMPACT/facets/cncf/GV175163-T_GV175163-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/GV175163-T_GV175163-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=9, facet="MSK-VP-0004 | Tumor biopsy")
-dev.off()
-
-load("../res/rebuttal/MSK-IMPACT/facets/cncf/DW801941-T_DW801941-N.Rdata")
-fit$ploidy = 2
-fit$purity = 1
-pdf(file="../res/rebuttal/DW801941-T_DW801941-N.pdf", width=7, height=2)
-plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=9, facet="MSK-VB-0023 | Tumor biopsy")
-dev.off()
+# 'plot_log2_ratio' <- function(x, y, xlab=FALSE, n=10, facet)
+# {
+#     segmented = x$jointseg
+#     chr = segmented$chrom
+#     len = table(chr)
+#     tmp = cumsum(len)
+#     start = c(1, tmp[-length(len)] + 1)
+#     end = tmp
+#     mid = start + len/2
+#     
+#     purity = y$purity
+#     ploidy = y$ploidy
+#     ki = ky = c(1, 3, 7, 13, 21)
+#     for (i in 1:length(ki)) {
+#    		ky[i] = (log2(((purity)*ki[i] + (1-purity)*2)/((purity)*ploidy + (1-purity)*2)))
+#    	}
+#    	
+#     
+#     
+#     tmp = bind_cols(segmented %>%
+#     	  				select(chrom, cnlr) %>%
+#     	  				rename(Chromosome = chrom, Log2Ratio = cnlr) %>%
+#     	  				mutate(Residual = as.factor(Chromosome %% 2)) %>%
+#     	  				mutate(Facet = facet),
+#     	  			Index = 1:nrow(segmented))
+#     	  
+#     	  
+#     tmp[,"Log2Ratio"] = winsorize(segmented[,c("chrom", "maploc", "cnlr")], method="pcf", gamma=100, verbose = FALSE)[,3]
+#     
+#     if (xlab) {
+# 	    plot.0 = ggplot(tmp, aes(x=Index, y=Log2Ratio, fill=Residual, color=Residual)) +
+#   		 	 geom_point(alpha=1, size=.3, shape=20) +
+# 			 geom_hline(yintercept=ky, color="goldenrod3", linetype=3, size=.25) +
+#   		 	 geom_vline(xintercept=mid, size=.25) +
+#   		 	 scale_fill_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
+#   		 	 scale_color_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
+#   		 	 facet_wrap(~Facet) +
+# 		 	 theme_bw(base_size=9) +
+# 		 	 labs(x="", y=expression(Log[2]~"Ratio")) +
+# 		 	 coord_cartesian(ylim = c(-4,4)) +
+#  		 	 theme(axis.text.y = element_text(size=10),
+#  		 	 	   axis.text.x = element_blank(),
+#  		 	 	   axis.ticks.x = element_blank(),
+#  		 	 	   panel.grid.major = element_blank(),
+#  		 	 	   panel.grid.minor = element_blank(),
+#  		 	 	   legend.justification = c(1, 0),
+# 		 	   	   legend.position = c(1, 0),
+# 		 	   	   legend.title = element_blank(),
+# 		 	   	   legend.background = element_blank(),
+# 		 	   	   legend.text=element_text(size=8))
+# 	} else {
+# 		plot.0 = ggplot(tmp, aes(x=Index, y=Log2Ratio, fill=Residual, color=Residual)) +
+#   		 	 geom_point(alpha=1, size=.3, shape=20) +
+# 			 geom_hline(yintercept=ky, color="goldenrod3", linetype=3, size=.25) +
+#   		 	 scale_fill_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
+#   		 	 scale_color_manual(guide = FALSE, values = c("grey75", "cadetblue")) +
+#   		 	 facet_wrap(~Facet) +
+# 		 	 theme_bw(base_size=9) +
+# 		 	 labs(x="", y=expression(Log[2]~"Ratio")) +
+# 		 	 coord_cartesian(ylim = c(-4,4)) +
+#  		 	 theme(axis.text.y = element_text(size=9),
+#  		 	 	   axis.text.x = element_blank(),
+#  		 	 	   axis.ticks.x = element_blank(),
+#  		 	 	   panel.grid.major = element_blank(),
+#  		 	 	   panel.grid.minor = element_blank(),
+#  		 	 	   legend.justification = c(1, 0),
+# 		 	   	   legend.position = c(1, 0),
+# 		 	   	   legend.title = element_blank(),
+# 		 	   	   legend.background = element_blank(),
+# 		 	   	   legend.text=element_text(size=8))
+# 	}
+# 	print(plot.0)
+# }
+# 
+# 
+# #==================================================
+# # Examples of GRAIL cfDNA
+# #==================================================
+# load("../res/rebuttal/GRAIL/facets/cncf/MSK-VB-0069_MSK-VB-0069-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/MSK-VB-0069_MSK-VB-0069-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=4, facet="MSK-VB-0069 | cfDNA")
+# dev.off()
+# 
+# load("../res/rebuttal/GRAIL/facets/cncf/MSK-VL-0056_MSK-VL-0056-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/MSK-VL-0056_MSK-VL-0056-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=5, facet="MSK-VL-0056 | cfDNA")
+# dev.off()
+# 
+# load("../res/rebuttal/GRAIL/facets/cncf/MSK-VP-0004_MSK-VP-0004-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/MSK-VP-0004_MSK-VP-0004-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=7, facet="MSK-VP-0004 | cfDNA")
+# dev.off()
+# 
+# load("../res/rebuttal/GRAIL/facets/cncf/MSK-VB-0023_MSK-VB-0023-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/MSK-VB-0023_MSK-VB-0023-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=7, facet="MSK-VB-0023 | cfDNA")
+# dev.off()
+# 
+# #==================================================
+# # Examples of MSK-IMPACT tumor biopsies
+# #==================================================
+# load("../res/rebuttal/MSK-IMPACT/facets/cncf/UE782797-T_TG260267-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/UE782797-T_TG260267-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=6, facet="MSK-VB-0069 | Tumor biopsy")
+# dev.off()
+# 
+# load("../res/rebuttal/MSK-IMPACT/facets/cncf/GK457095-T_GK457095-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/GK457095-T_GK457095-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=9, facet="MSK-VL-0056 | Tumor biopsy")
+# dev.off()
+# 
+# load("../res/rebuttal/MSK-IMPACT/facets/cncf/GV175163-T_GV175163-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/GV175163-T_GV175163-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=9, facet="MSK-VP-0004 | Tumor biopsy")
+# dev.off()
+# 
+# load("../res/rebuttal/MSK-IMPACT/facets/cncf/DW801941-T_DW801941-N.Rdata")
+# fit$ploidy = 2
+# fit$purity = 1
+# pdf(file="../res/rebuttal/DW801941-T_DW801941-N.pdf", width=7, height=2)
+# plot_log2_ratio(x=out2, y=fit, xlab=FALSE, n=9, facet="MSK-VB-0023 | Tumor biopsy")
+# dev.off()
 
 
 # ==================================================
