@@ -1148,31 +1148,7 @@ plot.0 = ggplot(tmp, aes(y = dpnobaq, x = af_nobaq)) +
 pdf(file="../res/rebuttal/High_Depth_Mutations_by_VAF.pdf", width=10, height=6)
 print(plot.0)
 dev.off()
-	  
-load("../res/rebuttal/GRAIL/facets/cncf/MSK-VB-0023_MSK-VB-0023-N.Rdata")
-pdf(file="../res/rebuttal/MSK-VB-0023_Manhattan_Plot.pdf", width=7, height=1.5)
-mat = out2$jointseg
-cncf = fit$cncf
-dipLogR = fit$dipLogR
-par(mar = c(3, 3, 1, 1), mgp = c(2, 0.7, 0))
-chr = mat$chrom
-len = table(chr)
-altcol = rep_len(c("light blue", "gray"), length(len))
-chr.col = rep(altcol, len)
-nmark = cncf$num.mark
-tmp = cumsum(len)
-start = c(1, tmp[-length(len)] + 1)
-end = tmp
-mid = start + len/2
-plot(mat$cnlr, type="n", axes = F, ylab = "", xlab="", ylim=c(0,1))
-abline(h=.5, lwd=1.5)
-labs = names(mid)
-labs = sub('21', '', labs)
-labs = sub('23', 'X', labs)
-axis(side = 1, at = mid, labels=labs, cex.axis = .75, las = 1)
-for (i in c(11,14,16,18,20,21,22)) {
-	axis(side = 1, at = mid[i], labels=labs[i], cex.axis = .75, las = 1, lwd=-1)
-}
+
 tmp = variants %>%
 	  filter(bio_source %in% c("biopsy_matched", "WBC_matched", "IMPACT-BAM_matched", "VUSo")) %>%
 	  mutate(bio_source = ifelse(bio_source %in% c("biopsy_matched", "IMPACT-BAM_matched"), "tumor_matched", bio_source)) %>%
@@ -1180,41 +1156,59 @@ tmp = variants %>%
 	  mutate(chrom = gsub("chr", "", chrom, fixed=TRUE)) %>%
 	  mutate(chrom = ifelse(chrom=="X", "23", chrom)) %>%
 	  mutate(chrom = as.numeric(chrom))
+	  
+cols = c("tumor_matched"="#D7191C",
+		 "WBC_matched"="#ABDDA4",
+		 "VUSo"="#2B83BA")
 
-mat = cbind(mat, start=mat$maploc)
-mat = cbind(mat, end=c(mat$maploc[2:nrow(mat)], Inf))
-load("~/share/usr/anaconda-envs/jrflab-modules-0.1.6/lib/R/library/GAP/data/CytoBand.RData")
+pdf(file="../res/rebuttal/MSK-VB-0023_Manhattan-Plot_High_DP.pdf", width=10, height=2.25)
+par(mar=c(5, 5, 4, 2)+.1)
+load("../res/etc/CytoBand.RData")
+end = NULL
 for (i in 1:23) {
-	index = max(which(mat$chrom==i))
-	mat[index,"end"] = max(CytoBand$End[CytoBand$Chromosome==i])
+	end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
 }
-index = rep(NA, nrow(tmp))
-for (i in 1:nrow(tmp)) {
-	indx = which(mat$chrom == tmp$chrom[i] & mat$start<= tmp$position[i] & mat$end>=tmp$position[i])
-	if (length(indx)==1) {
-		index[i] = indx
-	}
+end = cumsum(end)
+start = c(1, end[1:22]+1)
+CytoBand = cbind(start, end)
+index = NULL
+for (i in 1:23) {
+	index = c(index, seq(from = CytoBand[i, "start"], to=CytoBand[i, "end"], length=sum(tmp$chrom==i)))
 }
-mat = data.frame(mat, bio_source=rep("", nrow(mat)))
-levels(mat$bio_source) = c("", unique(tmp$bio_source))
-mat = data.frame(mat, dpnobaq=rep(NA, nrow(mat)))
-levels(mat$dpnobaq) = NULL
-
-mat[na.omit(index),"bio_source"] = tmp$bio_source[!is.na(index)]
-mat[na.omit(index),"dpnobaq"] = tmp$dpnobaq[!is.na(index)]
-
-x = 1:nrow(mat)
-y = ifelse(mat$dpnobaq>10000, .7, 0.2)
-z = ifelse(as.character(mat$bio_source) == "tumor_matched", "#D7191C", NA)
-z[which(as.character(mat$bio_source)=="WBC_matched")] = "#ABDDA4"
-z[which(as.character(mat$bio_source)=="VUSo")] = "#2B83BA"
-for (i in c("#2B83BA", "#ABDDA4", "#D7191C")) {
-	index = which(z==i)
-	points(x[index], y[index], pch="|", col=z[index], cex=2, lwd=.5)
+indx = tmp$dpnobaq>=10000
+plot(0, 0, type="n", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-.07,.1), xlim=c(1,max(index)))
+points(index[indx], rep(0, sum(indx)), type="p", pch="|", cex=2, col=cols[tmp$bio_source[indx]])
+abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+for (j in 1:23) {
+	abline(v=CytoBand[j,"end"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
 }
-rect(xleft=-100000, xright=100000, ybottom=4, ytop=6, col="grey90", lwd=1.5)
-box(lwd=1.5)
+axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
 dev.off()
+
+pdf(file="../res/rebuttal/MSK-VB-0023_Manhattan-Plot_Low_DP.pdf", width=10, height=2.25)
+par(mar=c(5, 5, 4, 2)+.1)
+load("../res/etc/CytoBand.RData")
+end = NULL
+for (i in 1:23) {
+	end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
+}
+end = cumsum(end)
+start = c(1, end[1:22]+1)
+CytoBand = cbind(start, end)
+index = NULL
+for (i in 1:23) {
+	index = c(index, seq(from = CytoBand[i, "start"], to=CytoBand[i, "end"], length=sum(tmp$chrom==i)))
+}
+indx = tmp$dpnobaq<10000
+plot(0, 0, type="n", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-.07,.1), xlim=c(1,max(index)))
+points(index[indx], rep(0, sum(indx)), type="p", pch="|", cex=2, col=cols[tmp$bio_source[indx]])
+abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+for (j in 1:23) {
+	abline(v=CytoBand[j,"end"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+}
+axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
+dev.off()
+
 
 #==================================================
 # Scatter plot of VAF of replicates for MKS-VB-0023
