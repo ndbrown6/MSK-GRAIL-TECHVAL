@@ -46,9 +46,9 @@ suppressPackageStartupMessages(library("snow"))
 suppressPackageStartupMessages(library("colorspace"))
 suppressPackageStartupMessages(library("magrittr"))
 suppressPackageStartupMessages(library("ggrepel"))
-#suppressPackageStartupMessages(library("eulerr"))
-#suppressPackageStartupMessages(library("maftools"))
-
+suppressPackageStartupMessages(library("copynumber"))
+suppressPackageStartupMessages(library("eulerr"))
+suppressPackageStartupMessages(library("maftools"))
 
 registerDoMC(32)
 
@@ -251,38 +251,122 @@ somatic_indels_grail <- list(
   )
 )
 
-msk_anno_joined <- str_c("../",
-						 "modified_v11/",
-						 "Variants_Calls/",
-						 "Joined_cfDNA_IMPACT_variants/",
-						 "scripts2/",
-						 "20180412_MSK_TechVal_Grail_small_variants_bio_source_label.filter_vus_biopsy_only.all_cases_ccf.tsv")
+msk_anno_joined <- str_c(
+	"../",
+	"modified_v11/",
+	"Variants_Calls/",
+	"Joined_cfDNA_IMPACT_variants/",
+	"scripts2/",
+	"20180412_MSK_TechVal_Grail_small_variants_bio_source_label.filter_vus_biopsy_only.all_cases_ccf.tsv"
+)
 						 
-						 
+url_techval.repeats <- str_c(
+	"../",
+	"annotated.tsv"
+)
+
+url_techval.repeats <- str_c(
+	"../",
+	"modified_v11/",
+	"Variants_Calls/",
+	"Joined_cfDNA_IMPACT_variants/",
+	"annotated.tsv"
+)
+
+url_ddpcr <- str_c(
+	"https://",
+	"docs.google.com/",
+	"spreadsheets/",
+	"d/",
+	"1s9PKGYZ1v3vgUiC25N6D5jXX1ai6c0vbisZsKIgwGlg/",
+	"edit?usp=sharing"
+)
+
+url_retest <- str_c(
+	"../",
+	"modified_v11/",
+	"Variants_Calls/",
+	"Stacked_annotated_retest/",
+	"TechVal_retest_annotated_stack.tsv"
+)
+
+url_cell.line <- str_c(
+	"../",
+	"res/",
+	"etc/",
+	"2018-01-10/",
+	"scored/",
+	"annotated.tsv"
+)
+
+url_HD753.truth <- str_c(
+	"../",
+	"res/",
+	"etc/",
+	"2018-01-10/",
+	"hd753_manifest.tsv"
+)
+
+url_qc.metrics <- str_c(
+	"../",
+	"modified_v11/",
+	"QC_metrics/",
+	"TechVal_Merlin_QC_metrics.tsv"
+)
+
+url_ctdna <- str_c(
+	"../",
+	"res/",
+	"etc/",
+	"ctdna_frac.csv"
+)
+
+url_volumetric_data <- str_c(
+	"../",
+	"res/",
+	"etc/",
+	"MSK_GRAIL_Volumetric_Data.xls"
+)
+						
 url_sample.tracker <- patient_tracker
 url_msk.snv <- snv_file$scored
 url_msk.indel <- indel_file$scored
-url_techval.repeats <- "../annotated.tsv"
-url_techval.repeats <- "../modified_v11/Variants_Calls/Joined_cfDNA_IMPACT_variants/annotated.tsv"
-url_target.bed <- common_bed
-url_ddpcr <- "https://docs.google.com/spreadsheets/d/1s9PKGYZ1v3vgUiC25N6D5jXX1ai6c0vbisZsKIgwGlg/edit?usp=sharing"
-url_original <- url_msk.snv
-url_retest <- "../modified_v11/Variants_Calls/Stacked_annotated_retest/TechVal_retest_annotated_stack.tsv"
-url_cell.line <- "../res/etc/2018-01-10/scored/annotated.tsv"
-url_HD753.truth <- "../res/etc/2018-01-10/hd753_manifest.tsv"
-url_qc.metrics <- "../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv"
-
 germline_alpha <- 0.15
-
 bam_read_count_cutoff <- 2
-
 ad_cutoff <- 5
-
 ref_genome <- BSgenome.Hsapiens.UCSC.hg19
+url_original <- url_msk.snv
+url_target.bed <- common_bed
 
-psa_file <- "../res/etc/PSA_MSK_VP_0041.txt"
+psa_file <- str_c(
+	"../",
+	"res/",
+	"etc/",
+	"PSA_MSK_VP_0041.txt"
+)
 
-recist_file <- "../res/etc/RECIST_MSK_VP_0041.txt"
+recist_file <- str_c(
+	"../",
+	"res/",
+	"etc/",
+	"RECIST_MSK_VP_0041.txt"
+)
+
+msi_processed_data_file <- str_c(
+	"../",
+	"modified_v11/",
+	"MSIMSK/",
+	"data/",
+	"20180423_msi_global_df.tsv"
+)
+
+subject_alias_file <- str_c(
+	"../",
+	"modified_v11/",
+	"MSIMSK/",
+	"data/",
+	"MSK_TechVal_MS_patient_ID_alias_mapping.tsv"
+)
 
 'in_common_bed' <- function (chromosome, position)
 {

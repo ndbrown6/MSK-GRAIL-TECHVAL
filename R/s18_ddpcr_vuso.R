@@ -255,7 +255,7 @@ tmp = ddpcr_results_summary %>%
 	  mutate(af_cfdna = ifelse(af_cfdna == 0, 1e-5, af_cfdna)) %>%
 	  mutate(af_ddPCR_mean = af_ddPCR_mean*100) %>%
 	  mutate(af_cfdna = af_cfdna*100) %>%
-	  mutate(facet = "VUSo ddPCR") %>%
+	  mutate(facet = "VUSo") %>%
 	  mutate(input_type = factor(ifelse(input_type=="library", "Library", input_type))) %>%
 	  mutate(UID = gsub("_p.", " ", as.character(UUID), fixed=TRUE))
 
@@ -273,16 +273,16 @@ plot.0 = ggplot(tmp, aes(y = af_cfdna, x = af_ddPCR_mean, shape = ddPCR_retest, 
 		 labs(y="\nTargeted DNA assay (%)\n", x="\nddPCR (%)\n") +
 		 scale_x_log10(
 		 	breaks = function(x) { c(0.001, 0.01, 0.1, 1, 10) },
- 			labels = function(x) { c("0", "0.01", "0.1", "1", "10") }
+ 			labels = function(x) { c("0", ".01", ".1", "1", "10") }
 		 ) +
 		 scale_y_log10(
 		 	breaks = function(x) { c(0.001, 0.01, 0.1, 1, 10) },
- 			labels = function(x) { c("0", "0.01", "0.1", "1", "10") }
+ 			labels = function(x) { c("0", ".01", ".1", "1", "10") }
 		 ) +
 		 annotation_logticks() +
 		 coord_cartesian(xlim=c(1e-3,10), ylim = c(1e-3, 10)) +
 		 facet_wrap(~facet) +
-		 guides(shape=guide_legend(title=c("Ground truth"), override.aes=list(fill="black"))) +
+		 guides(shape=guide_legend(title=c("Called in targeted\ncfDNA assay"), override.aes=list(fill="black"))) +
 		 guides(fill=guide_legend(title=c("Input type")))
 		 
 pdf(file="../res/rebuttal/ddPCR_VUSo.pdf", width=6, height=6)

@@ -370,6 +370,7 @@ plot.0 = ggplot(tmp, aes(x = LOD_af, y = LOD_dp, fill = Tissue)) +
 		 	   legend.title = element_blank(),
 		 	   legend.background = element_blank(),
 		 	   legend.text=element_text(size=8))
+
 pdf(file="../res/rebuttal/LOD_DP_versus_LOD_VAF.pdf", width=6, height=6)
 print(plot.0)
 dev.off()

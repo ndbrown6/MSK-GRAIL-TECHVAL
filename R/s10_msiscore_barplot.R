@@ -8,12 +8,9 @@ if (!dir.exists("../res/figureS10")) {
 	dir.create("../res/figureS10")
 }
 
-msi_processed_data_file = "../modified_v11/MSIMSK/data/20180423_msi_global_df.tsv"
-subject_alias_file = "../modified_v11/MSIMSK/data/MSK_TechVal_MS_patient_ID_alias_mapping.tsv"
+all_msi_df = read_tsv(file=msi_processed_data_file)
 
-all_msi_df = read_tsv(msi_processed_data_file)
-
-alias_df = read_tsv(subject_alias_file)
+alias_df = read_tsv(file=subject_alias_file)
 
 type_frame_df = data_frame(type=c("VB","VL","VP"), expand=c("Metastatic Breast","Metastatic Lung","Metastatic Prostate"), subject_type=c("Breast","Lung","Prostate"))
 

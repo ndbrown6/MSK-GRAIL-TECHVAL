@@ -72,6 +72,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Uncollapsed_Mean_Coverage, fill = Tissu
 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
 		 labs(x="", y="Uncollapsed mean coverage\n") +
 		 guides(fill=FALSE)
+		 
 pdf(file="../res/rebuttal/UNCOLLAPSED_MEAN_BAIT_COVERAGE.pdf", width=4, height=6)
 print(plot.0)
 dev.off()
@@ -87,6 +88,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Collapsed_Mean_Coverage, fill = Tissue)
 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
 		 labs(x="", y="Collapsed mean coverage\n") +
 		 guides(fill=FALSE)
+
 pdf(file="../res/rebuttal/COLLAPSED_MEAN_BAIT_COVERAGE.pdf", width=4, height=6)
 print(plot.0)
 dev.off()
@@ -102,6 +104,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Collapsed_Fragment_Mean_Coverage, fill 
 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
 		 labs(x="", y="Unique fragments mean coverage\n") +
 		 guides(fill=FALSE)
+
 pdf(file="../res/rebuttal/COLLAPSED_FRAGMENT_MEAN_BAIT_COVERAGE.pdf", width=4, height=6)
 print(plot.0)
 dev.off()
@@ -122,6 +125,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Uncollapsed_Mean_Coverage, fill = Tissu
 		 labs(x="", y="Uncollapsed mean coverage\n") +
 		 guides(fill=FALSE) +
 		 scale_y_continuous(breaks=c(50000, 75000, 100000, 125000), labels=c("50000", "75000", "100000", "125000"))
+
 pdf(file="../res/rebuttal/UNCOLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
 print(plot.0)
 dev.off()
@@ -137,6 +141,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Collapsed_Mean_Coverage, fill = Tissue)
 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
 		 labs(x="", y="Collapsed mean coverage\n") +
 		 guides(fill=FALSE)
+
 pdf(file="../res/rebuttal/COLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
 print(plot.0)
 dev.off()
@@ -186,6 +191,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Library_preparation_input_ng, fill = Ti
 		 labs(x="", y="Amount of DNA used\nfor library preparation (ng)\n") +
 		 coord_cartesian(ylim = c(10, 80)) +
 		 guides(fill=FALSE)
+
 pdf(file="../res/rebuttal/Input_cfDNA_by_Tissue.pdf", width=6, height=6)
 print(plot.0)
 dev.off()
@@ -205,6 +211,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = 1e5*Indel_and_Substitution_Error_Rate, 
 		 labs(x="", y="% collapsed bases (1E-05)\n") +
 		 guides(fill=FALSE) +
 		 coord_cartesian(ylim = c(5,11))
+
 pdf(file="../res/rebuttal/COMBINED_ERROR_RATE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
 print(plot.0)
 dev.off()
@@ -221,6 +228,7 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = 1e5*Substitution_Error_Rate, fill = Tis
 		 labs(x="", y="% collapsed bases (1E-05)\n") +
 		 guides(fill=FALSE) +
 		 coord_cartesian(ylim = c(1,7))
+
 pdf(file="../res/rebuttal/SUBSTITUTION_ERROR_RATE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
 print(plot.0)
 dev.off()

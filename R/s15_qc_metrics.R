@@ -10,25 +10,25 @@ if (!dir.exists("../res/rebuttal")) {
 }
 
 #==================================================
-# 1. Volume_of_blood_mL -> Volume of blood used for
-#	 DNA extraction (unit: mililiter)
-# 2. Volume_of_DNA_source_mL -> Volume of plasma or
-#	 buffy coat used for cfDNA extraction  (unit: milliliter)
-# 3. DNA_extraction_yield_ng -> Yield of DNA after
-#	 extraction (unit: nanogram)
-# 4. DNA_input_concentration_ng_uL -> Concentration
-#	 of input DNA (unit: nanogram/microliter)
-# 5. Raw.MEAN_BAIT_COVERAGE -> The mean coverage of
-#	 all baits in the experiment
-# 6. Collapsed.MEAN_BAIT_COVERAGE -> The mean coverage
-#	 of all baits in the experiment (collapsed and
+# 1. Volume_of_blood_mL : Volume of blood used for
+#    DNA extraction (unit: mL)
+# 2. Volume_of_DNA_source_mL : Volume of plasma or
+#    buffy coat used for cfDNA extraction  (unit: mL)
+# 3. DNA_extraction_yield_ng : Yield of DNA after
+#    extraction (unit: ng)
+# 4. DNA_input_concentration_ng_uL : Concentration
+#    of input DNA (unit: ng/muL)
+# 5. Raw.MEAN_BAIT_COVERAGE : The mean coverage of
+#    all baits in the experiment
+# 6. Collapsed.MEAN_BAIT_COVERAGE : The mean coverage
+#    of all baits in the experiment (collapsed and
 #    stitched reads)
-# 7. Collapsed_fragment.MEAN_BAIT_COVERAGE -> Unique
-#	 coverage across target region (collapsed reads)
-# 8. ReadErrorRate -> Percent collapsed bases with
-#	 SNV or Indels
-# 9. ReadSubstErrorRate -> Percent collapsed
-#	 bases with SNVs
+# 7. Collapsed_fragment.MEAN_BAIT_COVERAGE : Unique
+#    coverage across target region (collapsed reads)
+# 8. ReadErrorRate : Percent collapsed bases with
+#    SNV or Indels
+# 9. ReadSubstErrorRate : Percent collapsed bases
+#    with SNVs
 #==================================================
 tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
  				type_convert()

@@ -29,4 +29,3 @@ oncoplot(maf = wbc, genes = chip_genes,
 		 						Healthy = "cadetblue")),
 		 fontSize = 10)
 dev.off()
-
