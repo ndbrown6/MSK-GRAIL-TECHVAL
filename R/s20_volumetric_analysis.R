@@ -360,7 +360,7 @@ print(plot.0)
 dev.off()
  
 #==================================================
-# Box plot for Breast
+# Box plot for ctDNA fraction versus vol Breast
 #==================================================
 tmp = volumetric_data %>%
  	  mutate(ln_frac = log(ctdna_frac)) %>%
@@ -388,14 +388,14 @@ plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
  		 labs(x="", y="ctDNA fraction\n") +
 		 coord_cartesian(ylim = c(0,1)) +
-		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p))
+		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
 		 
 pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Box.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
  
 #==================================================
-# Box plot for Lung
+# Box plot for ctDNA fraction versus vol Lung
 #==================================================
 tmp = volumetric_data %>%
 	  mutate(ln_frac = log(ctdna_frac)) %>%
@@ -423,14 +423,14 @@ plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
  		 labs(x="", y="ctDNA fraction\n") +
  		 coord_cartesian(ylim = c(0,1)) +
-		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p))
+		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
 		 
 pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Lung_Box.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
 #==================================================
-# Box plot for Prostate
+# Box plot for ctDNA fraction versus BSI Prostate
 #==================================================
 tmp = volumetric_data %>%
 	  mutate(tot_volu = ifelse(tot_volu==0, 0.1, tot_volu)) %>%
@@ -459,142 +459,221 @@ plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
  		 labs(x="", y="ctDNA fraction\n") +
  		 coord_cartesian(ylim = c(0,1)) +
-		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p))
+		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
 
 pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Prostate_Box.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
-# #==================================================
-# # Breast and lung combined
-# #==================================================
-# tmp = volumetric_data %>%
-# 	  mutate(ln_frac = log(ctdna_frac)) %>%
-# 	  mutate(ln_vol = log(tot_volu)) %>%
-# 	  mutate(facet = "Breast & Lung") %>%
-# 	  filter(grepl("VL", GRAIL_ID) | grepl("VB", GRAIL_ID)) %>%
-# 	  mutate(Tissue = "Breast") %>%
-# 	  filter(!(is.infinite(ln_frac) | is.na(ln_frac))) %>%
-# 	  filter(!(is.infinite(ln_vol) | is.na(ln_vol)))
-# tmp[grepl("VL", tmp[,"GRAIL_ID"]),"Tissue"] = "Lung"
-# 
-# cols = c("Breast"="#D7191C", "Lung"="#2B83BA")
-# 
-# r2b = signif(summary(lm(ln_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Breast")))$r.squared, 3)
-# pb = signif(summary(lm(ln_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Breast")))$coefficients[2,4], 3)
-# r2l = signif(summary(lm(ln_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Lung")))$r.squared, 3)
-# pl = signif(summary(lm(ln_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Lung")))$coefficients[2,4], 3)
-# 
-# r2b = signif(cor(tmp$ln_frac[tmp$Tissue=="Breast"], tmp$ln_vol[tmp$Tissue=="Breast"], method="kendall"), 3)
-# pb = signif(cor.test(tmp$ln_frac[tmp$Tissue=="Breast"], tmp$ln_vol[tmp$Tissue=="Breast"], method="kendall")$p.value, 3)
-# r2l = signif(cor(tmp$ln_frac[tmp$Tissue=="Lung"], tmp$ln_vol[tmp$Tissue=="Lung"], method="kendall"), 3)
-# pl = signif(cor.test(tmp$ln_frac[tmp$Tissue=="Lung"], tmp$ln_vol[tmp$Tissue=="Lung"], method="kendall")$p.value, 3)
-# 	  
-# plot.0 = ggplot(tmp, aes(x = ln_vol, y = ln_frac, fill = Tissue)) +
-# 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
-# 		 geom_smooth(method = "lm", se=FALSE, data=tmp, aes(x = ln_vol, y = ln_frac, color = Tissue)) +
-# 		 scale_fill_manual(values = cols) +
-# 		 theme_bw(base_size=15) +
-# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-# 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
-# 		 facet_wrap(~facet) +
-# 		 scale_x_continuous(
-# 		 	breaks = function(x) { log(c(0, .1, 1, 10, 100, 500)) },
-#  			labels = function(x) { c(0, .1, 1, 10, 100, 500) }
-# 		 ) +
-#  		 scale_y_continuous(
-#  		 	breaks = function(x) { log(c(1, 0.2, 0.02, 0.002, 0.0003)) },
-#   			labels = function(x) { c("1", ".2", ".02", ".002", ".0003") }
-#  		 ) +
-#  		 coord_cartesian(xlim=c(0,6.5), ylim = c(-8.5, 1.1)) +
-#  		 annotate(geom="text", x=log(200), y=log(.001), label=paste0("t = ", r2b, " p = ", pb), color=cols[1]) +
-#  		 annotate(geom="text", x=log(200), y=log(.0003), label=paste0("t = ", r2l, " p = ", pl), color=cols[2])
-# 		 
-# pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_loglog.pdf", width=5.5, height=6)
-# print(plot.0)
-# dev.off()
-# 
-# r2b = signif(summary(lm(ctdna_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Breast")))$r.squared, 3)
-# pb = signif(summary(lm(ctdna_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Breast")))$coefficients[2,4], 3)
-# r2l = signif(summary(lm(ctdna_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Lung")))$r.squared, 3)
-# pl = signif(summary(lm(ctdna_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Lung")))$coefficients[2,4], 3)
-# 
-# r2b = signif(cor(tmp$ctdna_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall"), 3)
-# pb = signif(cor.test(tmp$ctdna_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall")$p.value, 3)
-# r2l = signif(cor(tmp$ctdna_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall"), 3)
-# pl = signif(cor.test(tmp$ctdna_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall")$p.value, 3)
-# 
-# plot.0 = ggplot(tmp, aes(x = tot_volu, y = ctdna_frac, fill = Tissue)) +
-# 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
-# 		 geom_smooth(method = "lm", se=FALSE, data=tmp, aes(x = tot_volu, y = ctdna_frac, color = Tissue)) +
-# 		 scale_fill_manual(values = cols) +
-# 		 theme_bw(base_size=15) +
-# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-# 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
-# 		 facet_wrap(~facet) +
-# 		 annotate(geom="text", x=500, y=.5, label=paste0("t = ", r2b, " p = ", pb), color=cols[1]) +
-#  		 annotate(geom="text", x=500, y=.4, label=paste0("t = ", r2l, " p = ", pl), color=cols[2])
-# 		 
-# pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_nolognolog.pdf", width=5.5, height=6)
-# print(plot.0)
-# dev.off()
-# 
-# r2b = signif(summary(lm(ctdna_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Breast")))$r.squared, 3)
-# pb = signif(summary(lm(ctdna_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Breast")))$coefficients[2,4], 3)
-# r2l = signif(summary(lm(ctdna_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Lung")))$r.squared, 3)
-# pl = signif(summary(lm(ctdna_frac ~ ln_vol, data=tmp %>% filter(Tissue=="Lung")))$coefficients[2,4], 3)
-# 
-# r2b = signif(cor(tmp$ctdna_frac[tmp$Tissue=="Breast"], tmp$ln_vol[tmp$Tissue=="Breast"], method="kendall"), 3)
-# pb = signif(cor.test(tmp$ctdna_frac[tmp$Tissue=="Breast"], tmp$ln_vol[tmp$Tissue=="Breast"], method="kendall")$p.value, 3)
-# r2l = signif(cor(tmp$ctdna_frac[tmp$Tissue=="Lung"], tmp$ln_vol[tmp$Tissue=="Lung"], method="kendall"), 3)
-# pl = signif(cor.test(tmp$ctdna_frac[tmp$Tissue=="Lung"], tmp$ln_vol[tmp$Tissue=="Lung"], method="kendall")$p.value, 3)
-# 
-# plot.0 = ggplot(tmp, aes(x = ln_vol, y = ctdna_frac, fill = Tissue)) +
-# 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
-# 		 geom_smooth(method = "lm", se=FALSE, data=tmp, aes(x = ln_vol, y = ctdna_frac, color = Tissue)) +
-# 		 scale_fill_manual(values = cols) +
-# 		 theme_bw(base_size=15) +
-# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-# 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
-# 		 facet_wrap(~facet) +
-# 		 scale_x_continuous(
-# 		 	breaks = function(x) { log(c(0, .1, 1, 10, 100, 500)) },
-#  			labels = function(x) { c(0, .1, 1, 10, 100, 500) }
-# 		 ) +
-#  		 coord_cartesian(xlim=c(0,6.5)) +
-#  		 annotate(geom="text", x=log(5), y=.70, label=paste0("t = ", r2b, " p = ", pb), color=cols[1]) +
-#  		 annotate(geom="text", x=log(5), y=.65, label=paste0("t = ", r2l, " p = ", pl), color=cols[2])
-# 		 
-# pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_lognolog.pdf", width=5.5, height=6)
-# print(plot.0)
-# dev.off()
-# 
-# r2b = signif(summary(lm(ln_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Breast")))$r.squared, 3)
-# pb = signif(summary(lm(ln_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Breast")))$coefficients[2,4], 3)
-# r2l = signif(summary(lm(ln_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Lung")))$r.squared, 3)
-# pl = signif(summary(lm(ln_frac ~ tot_volu, data=tmp %>% filter(Tissue=="Lung")))$coefficients[2,4], 3)
-# 
-# r2b = signif(cor(tmp$ln_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall"), 3)
-# pb = signif(cor.test(tmp$ln_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall")$p.value, 3)
-# r2l = signif(cor(tmp$ln_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall"), 3)
-# pl = signif(cor.test(tmp$ln_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall")$p.value, 3)
-# 
-# plot.0 = ggplot(tmp, aes(x = tot_volu, y = ln_frac, fill = Tissue)) +
-# 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
-# 		 geom_smooth(method = "lm", se=FALSE, data=tmp, aes(x = tot_volu, y = ln_frac, color = Tissue)) +
-# 		 scale_fill_manual(values = cols) +
-# 		 theme_bw(base_size=15) +
-# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-# 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
-# 		 facet_wrap(~facet) +
-#  		 scale_y_continuous(
-#  		 	breaks = function(x) { log(c(1, 0.2, 0.02, 0.002, 0.0003)) },
-#   			labels = function(x) { c("1", ".2", ".02", ".002", ".0003") }
-#  		 ) +
-#  		 coord_cartesian(ylim = c(-8.5, 1.1)) +
-#  		 annotate(geom="text", x=500, y=log(0.001), label=paste0("t = ", r2b, " p = ", pb), color=cols[1]) +
-#  		 annotate(geom="text", x=500, y=log(0.0003), label=paste0("t = ", r2l, " p = ", pl), color=cols[2])
-# 		 
-# pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_nologlog.pdf", width=5.5, height=6)
-# print(plot.0)
-# dev.off()
+#==================================================
+# Box plot for cfDNA fraction by number of
+# metastatic sites
+#==================================================
+clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+cfdna_frac = read.csv(file=url_ctdna, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+			 filter(!is.na(ctdna_frac)) %>%
+			 mutate(index = order_samples(ID)) %>%
+ 			 arrange(desc(ctdna_frac)) %>%
+			 arrange(index)
+number_metastatic_sites = unlist(lapply(strsplit(clinical[,"metastatic_sites",drop=TRUE], split=",", fixed=TRUE), function(x) {length(x)}))
+number_metastatic_sites[is.na(clinical[,"metastatic_sites",drop=TRUE])] = 0
+names(number_metastatic_sites) = clinical[,"patient_id",drop=TRUE]
+number_metastatic_sites = number_metastatic_sites[cfdna_frac[,1]]
+cfdna_frac = cbind(cfdna_frac, number_metastatic_sites) %>%
+			 mutate(Tissue = "") %>%
+			 mutate(Tissue = ifelse(grepl("VB", ID), "Breast", Tissue)) %>%
+			 mutate(Tissue = ifelse(grepl("VL", ID), "Lung", Tissue)) %>%
+			 mutate(Tissue = ifelse(grepl("VP", ID), "Prostate", Tissue)) %>%
+			 mutate(cat = case_when(
+			 		number_metastatic_sites==1 | number_metastatic_sites==2 ~ 1,
+			 		number_metastatic_sites==3 ~ 2,
+			 		number_metastatic_sites>=4 ~ 3))
+
+tmp.0 = cfdna_frac %>%
+		filter(Tissue=="Breast")
+		
+p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternative = "increasing")$p.value, 3)
+
+plot.0 = ggplot(tmp.0, aes(x = factor(cat), y = ctdna_frac)) + 
+		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, color="black", fill="white") +
+		 geom_point(alpha=1, size=3.75, shape=21, color="black", fill="salmon", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
+		 facet_wrap(~Tissue) +
+		 theme_bw(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
+ 		 labs(x="", y="ctDNA fraction\n") +
+ 		 coord_cartesian(ylim = c(0,1)) +
+		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
+		 			 
+pdf(file="../res/rebuttal/cfDNA_Fraction_by_Ns_Breast.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
+tmp.0 = cfdna_frac %>%
+		filter(Tissue=="Lung")
+		
+p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternative = "increasing")$p.value, 3)
+
+plot.0 = ggplot(tmp.0, aes(x = factor(cat), y = ctdna_frac)) + 
+		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, color="black", fill="white") +
+		 geom_point(alpha=1, size=3.75, shape=21, color="black", fill="#FDAE61", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
+		 facet_wrap(~Tissue) +
+		 theme_bw(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
+ 		 labs(x="", y="ctDNA fraction\n") +
+ 		 coord_cartesian(ylim = c(0,1)) +
+		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
+		 			 
+pdf(file="../res/rebuttal/cfDNA_Fraction_by_Ns_Lung.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
+tmp.0 = cfdna_frac %>%
+		filter(Tissue=="Prostate")
+		
+p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternative = "increasing")$p.value, 3)
+
+plot.0 = ggplot(tmp.0, aes(x = factor(cat), y = ctdna_frac)) + 
+		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, color="black", fill="white") +
+		 geom_point(alpha=1, size=3.75, shape=21, color="black", fill="#ABDDA4", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
+		 facet_wrap(~Tissue) +
+		 theme_bw(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
+ 		 labs(x="", y="ctDNA fraction\n") +
+ 		 coord_cartesian(ylim = c(0,1)) +
+		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
+		 			 
+pdf(file="../res/rebuttal/cfDNA_Fraction_by_Ns_Prostate.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
+#==================================================
+# Breast and Lung combined
+#==================================================
+tmp = volumetric_data %>%
+	  mutate(ln_frac = log(ctdna_frac)) %>%
+	  mutate(ln_vol = log(tot_volu)) %>%
+	  mutate(facet = "Breast & Lung") %>%
+	  filter(grepl("VL", GRAIL_ID) | grepl("VB", GRAIL_ID)) %>%
+	  mutate(Tissue = "Breast") %>%
+	  mutate(Tissue = ifelse(grepl("VL", GRAIL_ID), "Lung", Tissue)) %>%
+	  filter(!(is.infinite(ln_frac) | is.na(ln_frac))) %>%
+	  filter(!(is.infinite(ln_vol) | is.na(ln_vol)))
+	  
+cols = c("Breast"="#D7191C", "Lung"="#2B83BA")
+	  
+zB = cor.test(tmp$ln_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall")
+tauB = signif(zB$estimate, 3)
+pB =  signif(zB$p.value, 3)
+zL = cor.test(tmp$ln_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall")
+tauL = signif(zL$estimate, 3)
+pL =  signif(zL$p.value, 3) 
+
+plot.0 = ggplot(tmp, aes(x = ln_vol, y = ln_frac, fill = Tissue)) +
+ 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
+ 		 geom_smooth(method = "lm", se=TRUE, data=tmp, aes(x = ln_vol, y = ln_frac, color = Tissue)) +
+ 		 scale_fill_manual(values = cols) +
+ 		 theme_bw(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+ 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
+ 		 facet_wrap(~facet) +
+ 		 scale_x_continuous(
+ 		 	breaks = function(x) { log(c(0, .1, 1, 10, 100, 500)) },
+  			labels = function(x) { c(0, .1, 1, 10, 100, 500) }
+ 		 ) +
+  		 scale_y_continuous(
+  		 	breaks = function(x) { log(c(1, 0.2, 0.02, 0.002, 0.0003)) },
+   			labels = function(x) { c("1", ".2", ".02", ".002", ".0003") }
+  		 ) +
+  		 coord_cartesian(xlim=c(0,6.5), ylim = c(-8.5, 1.1)) +
+  		 annotate(geom="text", x=log(100), y=log(0.002), label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=log(100), y=log(0.002)-.5, label=expression(P~" = ")) +
+  		 annotate(geom="text", x=log(100), y=log(0.002)-1, label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=log(100), y=log(0.002)-1.5, label=expression(P~" = "))
+ 		 
+pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_loglog.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
+zB = cor.test(tmp$ctdna_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall")
+tauB = signif(zB$estimate, 3)
+pB =  signif(zB$p.value, 3)
+zL = cor.test(tmp$ctdna_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall")
+tauL = signif(zL$estimate, 3)
+pL =  signif(zL$p.value, 3) 
+ 
+plot.0 = ggplot(tmp, aes(x = tot_volu, y = ctdna_frac, fill = Tissue)) +
+		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
+		 geom_smooth(method = "lm", se=FALSE, data=tmp, aes(x = tot_volu, y = ctdna_frac, color = Tissue)) +
+		 scale_fill_manual(values = cols) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
+		 facet_wrap(~facet) +
+		 annotate(geom="text", x=500, y=.25, label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=500, y=.20, label=expression(P~" = ")) +
+  		 annotate(geom="text", x=500, y=.15, label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=500, y=.10, label=expression(P~" = "))
+ 		 
+pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_0log0log.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+ 
+zB = cor.test(tmp$ctdna_frac[tmp$Tissue=="Breast"], tmp$ln_vol[tmp$Tissue=="Breast"], method="kendall")
+tauB = signif(zB$estimate, 3)
+pB =  signif(zB$p.value, 3)
+zL = cor.test(tmp$ctdna_frac[tmp$Tissue=="Lung"], tmp$ln_vol[tmp$Tissue=="Lung"], method="kendall")
+tauL = signif(zL$estimate, 3)
+pL =  signif(zL$p.value, 3) 
+
+plot.0 = ggplot(tmp, aes(x = ln_vol, y = ctdna_frac, fill = Tissue)) +
+ 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
+ 		 geom_smooth(method = "lm", se=TRUE, data=tmp, aes(x = ln_vol, y = ctdna_frac, color = Tissue)) +
+ 		 scale_fill_manual(values = cols) +
+ 		 theme_bw(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+ 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
+ 		 facet_wrap(~facet) +
+ 		 scale_x_continuous(
+ 		 	breaks = function(x) { log(c(0, .1, 1, 10, 100, 500)) },
+  			labels = function(x) { c(0, .1, 1, 10, 100, 500) }
+ 		 ) +
+  		 coord_cartesian(xlim=c(0,6.5), ylim=c(-.1, 1)) +
+  		 annotate(geom="text", x=log(400), y=.25, label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=log(400), y=.20, label=expression(P~" = ")) +
+  		 annotate(geom="text", x=log(400), y=.15, label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=log(400), y=.10, label=expression(P~" = "))
+ 		 
+pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_log0log.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+ 
+zB = cor.test(tmp$ln_frac[tmp$Tissue=="Breast"], tmp$tot_volu[tmp$Tissue=="Breast"], method="kendall")
+tauB = signif(zB$estimate, 3)
+pB =  signif(zB$p.value, 3)
+zL = cor.test(tmp$ln_frac[tmp$Tissue=="Lung"], tmp$tot_volu[tmp$Tissue=="Lung"], method="kendall")
+tauL = signif(zL$estimate, 3)
+pL =  signif(zL$p.value, 3)
+
+plot.0 = ggplot(tmp, aes(x = tot_volu, y = ln_frac, fill = Tissue)) +
+ 		 geom_point(alpha = .8, size = 2.5, color = "black", shape = 21) +
+ 		 geom_smooth(method = "lm", se=TRUE, data=tmp, aes(x = tot_volu, y = ln_frac, color = Tissue)) +
+ 		 scale_fill_manual(values = cols) +
+ 		 theme_bw(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.9), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+ 		 labs(x="\nDisease volume\n", y="\nctDNA fraction\n") +
+ 		 facet_wrap(~facet) +
+  		 scale_y_continuous(
+  		 	breaks = function(x) { log(c(1, 0.2, 0.02, 0.002, 0.0003)) },
+   			labels = function(x) { c("1", ".2", ".02", ".002", ".0003") }
+  		 ) +
+  		 coord_cartesian(ylim = c(-8.5, 1.1)) +
+  		 annotate(geom="text", x=500, y=log(.002), label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=500, y=log(.002)-.5, label=expression(P~" = ")) +
+  		 annotate(geom="text", x=500, y=log(.002)-1, label=expression(tau~" = ")) +
+  		 annotate(geom="text", x=500, y=log(.002)-1.5, label=expression(P~" = "))
+ 		 
+pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Breast_Lung_0loglog.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
