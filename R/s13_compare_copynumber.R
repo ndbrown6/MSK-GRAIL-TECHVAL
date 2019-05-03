@@ -133,7 +133,9 @@ if (!dir.exists("../res/rebuttal")) {
     box(lwd=1.5)
 }
 
-
+#==================================================
+# Update IMPACT tumor (alpha, psi)
+#==================================================
 key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
 		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
@@ -191,6 +193,13 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
     box(lwd=1.5)
 	dev.off()
 } }
+
+#==================================================
+# Update GRAIL cfDNA (alpha, psi)
+#==================================================
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 
 if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
 	print(key_file$GRAIL_ID[i])
@@ -253,22 +262,12 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
 } }
 
 #==================================================
-# Updated GRAIL cfDNA Log2 Ratios
-#==================================================
-foreach (i=1:nrow(key_file)) %dopar% {
-	print(key_file$GRAIL_ID[i])
-	load(paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata"))
-	purity = key_file$GRAIL_alpha[i]
-	ploidy = key_file$GRAIL_psi[i]
-	pdf(file=paste0("../res/rebuttal/GRAIL/facets/plots/ext/", key_file$GRAIL_ID[i], ".pdf"), width=10, height=4.25)
-	plot_log2_(x=out2, y=fit, n=4, purity, ploidy, TRUE, ix=NULL, title = paste0(key_file$GRAIL_ID[i], " | cfDNA | purity = ", signif(purity,2), " | ploidy = ", signif(ploidy,3)))
-	dev.off()
-	return(invisible(1))
-}
- 
-#==================================================
 # Updated MSK-IMPACT tumor Log2 Ratios
 #==================================================
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
 foreach (i=1:nrow(key_file)) %dopar% {
 	print(key_file$GRAIL_ID[i])
 	load(paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata"))
@@ -281,14 +280,32 @@ foreach (i=1:nrow(key_file)) %dopar% {
 }
 
 #==================================================
-# Comparison of copy number aberrations
+# Updated GRAIL cfDNA Log2 Ratios
 #==================================================
-tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
-		  type_convert() %>%
-		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+foreach (i=1:nrow(key_file)) %dopar% {
+	print(key_file$GRAIL_ID[i])
+	load(paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata"))
+	purity = key_file$GRAIL_alpha[i]
+	ploidy = key_file$GRAIL_psi[i]
+	pdf(file=paste0("../res/rebuttal/GRAIL/facets/plots/ext/", key_file$GRAIL_ID[i], ".pdf"), width=10, height=4.25)
+	plot_log2_(x=out2, y=fit, n=4, purity, ploidy, TRUE, ix=NULL, title = paste0(key_file$GRAIL_ID[i], " | cfDNA | purity = ", signif(purity,2), " | ploidy = ", signif(ploidy,3)))
+	dev.off()
+	return(invisible(1))
+}
 
-i_bygene = foreach (i=1:nrow(tracker)) %dopar% {
- 	cat(tracker$GRAIL_ID[i], "\n")
+#==================================================
+# % agreement based on copy number calls
+#==================================================
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+res = foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
  	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
 	impact_data = new.env()
 	load(impact_path, envir=impact_data)
@@ -299,201 +316,7 @@ i_bygene = foreach (i=1:nrow(tracker)) %dopar% {
 				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
 										  psi=key_file$IMPACT_psi[i],
 										  x=impact_seg$log2)) %>%
-				 mutate(n = cumsum(n))
-				
- 	Chromosome = impact_seg[,"chrom"]
- 	Start = impact_seg[,"start"]
- 	End = impact_seg[,"end"]
- 	Calls = impact_seg[,"cn"]
- 	res = data.frame(Chromosome, Start, End, Calls)
- 	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
- 			select(hgnc_symbol, chr, start_position, end_position) %>%
- 			rename(Hugo_Symbol = hgnc_symbol,
- 				   Chromosome = chr,
- 				   Start = start_position,
- 				   End = end_position) %>%
- 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
- 			arrange(as.numeric(Chromosome), as.numeric(Start))
- 				   
- 	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
- 	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
- 	fo <- findOverlaps(res_by_segment, annot_by_gene)
- 
- 	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
- 	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
- 	for (j in 1:length(Hugo_Symbol)) {
- 		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
- 		df[index,2] = mean(df[index,2], na.rm=TRUE)
- 	}
- 	df = df %>% filter(!duplicated(Hugo_Symbol))
- 	df[,2] = round(df[,2])
- 	res = rep(0, nrow(annot))
- 	names(res) = annot[,"Hugo_Symbol"]
- 	res[as.character(df$Hugo_Symbol)] = df$Calls
- 	return(invisible(res))
-}
-i_bygene = do.call(cbind, i_bygene)
-colnames(i_bygene) = tracker$GRAIL_ID
-
- 
-g_bygene = foreach (i=1:nrow(tracker)) %dopar% {
- 	cat(tracker$GRAIL_ID[i], "\n")
-	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
-	grail_data = new.env()
-	load(grail_path, envir=grail_data)
-	
-	grail_cn = grail_data$out2$jointseg %>%
-			   select(chrom, pos = maploc, log2 = cnlr)
-	grail_seg = grail_data$fit$cncf %>%
-				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
-	
-	fixed_cn = fix_6(grail_cn, grail_seg)
-	grail_cn = fixed_cn[[1]]
-	grail_seg = fixed_cn[[2]]
-	
-	grail_seg = prune_(x=grail_seg) %>%
-				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
-										 psi=key_file$GRAIL_psi[i],
-										 x=grail_seg$log2)) %>%
-				mutate(n = cumsum(n))
- 	
- 	Chromosome = grail_seg[,"chrom"]
- 	Start = grail_seg[,"start"]
- 	End = grail_seg[,"end"]
- 	Calls = grail_seg[,"cn"]
- 	res = data.frame(Chromosome, Start, End, Calls)
- 	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
- 			select(hgnc_symbol, chr, start_position, end_position) %>%
- 			rename(Hugo_Symbol = hgnc_symbol,
- 				   Chromosome = chr,
- 				   Start = start_position,
- 				   End = end_position) %>%
- 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
- 			arrange(as.numeric(Chromosome), as.numeric(Start))
- 				   
- 	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
- 	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
- 	fo <- findOverlaps(res_by_segment, annot_by_gene)
- 
- 	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
- 	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
- 	for (j in 1:length(Hugo_Symbol)) {
- 		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
- 		df[index,2] = mean(df[index,2], na.rm=TRUE)
- 	}
- 	df = df %>% filter(!duplicated(Hugo_Symbol))
- 	df[,2] = round(df[,2])
- 	res = rep(0, nrow(annot))
- 	names(res) = annot[,"Hugo_Symbol"]
- 	res[as.character(df$Hugo_Symbol)] = df$Calls
- 	return(invisible(res))
-}
-g_bygene = do.call(cbind, g_bygene)
-colnames(g_bygene) = tracker$GRAIL_ID
-
-index = c("CRLF2", "HLA-A", "HLA-B", "HLA-C", "AR", "HIST2H3D", "HIST2H3C", "HIST3H3",
-		  "HIST1H3A", "HIST1H3B", "HIST1H3C", "HIST1H1C", "HIST1H2BD", "HIST1H3D",
-		  "HIST1H3E", "HIST1H3F", "HIST1H3G", "HIST1H3H", "HIST1H3I", "HIST1H3J")
-i_bygene = i_bygene[!(rownames(i_bygene) %in% index),,drop=FALSE]
-g_bygene = g_bygene[!(rownames(g_bygene) %in% index),,drop=FALSE]
-
-
-annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
- 			select(hgnc_symbol, chr, start_position, end_position) %>%
- 			rename(Hugo_Symbol = hgnc_symbol,
- 				   Chromosome = chr,
- 				   Start = start_position,
- 				   End = end_position) %>%
- 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
- 			arrange(as.numeric(Chromosome), as.numeric(Start))
-annot = annot[!(annot$Hugo_Symbol %in% index),,drop=FALSE]
-
-n = 23
-qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-ColSideColors = rep(NA, nrow(annot))
-ColSideColors = col_vector[as.numeric(annot[,"Chromosome"])]
-names(ColSideColors) = as.character(annot[,"Hugo_Symbol"])
-ColSideColors = ColSideColors[rownames(i_bygene)]
-RowSideColors = rep(NA, ncol(i_bygene))
-RowSideColors[grep("VB", colnames(i_bygene), fixed=TRUE)] = "salmon"
-RowSideColors[grep("VL", colnames(i_bygene), fixed=TRUE)] = "#FDAE61"
-RowSideColors[grep("VP", colnames(i_bygene), fixed=TRUE)] = "#ABDDA4"
-
-index = is.na(ColSideColors)
-ColSideColors = ColSideColors[!index]
-i_bygene = i_bygene[!index,,drop=FALSE]
-g_bygene = g_bygene[!index,,drop=FALSE]
-
-for (i in 1:nrow(tracker)) {
-	psi = round(tracker$IMPACT_psi[i])
- 	psi = ifelse(psi==1, 2, psi)
- 	x = i_bygene[,i]
- 	x2 = rep(0, length(x))
- 	if (psi==2) {
-	 	x2[x<(psi-1)] = -1
-		x2[x>(psi+3)] = 1
-	} else if (psi==3) {
-		x2[x<(psi-2)] = -1
-		x2[x>(psi+4)] = 1
-	} else {
-		x2[x<(psi-3)] = -1
-		x2[x>(psi+5)] = 1
-	}
-	i_bygene[,i] = x2
-	
-	psi = round(tracker$GRAIL_psi[i])
- 	psi = ifelse(psi==1, 2, psi)
- 	x = g_bygene[,i]
- 	x2 = rep(0, length(x))
- 	if (psi==2) {
-	 	x2[x<(psi-1)] = -1
-		x2[x>(psi+3)] = 1
-	} else if (psi==3) {
-		x2[x<(psi-2)] = -1
-		x2[x>(psi+4)] = 1
-	} else {
-		x2[x<(psi-3)] = -1
-		x2[x>(psi+4)] = 1
-	}
-	g_bygene[,i] = x2
-}
-#g_bygene[g_bygene==1 & i_bygene==0] = 0
-#g_bygene[g_bygene==-1 & i_bygene==0] = 0
-
-pdf(file="../res/rebuttal/Heatmap_CN_tumor_abs_copy_all_genes.pdf", width=8)
-hmi = heatmap(t(i_bygene), Colv=NA, Rowv=as.dendrogram(hclust(dist(t(i_bygene)))),
-			  col = c("steelblue", "white", "red"),
-			  scale="none",
- 			  RowSideColors=RowSideColors,
- 			  ColSideColors=ColSideColors,
- 			  labRow=NA,
- 			  labCol=NA)
-dev.off()
-
-pdf(file="../res/rebuttal/Heatmap_CN_cfDNA_abs_copy_all_genes.pdf", width=8)
-hmg = heatmap(t(g_bygene), Colv=NA, Rowv=as.dendrogram(hclust(dist(t(i_bygene)))),
-			  col = c("steelblue", "white", "red"),
-			  scale = "none",
- 			  RowSideColors=RowSideColors,
- 			  ColSideColors=ColSideColors,
- 			  labRow=NA,
- 			  labCol=NA)
-dev.off()
-
-
-res = foreach (i=1:nrow(tracker)) %dopar% {
- 	cat(tracker$GRAIL_ID[i], "\n")
- 	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
-	impact_data = new.env()
-	load(impact_path, envir=impact_data)
-	
-	impact_seg = impact_data$fit$cncf %>%
-				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
-	impact_seg = prune_(x=impact_seg) %>%
-				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
-										  psi=key_file$IMPACT_psi[i],
-										  x=impact_seg$log2)) %>%
+				 filter(n>=50) %>%
 				 mutate(n = cumsum(n))
 				
  	Chromosome = impact_seg[,"chrom"]
@@ -519,6 +342,7 @@ res = foreach (i=1:nrow(tracker)) %dopar% {
 				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
 										 psi=key_file$GRAIL_psi[i],
 										 x=grail_seg$log2)) %>%
+			 	filter(n>=50) %>%
 				mutate(n = cumsum(n))
  	
  	Chromosome = grail_seg[,"chrom"]
@@ -534,101 +358,127 @@ res = foreach (i=1:nrow(tracker)) %dopar% {
  	return(invisible(round(df)))
 }
 
-#==================================================
-# % Agreement based on copy number calls
-#==================================================
-if (TRUE) { pa = unlist(foreach (i=1:nrow(tracker)) %dopar% {
- 	cat(tracker$GRAIL_ID[i], "\n")
+pa = unlist(foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
  	x = res[[i]][,"cfDNA"] 
  	y = res[[i]][,"Biopsy"]
  	
  	x2 = rep(0, length(x))
  	y2 = rep(0, length(y))
  	
- 	psi = round(tracker$IMPACT_psi[i])
+ 	psi = round(key_file$IMPACT_psi[i])
  	psi = ifelse(psi==1, 2, psi)
  	if (psi==2) {
-	 	x2[x<(psi-1)] = -1
-		x2[x>(psi+3)] = 1
+	 	x2[x<1] = -1
+		x2[x>6] = 1
 	} else if (psi==3) {
-		x2[x<(psi-2)] = -1
-		x2[x>(psi+4)] = 1
+		x2[x<1] = -1
+		x2[x>7] = 1
 	} else {
-		x2[x<(psi-3)] = -1
-		x2[x>(psi+5)] = 1
+		x2[x<2] = -1
+		x2[x>8] = 1
 	}
 	
-	psi = round(tracker$GRAIL_psi[i])
+	psi = round(key_file$GRAIL_psi[i])
  	psi = ifelse(psi==1, 2, psi)
 	if (psi==2) {
-	 	y2[y<(psi-1)] = -1
-		y2[y>(psi+3)] = 1
+	 	y2[y<1] = -1
+		y2[y>6] = 1
 	} else if (psi==3) {
-		y2[y<(psi-2)] = -1
-		y2[y>(psi+4)] = 1
+		y2[y<1] = -1
+		y2[y>7] = 1
 	} else {
-		y2[y<(psi-3)] = -1
-		y2[y>(psi+5)] = 1
+		y2[y<2] = -1
+		y2[y>8] = 1
 	}
 	
-	z = matrix(0, ncol=3, nrow=3)
-	class = c(-1,0,1)
-	for (ii in 1:3) {
-		for (jj in 1:3) {
+	class = c(-1, 0, 1)
+	z = matrix(0, ncol=length(class), nrow=length(class))
+	
+	for (ii in 1:length(class)) {
+		for (jj in 1:length(class)) {
 			z[ii,jj] = sum(x2==class[ii] & y2==class[jj])
 		}
 	}
 	k = sum(diag(z))/sum(z)
 	return(k)
-}) }
+})
+
+tmp.0 = data.frame(pa = 100*pa)
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_All_Calls.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VB", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Breast_Calls.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VL", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Lung_Calls.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VP", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Prostate_Calls.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
 
 #==================================================
-# % Agreement based on absolute copy numbers
+# % agreement based on absolute copy numbers
 #==================================================
-if (FALSE) { pa = unlist(foreach (i=1:nrow(tracker)) %dopar% {
- 	cat(tracker$GRAIL_ID[i], "\n")
- 	x = res[[i]][,"cfDNA"] 
- 	y = res[[i]][,"Biopsy"]
- 	
- 	class = 1:max(c(x, y))
-	z = matrix(0, ncol=length(class), nrow=length(class))
-	
-	for (ii in 1:length(class)) {
-		for (jj in 1:length(class)) {
-			z[ii,jj] = sum(x==class[ii] & y==class[jj])
-		}
-	}
-	k = sum(diag(z))/sum(z)
-	return(k)
-}) }
-
-pa = data.frame(pa) %>%
-	 mutate(Tissue = "")
-pa[grepl("VB", tracker$GRAIL_ID),"Tissue"] = "Breast"	 
-pa[grepl("VL", tracker$GRAIL_ID),"Tissue"] = "Lung"
-pa[grepl("VP", tracker$GRAIL_ID),"Tissue"] = "Prostate"
-
-#==================================================
-# Updated ploidy
-#==================================================
-if (TRUE) { ploidy = foreach (i=1:nrow(key_file)) %dopar% {
-	print(key_file$GRAIL_ID[i])
-	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+res = foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
+ 	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
 	impact_data = new.env()
 	load(impact_path, envir=impact_data)
-	impact_cn = impact_data$out2$jointseg %>%
-			    select(chrom, pos = maploc, log2 = cnlr)
+	
 	impact_seg = impact_data$fit$cncf %>%
 				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
 	impact_seg = prune_(x=impact_seg) %>%
 				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
 										  psi=key_file$IMPACT_psi[i],
 										  x=impact_seg$log2)) %>%
-				mutate(n = cumsum(n))
-	impact_psi = (t(impact_seg[,"end"] - impact_seg[,"start"])%*%impact_seg[,"cn"])/sum(impact_seg[,"end"] - impact_seg[,"start"])
-	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
+				 filter(n>=50) %>%
+				 mutate(n = cumsum(n))
+				
+ 	Chromosome = impact_seg[,"chrom"]
+ 	Start = impact_seg[,"start"]
+ 	End = impact_seg[,"end"]
+ 	Calls = impact_seg[,"cn"]
+ 	im = data.frame(Chromosome, Start, End, Calls)
+ 	
+ 	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
 	grail_data = new.env()
 	load(grail_path, envir=grail_data)
+	
 	grail_cn = grail_data$out2$jointseg %>%
 			   select(chrom, pos = maploc, log2 = cnlr)
 	grail_seg = grail_data$fit$cncf %>%
@@ -642,200 +492,652 @@ if (TRUE) { ploidy = foreach (i=1:nrow(key_file)) %dopar% {
 				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
 										 psi=key_file$GRAIL_psi[i],
 										 x=grail_seg$log2)) %>%
+				filter(n>=50) %>%
 				mutate(n = cumsum(n))
-	grail_psi = (t(grail_seg[,"end"] - grail_seg[,"start"])%*%grail_seg[,"cn"])/sum(grail_seg[,"end"] - grail_seg[,"start"])
-	return(c(grail_psi, impact_psi))
-} }
-ploidy = do.call(rbind, ploidy)
+ 	
+ 	Chromosome = grail_seg[,"chrom"]
+ 	Start = grail_seg[,"start"]
+ 	End = grail_seg[,"end"]
+ 	Calls = grail_seg[,"cn"]
+ 	gr = data.frame(Chromosome, Start, End, Calls)
 
-tmp = cbind(tracker, pa)
-tmp[,"GRAIL_psi"] = ploidy[,1]
-tmp[,"IMPACT_psi"] = ploidy[,2]
+ 	biopsy_gr <- im %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+ 	cfdna_gr <- gr %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+ 	fo <- findOverlaps(biopsy_gr, cfdna_gr)
+ 	df <- data.frame(cfDNA=mcols(cfdna_gr)[subjectHits(fo),], Biopsy=mcols(biopsy_gr)[queryHits(fo),])
+ 	return(invisible(round(df)))
+}
 
-tmp.0 = tmp %>%
-		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
-		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
-		mutate(Cat = "Both estimate available") %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
-		mutate(Purity = "Purity")
-		
-plot.0 = ggplot(tmp.0, aes(y = GRAIL_alpha, x = IMPACT_alpha, shape = Tissue, fill = Cat)) +
-		 geom_abline(slope = 1, color = "goldenrod3", linetype = 1) +
-		 geom_point(alpha = .8, size = 2.5) +
-		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
-		 scale_shape_manual(values = c(24, 21, 22)) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.26, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\ncfDNA\n", x="\nBiopsy\n") +
-		 coord_cartesian(xlim=c(0,1), ylim = c(0, 1)) +
-		 facet_wrap(~Purity) +
-		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Purity")))
-		 
-		 
-pdf(file="../res/rebuttal/Comparison_Purity.pdf", width=6, height=6)
-print(plot.0)
-dev.off()
+pa = unlist(foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
+ 	x = res[[i]][,"cfDNA"]
+ 	x[x<0] = 0
+ 	y = res[[i]][,"Biopsy"]
+ 	y[y<0] = 0
+ 	
+ 	class = 0:max(c(x, y))
+ 	z = matrix(0, ncol=length(class), nrow=length(class))
 
-tmp.0 = tmp %>%
-		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
-		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
-		mutate(Cat = "Both estimate available") %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
-		mutate(Ploidy = "Ploidy")
-		
-plot.0 = ggplot(tmp.0, aes(y = GRAIL_psi, x = IMPACT_psi, shape = Tissue, fill = Cat)) +
-		 geom_abline(slope = 1, color = "goldenrod3", linetype = 1) +
-		 geom_point(alpha = .8, size = 2.5) +
- 		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
-		 scale_shape_manual(values = c(24, 21, 22)) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.26, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\ncfDNA\n", x="\nBiopsy\n") +
-		 coord_cartesian(xlim=c(1.5,4), ylim = c(1.5,4)) +
-		 facet_wrap(~Ploidy) +
-		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Purity")))
-		 
-pdf(file="../res/rebuttal/Comparison_Ploidy.pdf", width=6, height=6)
-print(plot.0)
-dev.off()
+	for (ii in 1:length(class)) {
+ 		for (jj in 1:length(class)) {
+ 			z[ii,jj] = sum(x==class[ii] & y==class[jj])
+ 		}
+ 	}
+ 	k = sum(diag(z))/sum(z)
+ 	return(k)
+})
 
-
-tmp.0 = tmp %>%
-		mutate(Tissue = "All samples")
-
-plot.0 = ggplot(tmp.0, aes(x = 100*pa)) +
-		 geom_histogram(color="black", fill="#2B83BA") +
-		 coord_cartesian(xlim=c(0,100)) +
-		 theme_bw(base_size=15) +
-		 facet_wrap(~Tissue) +
+tmp.0 = data.frame(pa = 100*pa)
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nFrequency\n", x="\n Agreement (%)\n")
-		 
-pdf(file="../res/rebuttal/Percent_Agreement_Combined.pdf", width=6.5)
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_All_CN.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-plot.0 = ggplot(tmp, aes(x = 100*pa)) +
-		 geom_histogram(color="black", fill="#2B83BA") +
-		 coord_cartesian(xlim=c(0,100)) +
-		 theme_bw(base_size=15) +
-		 facet_wrap(~Tissue) +
+tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VB", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nFrequency\n", x="\n Agreement (%)\n")
-		 
-pdf(file="../res/rebuttal/Percent_Agreement_Tissue.pdf", width=15)
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Breast_CN.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = tmp %>%
-		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
-		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
-		mutate(Cat = "Both estimate available") %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
-		mutate(Ploidy = "Agreement versus cfDNA ploidy")
-		
-
-plot.0 = ggplot(tmp.0, aes(y = GRAIL_psi, x = 100*pa, shape = Tissue, fill = Cat)) +
-		 geom_point(alpha = .8, size = 2.5) +
-		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
-		 scale_shape_manual(values = c(24, 21, 22)) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.26, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nPloidy in cfDNA\n", x="\nAgreement (%)\n") +
-		 coord_cartesian(xlim=c(0,100), ylim = c(1.5,4)) +
-		 facet_wrap(~Ploidy) +
-		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Purity")))
-		 
-pdf(file="../res/rebuttal/Agreement_Ploidy_cfDNA.pdf", width=6, height=6)
+tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VL", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Lung_CN.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = tmp %>%
-		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
-		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
-		mutate(Cat = "Both estimate available") %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
-		mutate(Ploidy = "Agreement versus tumor ploidy")
-		
-
-plot.0 = ggplot(tmp.0, aes(y = IMPACT_psi, x = 100*pa, shape = Tissue, fill = Cat)) +
-		 geom_point(alpha = .8, size = 2.5) +
-		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
-		 scale_shape_manual(values = c(24, 21, 22)) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.8, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nPloidy in tumor\n", x="\nAgreement (%)\n") +
-		 coord_cartesian(xlim=c(0,100), ylim = c(1.5,4)) +
-		 facet_wrap(~Ploidy) +
-		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Purity")))
-		 
-pdf(file="../res/rebuttal/Agreement_Ploidy_biopsy.pdf", width=6, height=6)
+tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VP", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
+		 coord_cartesian(xlim=c(0,100))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Prostate_CN.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = tmp %>%
-		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
-		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
-		mutate(Cat = "Both estimate available") %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
-		mutate(Ploidy = "Agreement versus ploidy difference")
-		
+#==================================================
+# % agreement based on Log2 ratios
+#==================================================
+key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+res = foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
+ 	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
+	impact_data = new.env()
+	load(impact_path, envir=impact_data)
+	
+	impact_seg = impact_data$fit$cncf %>%
+				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+	impact_seg = prune_(x=impact_seg) %>%
+				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
+										  psi=key_file$IMPACT_psi[i],
+										  x=impact_seg$log2)) %>%
+				 filter(n>=50) %>%
+				 mutate(n = cumsum(n))
+				
+ 	Chromosome = impact_seg[,"chrom"]
+ 	Start = impact_seg[,"start"]
+ 	End = impact_seg[,"end"]
+ 	Calls = impact_seg[,"log2"]
+ 	im = data.frame(Chromosome, Start, End, Calls)
+ 	
+ 	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
+	grail_data = new.env()
+	load(grail_path, envir=grail_data)
+	
+	grail_cn = grail_data$out2$jointseg %>%
+			   select(chrom, pos = maploc, log2 = cnlr)
+	grail_seg = grail_data$fit$cncf %>%
+				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+	
+	fixed_cn = fix_6(grail_cn, grail_seg)
+	grail_cn = fixed_cn[[1]]
+	grail_seg = fixed_cn[[2]]
+	
+	grail_seg = prune_(x=grail_seg) %>%
+				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
+										 psi=key_file$GRAIL_psi[i],
+										 x=grail_seg$log2)) %>%
+				filter(n>=50) %>%
+				mutate(n = cumsum(n))
+ 	
+ 	Chromosome = grail_seg[,"chrom"]
+ 	Start = grail_seg[,"start"]
+ 	End = grail_seg[,"end"]
+ 	Calls = grail_seg[,"log2"]
+ 	gr = data.frame(Chromosome, Start, End, Calls)
 
-plot.0 = ggplot(tmp.0, aes(y = abs(IMPACT_psi - GRAIL_psi), x = 100*pa, shape = Tissue, fill = Cat)) +
-		 geom_point(alpha = .8, size = 2.5) +
-		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
-		 scale_shape_manual(values = c(24, 21, 22)) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.8, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\n| cfDNA - Tumor |\n", x="\nAgreement (%)\n") +
-		 coord_cartesian(xlim=c(0,100), ylim = c(0,2)) +
-		 facet_wrap(~Ploidy) +
-		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Purity")))
-		 
-pdf(file="../res/rebuttal/Agreement_Ploidy_biopsy_cfDNA.pdf", width=6, height=6)
+ 	biopsy_gr <- im %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+ 	cfdna_gr <- gr %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+ 	fo <- findOverlaps(biopsy_gr, cfdna_gr)
+ 	df <- data.frame(cfDNA=mcols(cfdna_gr)[subjectHits(fo),], Biopsy=mcols(biopsy_gr)[queryHits(fo),])
+ 	return(invisible(df))
+}
+
+pa = unlist(foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
+ 	x = res[[i]][,"cfDNA"]
+ 	y = res[[i]][,"Biopsy"]
+ 	k = cor(x, y, method="spearman")
+ 	return(k)
+})
+
+tmp.0 = data.frame(pa = pa)
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 coord_cartesian(xlim=c(-1,1))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_All_Log2.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = tmp %>%
-		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
-		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
-		mutate(Cat = "Both estimate available") %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
-		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
-		mutate(Ploidy = "Agreement versus purity difference")
-		
-
-plot.0 = ggplot(tmp.0, aes(y = abs(IMPACT_alpha - GRAIL_alpha), x = 100*pa, shape = Tissue, fill = Cat)) +
-		 geom_point(alpha = .8, size = 2.5) +
-		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
-		 scale_shape_manual(values = c(24, 21, 22)) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.8, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\n| cfDNA - Tumor |\n", x="\nAgreement (%)\n") +
-		 coord_cartesian(xlim=c(0,100), ylim = c(0,1)) +
-		 facet_wrap(~Ploidy) +
-		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Purity")))
-		 
-pdf(file="../res/rebuttal/Agreement_Purity_biopsy_cfDNA.pdf", width=6, height=6)
+tmp.0 = data.frame(pa = pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VB", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 coord_cartesian(xlim=c(-1,1))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Breast_Log2.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
+
+tmp.0 = data.frame(pa = pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VL", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 coord_cartesian(xlim=c(-1,1))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Lung_Log2.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+tmp.0 = data.frame(pa = pa, patient_id=key_file$GRAIL_ID) %>%
+		filter(grepl("VP", patient_id))
+plot.0 = ggplot(tmp.0, aes(x=pa)) + 
+  		 geom_density() +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 coord_cartesian(xlim=c(-1,1))
+pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Prostate_Log2.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+
+# #==================================================
+# # Comparison of copy number aberrations by gene
+# #==================================================
+# tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+# 		  type_convert() %>%
+# 		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+# 
+# i_bygene = foreach (i=1:nrow(tracker)) %dopar% {
+#  	cat(tracker$GRAIL_ID[i], "\n")
+#  	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
+# 	impact_data = new.env()
+# 	load(impact_path, envir=impact_data)
+# 	
+# 	impact_seg = impact_data$fit$cncf %>%
+# 				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+# 	impact_seg = prune_(x=impact_seg) %>%
+# 				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
+# 										  psi=key_file$IMPACT_psi[i],
+# 										  x=impact_seg$log2)) %>%
+# 				 mutate(n = cumsum(n))
+# 				
+#  	Chromosome = impact_seg[,"chrom"]
+#  	Start = impact_seg[,"start"]
+#  	End = impact_seg[,"end"]
+#  	Calls = impact_seg[,"cn"]
+#  	res = data.frame(Chromosome, Start, End, Calls)
+#  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+#  			select(hgnc_symbol, chr, start_position, end_position) %>%
+#  			rename(Hugo_Symbol = hgnc_symbol,
+#  				   Chromosome = chr,
+#  				   Start = start_position,
+#  				   End = end_position) %>%
+#  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+#  			arrange(as.numeric(Chromosome), as.numeric(Start))
+#  				   
+#  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+#  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+#  	fo <- findOverlaps(res_by_segment, annot_by_gene)
+#  
+#  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+#  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+#  	for (j in 1:length(Hugo_Symbol)) {
+#  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+#  		df[index,2] = mean(df[index,2], na.rm=TRUE)
+#  	}
+#  	df = df %>% filter(!duplicated(Hugo_Symbol))
+#  	df[,2] = round(df[,2])
+#  	res = rep(0, nrow(annot))
+#  	names(res) = annot[,"Hugo_Symbol"]
+#  	res[as.character(df$Hugo_Symbol)] = df$Calls
+#  	return(invisible(res))
+# }
+# i_bygene = do.call(cbind, i_bygene)
+# colnames(i_bygene) = tracker$GRAIL_ID
+# 
+#  
+# g_bygene = foreach (i=1:nrow(tracker)) %dopar% {
+#  	cat(tracker$GRAIL_ID[i], "\n")
+# 	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
+# 	grail_data = new.env()
+# 	load(grail_path, envir=grail_data)
+# 	
+# 	grail_cn = grail_data$out2$jointseg %>%
+# 			   select(chrom, pos = maploc, log2 = cnlr)
+# 	grail_seg = grail_data$fit$cncf %>%
+# 				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+# 	
+# 	fixed_cn = fix_6(grail_cn, grail_seg)
+# 	grail_cn = fixed_cn[[1]]
+# 	grail_seg = fixed_cn[[2]]
+# 	
+# 	grail_seg = prune_(x=grail_seg) %>%
+# 				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
+# 										 psi=key_file$GRAIL_psi[i],
+# 										 x=grail_seg$log2)) %>%
+# 				mutate(n = cumsum(n))
+#  	
+#  	Chromosome = grail_seg[,"chrom"]
+#  	Start = grail_seg[,"start"]
+#  	End = grail_seg[,"end"]
+#  	Calls = grail_seg[,"cn"]
+#  	res = data.frame(Chromosome, Start, End, Calls)
+#  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+#  			select(hgnc_symbol, chr, start_position, end_position) %>%
+#  			rename(Hugo_Symbol = hgnc_symbol,
+#  				   Chromosome = chr,
+#  				   Start = start_position,
+#  				   End = end_position) %>%
+#  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+#  			arrange(as.numeric(Chromosome), as.numeric(Start))
+#  				   
+#  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+#  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+#  	fo <- findOverlaps(res_by_segment, annot_by_gene)
+#  
+#  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+#  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+#  	for (j in 1:length(Hugo_Symbol)) {
+#  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+#  		df[index,2] = mean(df[index,2], na.rm=TRUE)
+#  	}
+#  	df = df %>% filter(!duplicated(Hugo_Symbol))
+#  	df[,2] = round(df[,2])
+#  	res = rep(0, nrow(annot))
+#  	names(res) = annot[,"Hugo_Symbol"]
+#  	res[as.character(df$Hugo_Symbol)] = df$Calls
+#  	return(invisible(res))
+# }
+# g_bygene = do.call(cbind, g_bygene)
+# colnames(g_bygene) = tracker$GRAIL_ID
+# 
+# index = c("CRLF2", "HLA-A", "HLA-B", "HLA-C", "AR", "HIST2H3D", "HIST2H3C", "HIST3H3",
+# 		  "HIST1H3A", "HIST1H3B", "HIST1H3C", "HIST1H1C", "HIST1H2BD", "HIST1H3D",
+# 		  "HIST1H3E", "HIST1H3F", "HIST1H3G", "HIST1H3H", "HIST1H3I", "HIST1H3J")
+# i_bygene = i_bygene[!(rownames(i_bygene) %in% index),,drop=FALSE]
+# g_bygene = g_bygene[!(rownames(g_bygene) %in% index),,drop=FALSE]
+# 
+# 
+# annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+#  			select(hgnc_symbol, chr, start_position, end_position) %>%
+#  			rename(Hugo_Symbol = hgnc_symbol,
+#  				   Chromosome = chr,
+#  				   Start = start_position,
+#  				   End = end_position) %>%
+#  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+#  			arrange(as.numeric(Chromosome), as.numeric(Start))
+# annot = annot[!(annot$Hugo_Symbol %in% index),,drop=FALSE]
+# 
+# n = 23
+# qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+# col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+# ColSideColors = rep(NA, nrow(annot))
+# ColSideColors = col_vector[as.numeric(annot[,"Chromosome"])]
+# names(ColSideColors) = as.character(annot[,"Hugo_Symbol"])
+# ColSideColors = ColSideColors[rownames(i_bygene)]
+# RowSideColors = rep(NA, ncol(i_bygene))
+# RowSideColors[grep("VB", colnames(i_bygene), fixed=TRUE)] = "salmon"
+# RowSideColors[grep("VL", colnames(i_bygene), fixed=TRUE)] = "#FDAE61"
+# RowSideColors[grep("VP", colnames(i_bygene), fixed=TRUE)] = "#ABDDA4"
+# 
+# index = is.na(ColSideColors)
+# ColSideColors = ColSideColors[!index]
+# i_bygene = i_bygene[!index,,drop=FALSE]
+# g_bygene = g_bygene[!index,,drop=FALSE]
+# 
+# for (i in 1:nrow(tracker)) {
+# 	psi = round(tracker$IMPACT_psi[i])
+#  	psi = ifelse(psi==1, 2, psi)
+#  	x = i_bygene[,i]
+#  	x2 = rep(0, length(x))
+#  	if (psi==2) {
+# 	 	x2[x<(psi-1)] = -1
+# 		x2[x>(psi+3)] = 1
+# 	} else if (psi==3) {
+# 		x2[x<(psi-2)] = -1
+# 		x2[x>(psi+4)] = 1
+# 	} else {
+# 		x2[x<(psi-3)] = -1
+# 		x2[x>(psi+5)] = 1
+# 	}
+# 	i_bygene[,i] = x2
+# 	
+# 	psi = round(tracker$GRAIL_psi[i])
+#  	psi = ifelse(psi==1, 2, psi)
+#  	x = g_bygene[,i]
+#  	x2 = rep(0, length(x))
+#  	if (psi==2) {
+# 	 	x2[x<(psi-1)] = -1
+# 		x2[x>(psi+3)] = 1
+# 	} else if (psi==3) {
+# 		x2[x<(psi-2)] = -1
+# 		x2[x>(psi+4)] = 1
+# 	} else {
+# 		x2[x<(psi-3)] = -1
+# 		x2[x>(psi+4)] = 1
+# 	}
+# 	g_bygene[,i] = x2
+# }
+# 
+# pdf(file="../res/rebuttal/Heatmap_CN_tumor_abs_copy_all_genes.pdf", width=8)
+# hmi = heatmap(t(i_bygene), Colv=NA, Rowv=as.dendrogram(hclust(dist(t(i_bygene)))),
+# 			  col = c("steelblue", "white", "red"),
+# 			  scale="none",
+#  			  RowSideColors=RowSideColors,
+#  			  ColSideColors=ColSideColors,
+#  			  labRow=NA,
+#  			  labCol=NA)
+# dev.off()
+# 
+# pdf(file="../res/rebuttal/Heatmap_CN_cfDNA_abs_copy_all_genes.pdf", width=8)
+# hmg = heatmap(t(g_bygene), Colv=NA, Rowv=as.dendrogram(hclust(dist(t(i_bygene)))),
+# 			  col = c("steelblue", "white", "red"),
+# 			  scale = "none",
+#  			  RowSideColors=RowSideColors,
+#  			  ColSideColors=ColSideColors,
+#  			  labRow=NA,
+#  			  labCol=NA)
+# dev.off()
+# 
+# 
+# 
+# 
+# #==================================================
+# # % Agreement based on absolute copy numbers
+# #==================================================
+# if (FALSE) { pa = unlist(foreach (i=1:nrow(tracker)) %dopar% {
+#  	cat(tracker$GRAIL_ID[i], "\n")
+#  	x = res[[i]][,"cfDNA"] 
+#  	y = res[[i]][,"Biopsy"]
+#  	
+#  	class = 1:max(c(x, y))
+# 	z = matrix(0, ncol=length(class), nrow=length(class))
+# 	
+# 	for (ii in 1:length(class)) {
+# 		for (jj in 1:length(class)) {
+# 			z[ii,jj] = sum(x==class[ii] & y==class[jj])
+# 		}
+# 	}
+# 	k = sum(diag(z))/sum(z)
+# 	return(k)
+# }) }
+# 
+# pa = data.frame(pa) %>%
+# 	 mutate(Tissue = "")
+# pa[grepl("VB", tracker$GRAIL_ID),"Tissue"] = "Breast"	 
+# pa[grepl("VL", tracker$GRAIL_ID),"Tissue"] = "Lung"
+# pa[grepl("VP", tracker$GRAIL_ID),"Tissue"] = "Prostate"
+# 
+# #==================================================
+# # Updated ploidy
+# #==================================================
+# if (TRUE) { ploidy = foreach (i=1:nrow(key_file)) %dopar% {
+# 	print(key_file$GRAIL_ID[i])
+# 	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
+# 	impact_data = new.env()
+# 	load(impact_path, envir=impact_data)
+# 	impact_cn = impact_data$out2$jointseg %>%
+# 			    select(chrom, pos = maploc, log2 = cnlr)
+# 	impact_seg = impact_data$fit$cncf %>%
+# 				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+# 	impact_seg = prune_(x=impact_seg) %>%
+# 				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
+# 										  psi=key_file$IMPACT_psi[i],
+# 										  x=impact_seg$log2)) %>%
+# 				mutate(n = cumsum(n))
+# 	impact_psi = (t(impact_seg[,"end"] - impact_seg[,"start"])%*%impact_seg[,"cn"])/sum(impact_seg[,"end"] - impact_seg[,"start"])
+# 	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
+# 	grail_data = new.env()
+# 	load(grail_path, envir=grail_data)
+# 	grail_cn = grail_data$out2$jointseg %>%
+# 			   select(chrom, pos = maploc, log2 = cnlr)
+# 	grail_seg = grail_data$fit$cncf %>%
+# 				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+# 	
+# 	fixed_cn = fix_6(grail_cn, grail_seg)
+# 	grail_cn = fixed_cn[[1]]
+# 	grail_seg = fixed_cn[[2]]
+# 	
+# 	grail_seg = prune_(x=grail_seg) %>%
+# 				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
+# 										 psi=key_file$GRAIL_psi[i],
+# 										 x=grail_seg$log2)) %>%
+# 				mutate(n = cumsum(n))
+# 	grail_psi = (t(grail_seg[,"end"] - grail_seg[,"start"])%*%grail_seg[,"cn"])/sum(grail_seg[,"end"] - grail_seg[,"start"])
+# 	return(c(grail_psi, impact_psi))
+# } }
+# ploidy = do.call(rbind, ploidy)
+# 
+# tmp = cbind(tracker, pa)
+# tmp[,"GRAIL_psi"] = ploidy[,1]
+# tmp[,"IMPACT_psi"] = ploidy[,2]
+# 
+# tmp.0 = tmp %>%
+# 		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
+# 		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
+# 		mutate(Cat = "Both estimate available") %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
+# 		mutate(Purity = "Purity")
+# 		
+# plot.0 = ggplot(tmp.0, aes(y = GRAIL_alpha, x = IMPACT_alpha, shape = Tissue, fill = Cat)) +
+# 		 geom_abline(slope = 1, color = "goldenrod3", linetype = 1) +
+# 		 geom_point(alpha = .8, size = 2.5) +
+# 		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
+# 		 scale_shape_manual(values = c(24, 21, 22)) +
+# 		 theme_bw(base_size=15) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.26, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\ncfDNA\n", x="\nBiopsy\n") +
+# 		 coord_cartesian(xlim=c(0,1), ylim = c(0, 1)) +
+# 		 facet_wrap(~Purity) +
+# 		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
+# 		 guides(fill=guide_legend(title=c("Purity")))
+# 		 
+# 		 
+# pdf(file="../res/rebuttal/Comparison_Purity.pdf", width=6, height=6)
+# print(plot.0)
+# dev.off()
+# 
+# tmp.0 = tmp %>%
+# 		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
+# 		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
+# 		mutate(Cat = "Both estimate available") %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
+# 		mutate(Ploidy = "Ploidy")
+# 		
+# plot.0 = ggplot(tmp.0, aes(y = GRAIL_psi, x = IMPACT_psi, shape = Tissue, fill = Cat)) +
+# 		 geom_abline(slope = 1, color = "goldenrod3", linetype = 1) +
+# 		 geom_point(alpha = .8, size = 2.5) +
+#  		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
+# 		 scale_shape_manual(values = c(24, 21, 22)) +
+# 		 theme_bw(base_size=15) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.26, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\ncfDNA\n", x="\nBiopsy\n") +
+# 		 coord_cartesian(xlim=c(1.5,4), ylim = c(1.5,4)) +
+# 		 facet_wrap(~Ploidy) +
+# 		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
+# 		 guides(fill=guide_legend(title=c("Purity")))
+# 		 
+# pdf(file="../res/rebuttal/Comparison_Ploidy.pdf", width=6, height=6)
+# print(plot.0)
+# dev.off()
+# 
+# 
+# tmp.0 = tmp %>%
+# 		mutate(Tissue = "All samples")
+# 
+# plot.0 = ggplot(tmp.0, aes(x = 100*pa)) +
+# 		 geom_histogram(color="black", fill="#2B83BA") +
+# 		 coord_cartesian(xlim=c(0,100)) +
+# 		 theme_bw(base_size=15) +
+# 		 facet_wrap(~Tissue) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\nFrequency\n", x="\n Agreement (%)\n")
+# 		 
+# pdf(file="../res/rebuttal/Percent_Agreement_Combined.pdf", width=6.5)
+# print(plot.0)
+# dev.off()
+# 
+# plot.0 = ggplot(tmp, aes(x = 100*pa)) +
+# 		 geom_histogram(color="black", fill="#2B83BA") +
+# 		 coord_cartesian(xlim=c(0,100)) +
+# 		 theme_bw(base_size=15) +
+# 		 facet_wrap(~Tissue) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\nFrequency\n", x="\n Agreement (%)\n")
+# 		 
+# pdf(file="../res/rebuttal/Percent_Agreement_Tissue.pdf", width=15)
+# print(plot.0)
+# dev.off()
+# 
+# tmp.0 = tmp %>%
+# 		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
+# 		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
+# 		mutate(Cat = "Both estimate available") %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
+# 		mutate(Ploidy = "Agreement versus cfDNA ploidy")
+# 		
+# 
+# plot.0 = ggplot(tmp.0, aes(y = GRAIL_psi, x = 100*pa, shape = Tissue, fill = Cat)) +
+# 		 geom_point(alpha = .8, size = 2.5) +
+# 		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
+# 		 scale_shape_manual(values = c(24, 21, 22)) +
+# 		 theme_bw(base_size=15) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.26, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\nPloidy in cfDNA\n", x="\nAgreement (%)\n") +
+# 		 coord_cartesian(xlim=c(0,100), ylim = c(1.5,4)) +
+# 		 facet_wrap(~Ploidy) +
+# 		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
+# 		 guides(fill=guide_legend(title=c("Purity")))
+# 		 
+# pdf(file="../res/rebuttal/Agreement_Ploidy_cfDNA.pdf", width=6, height=6)
+# print(plot.0)
+# dev.off()
+# 
+# tmp.0 = tmp %>%
+# 		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
+# 		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
+# 		mutate(Cat = "Both estimate available") %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
+# 		mutate(Ploidy = "Agreement versus tumor ploidy")
+# 		
+# 
+# plot.0 = ggplot(tmp.0, aes(y = IMPACT_psi, x = 100*pa, shape = Tissue, fill = Cat)) +
+# 		 geom_point(alpha = .8, size = 2.5) +
+# 		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
+# 		 scale_shape_manual(values = c(24, 21, 22)) +
+# 		 theme_bw(base_size=15) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.8, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\nPloidy in tumor\n", x="\nAgreement (%)\n") +
+# 		 coord_cartesian(xlim=c(0,100), ylim = c(1.5,4)) +
+# 		 facet_wrap(~Ploidy) +
+# 		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
+# 		 guides(fill=guide_legend(title=c("Purity")))
+# 		 
+# pdf(file="../res/rebuttal/Agreement_Ploidy_biopsy.pdf", width=6, height=6)
+# print(plot.0)
+# dev.off()
+# 
+# tmp.0 = tmp %>%
+# 		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
+# 		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
+# 		mutate(Cat = "Both estimate available") %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
+# 		mutate(Ploidy = "Agreement versus ploidy difference")
+# 		
+# plot.0 = ggplot(tmp.0, aes(y = abs(IMPACT_psi - GRAIL_psi), x = 100*pa, shape = Tissue, fill = Cat)) +
+# 		 geom_point(alpha = .8, size = 2.5) +
+# 		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
+# 		 scale_shape_manual(values = c(24, 21, 22)) +
+# 		 theme_bw(base_size=15) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.8, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\n| cfDNA - Tumor |\n", x="\nAgreement (%)\n") +
+# 		 coord_cartesian(xlim=c(0,100), ylim = c(0,2)) +
+# 		 facet_wrap(~Ploidy) +
+# 		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
+# 		 guides(fill=guide_legend(title=c("Purity")))
+# 		 
+# pdf(file="../res/rebuttal/Agreement_Ploidy_biopsy_cfDNA.pdf", width=6, height=6)
+# print(plot.0)
+# dev.off()
+# 
+# tmp.0 = tmp %>%
+# 		mutate(GRAIL_alpha = ifelse(GRAIL_alpha==1, 0, GRAIL_alpha)) %>%
+# 		mutate(IMPACT_alpha = ifelse(IMPACT_alpha==1, 0, IMPACT_alpha)) %>%
+# 		mutate(Cat = "Both estimate available") %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha == 0, "No estimate in both", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha == 0 & IMPACT_alpha != 0, "No estimate in cfDNA", Cat)) %>%
+# 		mutate(Cat = ifelse(GRAIL_alpha != 0 & IMPACT_alpha == 0, "No estimate in Biopsy", Cat)) %>%
+# 		mutate(Ploidy = "Agreement versus purity difference")
+# 		
+# 
+# plot.0 = ggplot(tmp.0, aes(y = abs(IMPACT_alpha - GRAIL_alpha), x = 100*pa, shape = Tissue, fill = Cat)) +
+# 		 geom_point(alpha = .8, size = 2.5) +
+# 		 scale_fill_manual(values = c("Both estimate available"="salmon", "No estimate in both"="#FDAE61", "No estimate in cfDNA"="#ABDDA4", "No estimate in Biopsy"="steelblue")) +
+# 		 scale_shape_manual(values = c(24, 21, 22)) +
+# 		 theme_bw(base_size=15) +
+# 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.8, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+# 		 labs(y="\n| cfDNA - Tumor |\n", x="\nAgreement (%)\n") +
+# 		 coord_cartesian(xlim=c(0,100), ylim = c(0,1)) +
+# 		 facet_wrap(~Ploidy) +
+# 		 guides(shape=guide_legend(title=c("Tissue"), override.aes=list(fill="black"))) +
+# 		 guides(fill=guide_legend(title=c("Purity")))
+# 		 
+# pdf(file="../res/rebuttal/Agreement_Purity_biopsy_cfDNA.pdf", width=6, height=6)
+# print(plot.0)
+# dev.off()
 
 
 # for (i in 1:nrow(tracker)) {

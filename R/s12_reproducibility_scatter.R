@@ -785,3 +785,562 @@ for (i in 1:length(patient_ids)) {
 	dev.off()
 	
 }
+
+#==================================================
+# Tabulate %PPA for 6 patients used to test
+# assay reproducibility
+#==================================================
+clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+		   
+snv_vars = read_tsv(snv_file$scored, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(level_2a = as.character(level_2a)) %>%
+		   mutate(level_r1 = as.character(level_r1))
+		   
+indel_vars = read_tsv(indel_file$scored, col_types = cols(.default = col_character())) %>%
+			 type_convert() %>%
+			 mutate(level_2a = as.character(level_2a)) %>%
+		     mutate(level_r1 = as.character(level_r1))
+
+wbc_stack = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character())) %>%
+			type_convert()
+			
+msk_anno = read_tsv(msk_anno_joined, col_types = cols(.default = col_character())) %>%
+  		   type_convert()
+			
+tracker_grail = read_csv(file=patient_tracker)
+
+tracker_impact = read_csv(file=impact_tracker)
+
+valid_patient_ids = tracker_grail %>%
+					filter(patient_id %in% tracker_impact$patient_id) %>%
+					.[["patient_id"]]
+  
+indel_vars = indel_vars %>%
+			 mutate(filter = replace(filter,
+             		patient_id == "MSK-VB-0001" &
+             		gene == "GATA3" &
+             		filter == "PASS",
+             		"CSR_MATCH_ELIMINATED"),
+         	 		ccd = replace(ccd,
+             			   		  patient_id == "MSK-VB-0001" &
+                           		  gene == "GATA3" &
+                           		  filter == "CSR_MATCH_ELIMINATED",
+                           		  0))
+
+snv_plasma = snv_vars %>%
+  			 filter(ccd == 1,
+         			(c_panel == 1 | panel == 1),
+         			study == "TechVal",
+         			grail == 1 | MSK == 1,
+         			patient_id %in% valid_patient_ids) %>%
+			 mutate(vtype = "SNV")
+
+indel_plasma = indel_vars %>%
+			   filter(ccd == 1,
+         			  (c_panel == 1 | panel == 1),
+         			  study == "TechVal",
+         			  grail == 1 | MSK == 1,
+         			  patient_id %in% valid_patient_ids) %>%
+  			   mutate(vtype = "INDEL",
+         			  altenddistmedian = as.integer(altenddistmedian))
+         			  
+healthy_snv = snv_vars %>%
+  			  filter((c_panel == 1 | panel == 1),
+         			  subj_type == "Healthy",
+         			  grail == 1) %>%
+  			  mutate(vtype = "SNV")
+
+healthy_indel = indel_vars %>%
+  				filter((c_panel == 1 | panel == 1),
+         			    subj_type == "Healthy",
+         				grail == 1) %>%
+  				mutate(vtype = "INDEL",
+         			   altenddistmedian = as.integer(altenddistmedian))
+
+small_vars_plasma = full_join(snv_plasma, indel_plasma) %>%
+					full_join(healthy_snv) %>%
+					full_join(healthy_indel)
+small_vars_plasma = small_vars_plasma %>%
+  					mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+
+small_vars_plasma = small_vars_plasma %>%
+					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))
+
+all_patient_table = small_vars_plasma %>%
+					distinct(subj_type, patient_id)
+					
+all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type, 4),
+                                     patient_id = rep(all_patient_table$patient_id, 4),
+                                     bio_source = rep(c("WBC_matched",
+                                                        "VUSo",
+                                                        "biopsy_matched",
+                                                        "biopsy_only"),
+                                                       each = nrow(all_patient_table)))
+
+variants = label_bio_source(small_vars_plasma)
+
+variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = variants %>%
+		   mutate(bio_source = case_when(
+		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   					   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   					   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   					   category %in% c("germline", "germlineish") ~ "germline",
+		   					   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   					   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+		   					   category == "somatic" ~ "VUSo",
+		   					   TRUE ~ "other"),
+		   		  af = ifelse(is.na(af), 0, af),
+		   		  af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+		   		  af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+
+patient_ids = c("MSK-VB-0050", "MSK-VB-0041", "MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023", "MSK-VL-0038")
+bio_labels = c("biopsy_matched", "IMPACT-BAM_matched", "VUSo", "WBC_matched")
+
+vars_rep0 = variants %>%
+			filter(patient_id %in% patient_ids) %>%
+			filter(bio_source %in% bio_labels)
+
+gdna_params = data_frame(
+				subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
+				min_p = c(0.8, 0.79, 0.82, 0.79))
+clean_target_region = read_tsv(url_target.bed, col_names = c("chrom", "start", "end"))
+clean_target_region$in_target = TRUE
+techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+				  filter(!patient_id %in% c("MSK-VB-0023_B", "MSK-VL-0028_B", "MSK-VL-0042_B")) %>%
+				  mutate(patient_id = gsub(pattern="_A", replacement="", patient_id)) %>%
+				  mutate_at(vars(matches("qual")), funs(if_else(is.na(.), 0, .))) %>%
+				  mutate(pedge = ifelse(is.na(pedge), 0, pedge), pgtkxgdna = ifelse(is.na(pgtkxgdna), 0, pgtkxgdna)) %>%
+				  separate(hgvsp, into = c("p1", "p2", "p3", "p4"), sep = "\\|") %>%
+				  separate(is_nonsyn, into = c("t1","t2", "t3", "t4"), sep = "\\|") %>%
+				  separate(symbol, into = c("g1", "g2", "g3", "g4"), sep = "\\|") %>%
+				  mutate(gene = case_when(
+									(.$t1 == TRUE | is.na(.$t2)) ~g1,
+									(.$t1 != TRUE & .$t2 == TRUE) ~g2,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 == TRUE) ~g3,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~g4)) %>%
+				  mutate(hgvs_p = case_when(
+									(.$t1 == TRUE) ~p1,
+									(.$t1 != TRUE & .$t2 == TRUE) ~p2,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 == TRUE) ~p3,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~p4)) %>%
+				  mutate(hgvs_p = sub(".*:", "", hgvs_p),
+						 is_nonsyn = ifelse(is.na(hgvs_p), FALSE, TRUE)) %>%
+				  select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4) %>%
+				  mutate(filter = "",
+					  		 subj_type = case_when(
+					  		 				grepl("VB", .$patient_id) ~ "Breast",
+					  		 				grepl("VL", .$patient_id) ~ "Lung",
+					  		 				grepl("VP", .$patient_id) ~ "Prostate")) %>%
+				  left_join(gdna_params) %>%
+				  mutate_(filter = ~update_filter(
+					  	  filter = filter,
+					  	  qualnobaq = qualnobaq,
+					  	  pgtkxgdna = pgtkxgdna,
+					  	  is_edge = isedge,
+					  	  min_p = min_p)) %>%
+				  select(-min_p) %>%
+				  mutate(loc = str_c(chrom, ":", pos, "_", ref, ">", alt)) %>%
+				  mutate(position_orig = pos, ref_orig = ref, alt_orig = alt, position = pos) %>%
+				  mutate(gratio = (adnobaq+2)*(dpgdna+4)/((adgdna+2)*(dpnobaq+4)),
+				  		 gzero = adgdna/sqrt(adgdna+2)) %>%
+				  mutate(start = position_orig,
+                         end = position_orig + 1) %>%
+                  genome_left_join(clean_target_region, by = c("chrom", "start", "end")) %>%
+                  mutate(chrom = chrom.x) %>%
+                  select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
+				  left_join(variants %>% select(patient_id, chrom, position_orig, ref_orig, alt_orig, MSK, grail), by=c("patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
+				  mutate(MSK = ifelse(is.na(MSK), 0, MSK)) %>%
+				  mutate(grail = 1) %>%
+				  mutate(study = "TechVal")
+				  
+feature_names = intersect(colnames(small_vars_plasma), colnames(techval_repeats))
+repeat_variants = bind_rows(small_vars_plasma[,feature_names,drop=FALSE] %>%
+							filter(!(patient_id %in% patient_ids)),
+							techval_repeats[,feature_names,drop=FALSE])
+
+repeat_variants = label_bio_source(repeat_variants)
+repeat_variants = left_join(repeat_variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+repeat_variants = repeat_variants %>%
+		   				mutate(bio_source = case_when(
+		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   					   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   					   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   					   category %in% c("germline", "germlineish") ~ "germline",
+		   					   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   					   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+		   					   category == "somatic" ~ "VUSo",
+		   					   TRUE ~ "other"),
+			   		  	af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+			   		  	af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+
+vars_rep1 = repeat_variants %>%
+			filter(patient_id %in% patient_ids)
+			
+			
+for (i in 1:length(patient_ids)) {
+	tmp_r1 = vars_rep1 %>%
+			 filter(patient_id == patient_ids[i]) %>%
+			 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_"))
+	tmp_r0 = vars_rep0 %>%
+		  	 filter(patient_id == patient_ids[i]) %>%
+		  	 filter(is_nonsyn) %>%
+		  	 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_")) %>%
+		  	 mutate(r = uuid %in% tmp_r1$uuid)
+	pander(table(tmp_r0$r, tmp_r0$bio_source))
+}
+				
+#==================================================
+# Tabulate %PPA for 3 patients used to test
+# assay reproducibility
+#==================================================
+clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+		   
+snv_vars = read_tsv(snv_file$scored, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(level_2a = as.character(level_2a)) %>%
+		   mutate(level_r1 = as.character(level_r1))
+		   
+indel_vars = read_tsv(indel_file$scored, col_types = cols(.default = col_character())) %>%
+			 type_convert() %>%
+			 mutate(level_2a = as.character(level_2a)) %>%
+		     mutate(level_r1 = as.character(level_r1))
+
+wbc_stack = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character())) %>%
+			type_convert()
+			
+msk_anno = read_tsv(msk_anno_joined, col_types = cols(.default = col_character())) %>%
+  		   type_convert()
+			
+tracker_grail = read_csv(file=patient_tracker)
+
+tracker_impact = read_csv(file=impact_tracker)
+
+valid_patient_ids = tracker_grail %>%
+					filter(patient_id %in% tracker_impact$patient_id) %>%
+					.[["patient_id"]]
+  
+indel_vars = indel_vars %>%
+			 mutate(filter = replace(filter,
+             		patient_id == "MSK-VB-0001" &
+             		gene == "GATA3" &
+             		filter == "PASS",
+             		"CSR_MATCH_ELIMINATED"),
+         	 		ccd = replace(ccd,
+             			   		  patient_id == "MSK-VB-0001" &
+                           		  gene == "GATA3" &
+                           		  filter == "CSR_MATCH_ELIMINATED",
+                           		  0))
+
+snv_plasma = snv_vars %>%
+  			 filter(ccd == 1,
+         			(c_panel == 1 | panel == 1),
+         			study == "TechVal",
+         			grail == 1 | MSK == 1,
+         			patient_id %in% valid_patient_ids) %>%
+			 mutate(vtype = "SNV")
+
+indel_plasma = indel_vars %>%
+			   filter(ccd == 1,
+         			  (c_panel == 1 | panel == 1),
+         			  study == "TechVal",
+         			  grail == 1 | MSK == 1,
+         			  patient_id %in% valid_patient_ids) %>%
+  			   mutate(vtype = "INDEL",
+         			  altenddistmedian = as.integer(altenddistmedian))
+         			  
+healthy_snv = snv_vars %>%
+  			  filter((c_panel == 1 | panel == 1),
+         			  subj_type == "Healthy",
+         			  grail == 1) %>%
+  			  mutate(vtype = "SNV")
+
+healthy_indel = indel_vars %>%
+  				filter((c_panel == 1 | panel == 1),
+         			    subj_type == "Healthy",
+         				grail == 1) %>%
+  				mutate(vtype = "INDEL",
+         			   altenddistmedian = as.integer(altenddistmedian))
+
+small_vars_plasma = full_join(snv_plasma, indel_plasma) %>%
+					full_join(healthy_snv) %>%
+					full_join(healthy_indel)
+small_vars_plasma = small_vars_plasma %>%
+  					mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+
+small_vars_plasma = small_vars_plasma %>%
+					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))
+
+all_patient_table = small_vars_plasma %>%
+					distinct(subj_type, patient_id)
+					
+all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type, 4),
+                                     patient_id = rep(all_patient_table$patient_id, 4),
+                                     bio_source = rep(c("WBC_matched",
+                                                        "VUSo",
+                                                        "biopsy_matched",
+                                                        "biopsy_only"),
+                                                       each = nrow(all_patient_table)))
+
+variants = label_bio_source(small_vars_plasma)
+
+variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = variants %>%
+		   mutate(bio_source = case_when(
+		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   					   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   					   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   					   category %in% c("germline", "germlineish") ~ "germline",
+		   					   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   					   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+		   					   category == "somatic" ~ "VUSo",
+		   					   TRUE ~ "other"),
+		   		  af = ifelse(is.na(af), 0, af),
+		   		  af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+		   		  af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+
+patient_ids = c("MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023")
+bio_labels = c("biopsy_matched", "IMPACT-BAM_matched", "VUSo", "WBC_matched")
+
+vars_rep0 = variants %>%
+			filter(patient_id %in% patient_ids) %>%
+			filter(bio_source %in% bio_labels)
+
+gdna_params = data_frame(
+				subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
+				min_p = c(0.8, 0.79, 0.82, 0.79))
+clean_target_region = read_tsv(url_target.bed, col_names = c("chrom", "start", "end"))
+clean_target_region$in_target = TRUE
+techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+				  filter(patient_id %in% c("MSK-VB-0023_B", "MSK-VL-0028_B", "MSK-VL-0042_B")) %>%
+				  mutate(patient_id = gsub(pattern="_B", replacement="", patient_id)) %>%
+				  mutate_at(vars(matches("qual")), funs(if_else(is.na(.), 0, .))) %>%
+				  mutate(pedge = ifelse(is.na(pedge), 0, pedge), pgtkxgdna = ifelse(is.na(pgtkxgdna), 0, pgtkxgdna)) %>%
+				  separate(hgvsp, into = c("p1", "p2", "p3", "p4"), sep = "\\|") %>%
+				  separate(is_nonsyn, into = c("t1","t2", "t3", "t4"), sep = "\\|") %>%
+				  separate(symbol, into = c("g1", "g2", "g3", "g4"), sep = "\\|") %>%
+				  mutate(gene = case_when(
+									(.$t1 == TRUE | is.na(.$t2)) ~g1,
+									(.$t1 != TRUE & .$t2 == TRUE) ~g2,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 == TRUE) ~g3,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~g4)) %>%
+				  mutate(hgvs_p = case_when(
+									(.$t1 == TRUE) ~p1,
+									(.$t1 != TRUE & .$t2 == TRUE) ~p2,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 == TRUE) ~p3,
+									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~p4)) %>%
+				  mutate(hgvs_p = sub(".*:", "", hgvs_p),
+						 is_nonsyn = ifelse(is.na(hgvs_p), FALSE, TRUE)) %>%
+				  select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4) %>%
+				  mutate(filter = "",
+					  		 subj_type = case_when(
+					  		 				grepl("VB", .$patient_id) ~ "Breast",
+					  		 				grepl("VL", .$patient_id) ~ "Lung",
+					  		 				grepl("VP", .$patient_id) ~ "Prostate")) %>%
+				  left_join(gdna_params) %>%
+				  mutate_(filter = ~update_filter(
+					  	  filter = filter,
+					  	  qualnobaq = qualnobaq,
+					  	  pgtkxgdna = pgtkxgdna,
+					  	  is_edge = isedge,
+					  	  min_p = min_p)) %>%
+				  select(-min_p) %>%
+				  mutate(loc = str_c(chrom, ":", pos, "_", ref, ">", alt)) %>%
+				  mutate(position_orig = pos, ref_orig = ref, alt_orig = alt, position = pos) %>%
+				  mutate(gratio = (adnobaq+2)*(dpgdna+4)/((adgdna+2)*(dpnobaq+4)),
+				  		 gzero = adgdna/sqrt(adgdna+2)) %>%
+				  mutate(start = position_orig,
+                         end = position_orig + 1) %>%
+                  genome_left_join(clean_target_region, by = c("chrom", "start", "end")) %>%
+                  mutate(chrom = chrom.x) %>%
+                  select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
+				  left_join(variants %>% select(patient_id, chrom, position_orig, ref_orig, alt_orig, MSK, grail), by=c("patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
+				  mutate(MSK = ifelse(is.na(MSK), 0, MSK)) %>%
+				  mutate(grail = 1) %>%
+				  mutate(study = "TechVal")
+				  
+feature_names = intersect(colnames(small_vars_plasma), colnames(techval_repeats))
+repeat_variants = bind_rows(small_vars_plasma[,feature_names,drop=FALSE] %>%
+							filter(!(patient_id %in% patient_ids)),
+							techval_repeats[,feature_names,drop=FALSE])
+
+repeat_variants = label_bio_source(repeat_variants)
+repeat_variants = left_join(repeat_variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+repeat_variants = repeat_variants %>%
+		   				mutate(bio_source = case_when(
+		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   					   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   					   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   					   category %in% c("germline", "germlineish") ~ "germline",
+		   					   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   					   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+		   					   category == "somatic" ~ "VUSo",
+		   					   TRUE ~ "other"),
+			   		  	af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+			   		  	af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+
+vars_rep1 = repeat_variants %>%
+			filter(patient_id %in% patient_ids)
+			
+			
+for (i in 1:length(patient_ids)) {
+	tmp_r1 = vars_rep1 %>%
+			 filter(patient_id == patient_ids[i]) %>%
+			 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_"))
+	tmp_r0 = vars_rep0 %>%
+		  	 filter(patient_id == patient_ids[i]) %>%
+		  	 filter(is_nonsyn) %>%
+		  	 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_")) %>%
+		  	 mutate(r = uuid %in% tmp_r1$uuid)
+	pander(table(tmp_r0$r, tmp_r0$bio_source))
+}
+
+#==================================================
+# Tabulate variants for 6 patients used to test
+# assay reproducibility where relabelling required
+#==================================================
+clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+		   
+snv_vars = read_tsv(snv_file$scored, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(level_2a = as.character(level_2a)) %>%
+		   mutate(level_r1 = as.character(level_r1))
+		   
+indel_vars = read_tsv(indel_file$scored, col_types = cols(.default = col_character())) %>%
+			 type_convert() %>%
+			 mutate(level_2a = as.character(level_2a)) %>%
+		     mutate(level_r1 = as.character(level_r1))
+
+wbc_stack = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character())) %>%
+			type_convert()
+			
+msk_anno = read_tsv(msk_anno_joined, col_types = cols(.default = col_character())) %>%
+  		   type_convert()
+			
+tracker_grail = read_csv(file=patient_tracker)
+
+tracker_impact = read_csv(file=impact_tracker)
+
+valid_patient_ids = tracker_grail %>%
+					filter(patient_id %in% tracker_impact$patient_id) %>%
+					.[["patient_id"]]
+  
+indel_vars = indel_vars %>%
+			 mutate(filter = replace(filter,
+             		patient_id == "MSK-VB-0001" &
+             		gene == "GATA3" &
+             		filter == "PASS",
+             		"CSR_MATCH_ELIMINATED"),
+         	 		ccd = replace(ccd,
+             			   		  patient_id == "MSK-VB-0001" &
+                           		  gene == "GATA3" &
+                           		  filter == "CSR_MATCH_ELIMINATED",
+                           		  0))
+
+snv_plasma = snv_vars %>%
+  			 filter(ccd == 1,
+         			(c_panel == 1 | panel == 1),
+         			study == "TechVal",
+         			grail == 1 | MSK == 1,
+         			patient_id %in% valid_patient_ids) %>%
+			 mutate(vtype = "SNV")
+
+indel_plasma = indel_vars %>%
+			   filter(ccd == 1,
+         			  (c_panel == 1 | panel == 1),
+         			  study == "TechVal",
+         			  grail == 1 | MSK == 1,
+         			  patient_id %in% valid_patient_ids) %>%
+  			   mutate(vtype = "INDEL",
+         			  altenddistmedian = as.integer(altenddistmedian))
+         			  
+healthy_snv = snv_vars %>%
+  			  filter((c_panel == 1 | panel == 1),
+         			  subj_type == "Healthy",
+         			  grail == 1) %>%
+  			  mutate(vtype = "SNV")
+
+healthy_indel = indel_vars %>%
+  				filter((c_panel == 1 | panel == 1),
+         			    subj_type == "Healthy",
+         				grail == 1) %>%
+  				mutate(vtype = "INDEL",
+         			   altenddistmedian = as.integer(altenddistmedian))
+
+small_vars_plasma = full_join(snv_plasma, indel_plasma) %>%
+					full_join(healthy_snv) %>%
+					full_join(healthy_indel)
+small_vars_plasma = small_vars_plasma %>%
+  					mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+
+small_vars_plasma = small_vars_plasma %>%
+					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))
+
+all_patient_table = small_vars_plasma %>%
+					distinct(subj_type, patient_id)
+					
+all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type, 4),
+                                     patient_id = rep(all_patient_table$patient_id, 4),
+                                     bio_source = rep(c("WBC_matched",
+                                                        "VUSo",
+                                                        "biopsy_matched",
+                                                        "biopsy_only"),
+                                                       each = nrow(all_patient_table)))
+
+variants = label_bio_source(small_vars_plasma)
+
+variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = variants %>%
+		   mutate(bio_source = case_when(
+		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   					   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   					   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   					   category %in% c("germline", "germlineish") ~ "germline",
+		   					   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   					   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+		   					   category == "somatic" ~ "VUSo",
+		   					   TRUE ~ "other"),
+		   		  af = ifelse(is.na(af), 0, af),
+		   		  af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+		   		  af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+
+patient_ids = c("MSK-VB-0050", "MSK-VB-0041", "MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023", "MSK-VL-0038")
+z = list()
+for (i in 1:length(patient_ids)) {
+	tmp = variants %>%
+		  filter(patient_id==patient_ids[i]) %>%
+		  filter(bio_source %in% c("biopsy_matched", "IMPACT-BAM_matched", "VUSo", "WBC_matched"))
+	x = table(tmp$bio_source)
+	y = rep(0, 4)
+	names(y) = c("biopsy_matched", "IMPACT-BAM_matched", "VUSo", "WBC_matched")
+	y[names(x)] = x
+	z[[i]] = y
+}
+z = do.call(rbind, z)
+z = cbind(patient_ids, z)
+pander(z)
+
+#--------------------------------------------------------------------------------------------------
+# &nbsp;    gene.1       filter.1            filter.2        gzero.1   gzero.2  gratio.1   gratio.2 
+#--------- -------- ------------------- ------------------- --------- ------------------ ---------- 
+# **13**    NOTCH2	PGTKXGDNA_LT_0.79   PASS             	0       0     	1.816   	4.156   
+# **20**    TET1	PGTKXGDNA_LT_0.79   PASS		        0       0     	1.337   	2.581   
+# **29**    ARID2	PASS          		PGTKXGDNA_LT_0.79   0      	0.5774  2.052       1.106   
+# **30**    KMT2D	PASS          		PGTKXGDNA_LT_0.79   0       0     	2.197       1.63   
+# **37**    MAPK3	PASS          		PGTKXGDNA_LT_0.79   0      	0.5774  1.758       1.201   
+# **38**    MAPK3	PASS          		PGTKXGDNA_LT_0.79   0       0     	2.178       1.459   
+# **40**    FANCA	PGTKXGDNA_LT_0.79   PASS             	0       0     	1.71       	2.209  
+# **50**    INSR	PGTKXGDNA_LT_0.79   PASS             	0       0     	1.518      	3.367  
+# **88**    PIK3CG	PGTKXGDNA_LT_0.79   PASS          		0.5774  0     	1.049      	2.867   
+# **110**   TET1	PGTKXGDNA_LT_0.82   PASS          		0.5774  0     	1.626      	2.338   
+# **115**   STAG2	PASS          		PGTKXGDNA_LT_0.82   0.5774  1     	2.597      	1.213   
+# **134**   TET2	PASS          		PGTKXGDNA_LT_0.82   0       1.633   1.868      	0.7473
+# **136**   AMER1	PGTKXGDNA_LT_0.82   PASS             	0       0     	1.74       	2.168   
+#--------------------------------------------------------------------------------------------------
