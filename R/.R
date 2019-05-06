@@ -170,13 +170,19 @@ cfdna_vs_gdna_vaf_plot = variants_nohyper %>%
 						 mutate(afcfdna_nobaq_nos = ifelse(is.na(afcfdna_nobaq_nos) | afcfdna_nobaq_nos==0, 0.01, afcfdna_nobaq_nos)) %>%
 						 mutate(afgdna_nobaq_nos = ifelse(is.na(afgdna_nobaq_nos) | afgdna_nobaq_nos==0, 0.01, afgdna_nobaq_nos)) %>%
 						 mutate(facets_1 = "Mean posterior VAF") %>%
-						 mutate(facets_2 = "VAF with pseudo-counts from pileup without BAQ") %>%
-						 mutate(facets_3 = "VAF without pseudo-counts from pileup without BAQ")
+						 mutate(facets_2 = "VAF with pseudocounts without BAQ") %>%
+						 mutate(facets_3 = "VAF without pseudocounts without BAQ") %>%
+						 mutate(bio_source = case_when(
+						 	bio_source == "biopsy_matched" ~ "Biopsy-matched",
+						 	bio_source == "IMPACT-BAM_matched" ~ "Biopsy-subthreshold",
+						 	bio_source == "VUSo" ~ "VUSo",
+						 	bio_source == "WBC_matched" ~ "WBC-matched",
+						 ))
 
-cols = c("biopsy_matched" = "#297AA3",
-         "IMPACT-BAM_matched" = "#F4AC33",
+cols = c("Biopsy-matched" = "#297AA3",
+         "Biopsy-subthreshold" = "#F4AC33",
          "VUSo" = "#3FBC45",
-         "WBC_matched"="#D68EAF")
+         "WBC-matched"="#D68EAF")
 
 plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afmeancfdna, y = afmeangdna, fill = bio_source)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
@@ -199,7 +205,7 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afmeancfdna, y = afmeangdna, fil
 			 guides(fill=guide_legend(title=c("Variant category")))
 			 
 
-pdf(file="../res/rebuttal/VAF_VAF_Posterior.pdf", width=6.5, height=6.5)
+pdf(file="../res/rebuttal/VAF_VAF_Posterior.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
@@ -223,7 +229,7 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq, y = afgdna_nobaq,
  			 annotation_logticks() +
 			 guides(fill=guide_legend(title=c("Variant category")))
 		 
-pdf(file="../res/rebuttal/VAF_VAF_pseudo_no_BAQ.pdf", width=6.5, height=6.5)
+pdf(file="../res/rebuttal/VAF_VAF_pseudo_no_BAQ.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
@@ -237,21 +243,19 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq_nos, y = afgdna_no
  			 labs(x="\nVAF in cfDNA (%)\n", y="VAF in WBC (%)\n") +
  			 scale_x_log10(
   			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
+  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
   			 ) + 
   			 scale_y_log10(
   			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
+  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
   			 ) +
  			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
  			 annotation_logticks() +
 			 guides(fill=guide_legend(title=c("Variant category")))
 		 
-pdf(file="../res/rebuttal/VAF_VAF_nopsedo__noBAQ.pdf", width=6.5, height=6.5)
+pdf(file="../res/rebuttal/VAF_VAF_nopsedo__noBAQ.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
-
-
 
 #==================================================
 # Export mutation summary for MSK-VB-0023

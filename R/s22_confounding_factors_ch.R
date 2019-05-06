@@ -11,7 +11,7 @@ if (!dir.exists("../res/rebuttal")) {
 
 
 #==================================================
-# Confounding factors in CH 
+# Age by cancer status and treatment history
 #==================================================
 tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
 				type_convert()
@@ -34,20 +34,21 @@ tmp = clinical %>%
 	  mutate(cat = "") %>%
 	  mutate(cat = ifelse(patient_id %in% valid_patient_ids[index_control], "Control", cat)) %>%
 	  mutate(cat = ifelse(patient_id %in% valid_patient_ids[index_cancer], "Cancer", cat)) %>%
-	  mutate(cat_num = 0) %>%
-	  mutate(cat_num = ifelse(patient_id %in% valid_patient_ids[index_control], 2, cat_num)) %>%
-	  mutate(cat_num = ifelse(patient_id %in% valid_patient_ids[index_cancer], 1, cat_num)) %>%
-	  filter(!(cat == "" | cat_num == 0))
+	  filter(cat != "") %>%
+	  mutate(facet = "Age by cancer status")
+	  
 	  
 p = signif(wilcox.test(tmp$age[tmp$cat=="Cancer"], tmp$age[tmp$cat=="Control"], alternative="two.sided", correct=FALSE)$p.value, 3)
 		
-plot.0 = ggplot(tmp, aes(x=cat, y=age)) +
-		 geom_boxplot(outlier.colour=NA, outlier.fill=NA, outlier.shape=NA) +
-		 geom_point(alpha = .8, size = 3.25, color = "black", fill = "steelblue", shape = 21, aes(x=jitter(cat_num), y=age), data=tmp) +
+plot.0 = ggplot(tmp, aes(x=cat, y=age, fill = cat)) +
+		 geom_boxplot(stat = "boxplot") +
+		 scale_fill_manual(values = rev(c("#FDAE61", "salmon"))) +
 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
 		 labs(x="", y="Age (years)\n") +
- 		 coord_cartesian(ylim = c(10,100)) +
+ 		 coord_cartesian(ylim = c(20,100)) +
 		 guides(fill=FALSE) +
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
   		 annotate(geom="text", x=1.5, y=100, label=paste0("P = ", p))
 	  	
 pdf(file="../res/rebuttal/Age_by_Cancer.pdf", width=5, height=5)
@@ -65,24 +66,25 @@ tmp = clinical %>%
 	  select(patient_id, age) %>%
 	  mutate(cat = "No RT/CT") %>%
 	  mutate(cat = ifelse(clinical$prior_rt==1 | clinical$prior_chemo==1, "RT/CT", cat)) %>%
-	  mutate(cat_num = 1) %>%
-	  mutate(cat_num = ifelse(clinical$prior_rt==1 | clinical$prior_chemo==1, 2, cat_num))
+	  mutate(cat = factor(cat, levels=c("RT/CT","No RT/CT"))) %>%
+	  mutate(facet = "Age by treatment history")
 	  
 p = signif(wilcox.test(tmp$age[tmp$cat=="No RT/CT"], tmp$age[tmp$cat=="RT/CT"], alternative="two.sided", correct=FALSE)$p.value, 3)
 		
-plot.0 = ggplot(tmp, aes(x=cat, y=age)) +
-		 geom_boxplot(outlier.colour=NA, outlier.fill=NA, outlier.shape=NA) +
-		 geom_point(alpha = .8, size = 3.25, color = "black", fill = "salmon", shape = 21, aes(x=jitter(cat_num), y=age), data=tmp) +
+plot.0 = ggplot(tmp, aes(x=cat, y=age, fill = cat)) +
+		 geom_boxplot(stat = "boxplot") +
+		 scale_fill_manual(values = rev(c("#FDAE61", "salmon"))) +
 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
 		 labs(x="", y="Age (years)\n") +
- 		 coord_cartesian(ylim = c(10,100)) +
+ 		 coord_cartesian(ylim = c(20,100)) +
 		 guides(fill=FALSE) +
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
   		 annotate(geom="text", x=1.5, y=100, label=paste0("P = ", p))
 	  	
 pdf(file="../res/rebuttal/Age_by_Treatment.pdf", width=5, height=5)
 print(plot.0)
 dev.off()
-
 
 #==================================================
 # Comparison of sequencing depth of cases and
@@ -564,5 +566,3 @@ plot.0 = ggplot(tmp.1, aes(x = age_cat, y = n, fill = treatment_cat)) +
 pdf(file="../res/rebuttal/CH_mutations_WBC_RT_CT.pdf", width=9, height=5)
 print(plot.0)
 dev.off()
-
-p1 = glm(n ~ age + case_cat, family="poisson", data=tmp.1)
