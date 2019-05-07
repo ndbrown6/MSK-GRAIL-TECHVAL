@@ -130,9 +130,13 @@ volumetric_data = bind_rows(vol_breast, vol_lung) %>%
 				  left_join(ctdna_fraction, by="GRAIL_ID")
 				  
 volumetric_data = volumetric_data %>%
-				  mutate(tot_volu = apply( volumetric_data[,which(grepl('volume', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(x, na.rm=T) )) %>%
-				  mutate(tot_mets = apply( volumetric_data[,which(!grepl('volume', colnames(volumetric_data), ignore.case = T) & grepl('Lesions|Lymph_Nodes|Pleural_Disease', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(x, na.rm=T))) %>%
+				  mutate(tot_volu = apply( volumetric_data[,which(grepl('volume', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(as.numeric(x), na.rm=T) )) %>%
+				  mutate(tot_mets = apply( volumetric_data[,which(!grepl('volume', colnames(volumetric_data), ignore.case = T) & grepl('Lesions|Lymph_Nodes|Pleural_Disease', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(as.numeric(x), na.rm=T))) %>%
 				  filter(!(GRAIL_ID %in% c('MSK-VL-0057','MSK-VL-0003','MSK-VB-0046')))
+				  
+				  
+# triangles = Unmeasurable disease not included in volumetric assessment
+# circles = Measured in volumetric assessment
 
 tmp = volumetric_data %>%
  	  mutate(ln_frac = log(ctdna_frac)) %>%
@@ -141,7 +145,9 @@ tmp = volumetric_data %>%
  	  filter(grepl("VB", GRAIL_ID)) %>%
  	  mutate(Tissue = "Breast") %>%
  	  filter(!(is.infinite(ln_frac) | is.na(ln_frac))) %>%
- 	  filter(!(is.infinite(ln_vol) | is.na(ln_vol)))
+ 	  filter(!(is.infinite(ln_vol) | is.na(ln_vol))) %>%
+ 	  mutate(shape = ifelse(is.na(Bone_Lesions) & is.na(Pleural_Disease), 21, 24))
+ 	  	  
 tmp.0 = tmp %>%
 		mutate(cat = case_when(
 			tot_volu >= 0 & tot_volu < quantile(tot_volu, 1/3) ~ 1,
@@ -154,7 +160,7 @@ p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternat
  
 plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) + 
 		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, color="black", fill="white") +
-		 geom_point(alpha=1, size=3.75, shape=21, color="black", fill="salmon", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
+		 geom_point(alpha = 1, size = 3.75, color = "black", fill = "salmon", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), shape = tmp.0$shape, data=tmp.0, inherit.aes = FALSE) +
 		 facet_wrap(~Tissue) +
 		 theme_bw(base_size=15) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
@@ -173,7 +179,11 @@ tmp = volumetric_data %>%
 	  filter(grepl("VL", GRAIL_ID)) %>%
 	  mutate(Tissue = "Lung") %>%
 	  filter(!(is.infinite(ln_frac) | is.na(ln_frac))) %>%
-	  filter(!(is.infinite(ln_vol) | is.na(ln_vol)))
+	  filter(!(is.infinite(ln_vol) | is.na(ln_vol))) %>%
+	  mutate(shape = ifelse(is.na(Bone_Lesions) & is.na(Pleural_Disease), 21, 24)) %>%
+	  # Large left forearm bone and soft-tissue mass 10 by 7 by 17 cm not included in PET-scan and measurements
+	  mutate(shape = ifelse(GRAIL_ID=="MSK-VL-0008", 24, shape)) 
+	  
 tmp.0 = tmp %>%
 		mutate(cat = case_when(
 			tot_volu >= 0 & tot_volu < quantile(tot_volu, 1/3) ~ 1,
@@ -186,7 +196,7 @@ p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternat
 
 plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) + 
 		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, color="black", fill="white") +
-		 geom_point(alpha=1, size=3.75, shape=21, color="black", fill="#FDAE61", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
+		 geom_point(alpha = 1, size = 3.75, color = "black", fill = "#FDAE61", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), shape = tmp.0$shape, data=tmp.0, inherit.aes = FALSE) +
 		 facet_wrap(~Tissue) +
 		 theme_bw(base_size=15) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
@@ -575,8 +585,8 @@ volumetric_data = bind_rows(vol_breast, vol_lung) %>%
 				  left_join(ctdna_fraction, by="GRAIL_ID")
 				  
 volumetric_data = volumetric_data %>%
-				  mutate(tot_volu = apply( volumetric_data[,which(grepl('volume', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(x, na.rm=T) )) %>%
-				  mutate(tot_mets = apply( volumetric_data[,which(!grepl('volume', colnames(volumetric_data), ignore.case = T) & grepl('Lesions|Lymph_Nodes|Pleural_Disease', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(x, na.rm=T))) %>%
+				  mutate(tot_volu = apply( volumetric_data[,which(grepl('volume', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(as.numeric(x), na.rm=T) )) %>%
+				  mutate(tot_mets = apply( volumetric_data[,which(!grepl('volume', colnames(volumetric_data), ignore.case = T) & grepl('Lesions|Lymph_Nodes|Pleural_Disease', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(as.numeric(x), na.rm=T))) %>%
 				  filter(!(GRAIL_ID %in% c('MSK-VL-0057','MSK-VL-0003','MSK-VB-0046')))
 				  
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
