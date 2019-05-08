@@ -185,25 +185,25 @@ somatic_vars_prostate <- str_c(
 	"normal_silent_common_intron_target.tables_merged_prostate.tsv"
 )
 
-cosmic_file <- str_c(
+cosmic_v84 <- str_c(
 	"../",
 	"res/",
 	"etc/",
-	"cosmic_db_v84.RData"
+	"cosmic_v84.tsv"
 )
 
-gnomad_file <- str_c(
+gnomad_r2.0.1 <- str_c(
 	"../",
 	"res/",
 	"etc/",
-	"gnomad_db.r2.0.1.RData"
+	"gnomad_r2.0.1.tsv"
 )
 
-hotspot_file <- str_c(
+hotspot_v2 <- str_c(
 	"../",
 	"res/",
 	"etc/",
-	"cancer_hotspots_v2.RData"
+	"cancer_hotspots_v2.tsv"
 )
 
 all_vars_and_clinical <- str_c(

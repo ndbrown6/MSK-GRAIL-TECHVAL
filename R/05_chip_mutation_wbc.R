@@ -131,18 +131,18 @@ if (FLAG) {
  	som_vars = bind_rows(som_vars_breast, som_vars_lung, som_vars_prostate) %>%
  			   mutate(ID_x = make_id_x(CASE, CHROM, POS, REF, ALT)) %>%
  			   mutate(ID_y = make_id_y(CASE, vcf2maf_HGVSp_Short))
- 	load(cosmic_file)
- 	cosmic_db = cosmic_db %>%
- 				filter(SNP==0) %>%
- 				filter(as.numeric(n)>=2) %>%
- 				mutate(id = paste0("chr", CHROM, ":", POS, "_", REF, ">", ALT))
- 	load(gnomad_file)
-  	gnomad_db = gnomad_db %>%
-  				filter(AF>=0.01) %>%
-  				mutate(id = paste0("chr", CHROM, ":", POS, "_", REF, ">", ALT))
-  	load(hotspot_file)
-  	cancer_hotspot = cancer_hotspot %>%
-  					 mutate(id = paste0("chr", Chromosome, ":", Start_Position, "_", Reference_Allele, ">", Tumor_Seq_Allele2))
+ 	cosmic = read_tsv(file=cosmic_v84, col_types = cols(.default = col_character())) %>%
+ 			 type_convert() %>%
+			 filter(SNP==0) %>%
+ 			 filter(as.numeric(n)>=2) %>%
+ 			 mutate(id = paste0("chr", CHROM, ":", POS, "_", REF, ">", ALT))
+  	gnomad = read_tsv(file=gnomad_r2.0.1, col_types = cols(.default = col_character())) %>%
+  			 type_convert() %>%
+  			 filter(AF>=0.01) %>%
+  			 mutate(id = paste0("chr", CHROM, ":", POS, "_", REF, ">", ALT))
+  	hotspots = read_tsv(file=hotspot_v2, col_types = cols(.default = col_character())) %>%
+  			   type_convert() %>%
+  			   mutate(id = paste0("chr", Chromosome, ":", Start_Position, "_", Reference_Allele, ">", Tumor_Seq_Allele2))
 	 		   
   	all_vars = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character()))  %>%
  			   type_convert()
@@ -162,10 +162,10 @@ if (FLAG) {
  		   	   mutate(is_lowqual = (qualnobaq < 60)) %>%
  			   mutate(is_tumor_matched = (ID_x %in% som_vars$ID_x) | (ID_y %in% som_vars$ID_y)) %>%
  			   mutate(is_cfdna_matched = (ID_x %in% variants$ID_x[variants$bio_source %in% c("biopsy_matched", "biopsy_only", "germline", "IMPACT-BAM_matched")])) %>%
- 			   mutate(in_cosmic = loc_lng %in% cosmic_db$id) %>%
+ 			   mutate(in_cosmic = loc_lng %in% cosmic$id) %>%
   		   	   mutate(in_exac = !is.na(ExAC_AF) & ExAC_AF>=0.01) %>%
-  		   	   mutate(in_gnomad = loc_lng %in% gnomad_db$id) %>%
-  		   	   mutate(is_hotspot = loc_lng %in% cancer_hotspot$id)
+  		   	   mutate(in_gnomad = loc_lng %in% gnomad$id) %>%
+  		   	   mutate(is_hotspot = loc_lng %in% hotspots$id)
   		   	   
   	save(all_vars, clinical, file=all_vars_and_clinical)
 } else {
