@@ -304,6 +304,12 @@ key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.d
 		   type_convert() %>%
 		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 		   
+ctDNA_fraction = read_csv(file=url_ctdna, col_types = cols(.default = col_character())) %>%
+		   		 type_convert() %>%
+		   		 rename(GRAIL_ID = ID)
+		   		 
+key_file = left_join(key_file, ctDNA_fraction, by="GRAIL_ID")
+		   
 res = foreach (i=1:nrow(key_file)) %dopar% {
  	cat(key_file$GRAIL_ID[i], "\n")
  	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
@@ -404,9 +410,26 @@ pa = unlist(foreach (i=1:nrow(key_file)) %dopar% {
 	return(k)
 })
 
-tmp.0 = data.frame(pa = 100*pa)
+tmp.0 = data.frame(pa = 100*pa,
+				   ctdna_f = key_file$ctdna_frac,
+				   sample_id = key_file$GRAIL_ID) %>%
+				   mutate(tissue = case_when(
+				   		grepl("VB", sample_id) ~ "Breast",
+				   		grepl("VL", sample_id) ~ "Lung",
+				   		grepl("VP", sample_id) ~ "Prostate",
+				   )) %>%
+				   mutate(ctdna_cat = case_when(
+				   		ctdna_f > 0 & ctdna_f < .2 ~ 1,
+				   		ctdna_f >= .2 & ctdna_f < .4 ~ 2,
+				   		ctdna_f >= .4 & ctdna_f < .6 ~ 3,
+				   		ctdna_f >= .6 & ctdna_f < .8 ~ 4,
+				   		ctdna_f >= .8 & ctdna_f < 1 ~ 5
+				   )) %>%
+				   mutate(tissue = as.factor(tissue)) %>%
+				   mutate(ctdna_cat = as.factor(ctdna_cat))
+
 plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+  		 geom_density(fill="lightgrey") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -414,10 +437,24 @@ pdf(file="../res/rebuttal/Distribution_Percent_Agreement_All_Calls.pdf", width=5
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VB", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0, aes(x=ctdna_f, y=pa, fill = tissue)) +
+		 geom_point(alpha=1, size = 2.5, shape=21) +
+		 scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4")) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\nctDNA fraction\n\n", y="Agreement (%)\n") +
+		 coord_cartesian(ylim=c(0, 100)) +
+		 theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8)) +
+		 guides(fill=guide_legend(title=c("Cancer type"), override.aes=list(shape=21)))
+pdf(file="../res/rebuttal/Percent_Agreement_ctDNA_Fraction_Calls.pdf", width=6, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Breast"), aes(x=pa)) + 
+  		 geom_density(fill="salmon") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -425,10 +462,8 @@ pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Breast_Calls.pdf", widt
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VL", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Lung"), aes(x=pa)) + 
+  		 geom_density(fill="#FDAE61") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -436,10 +471,8 @@ pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Lung_Calls.pdf", width=
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VP", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Prostate"), aes(x=pa)) + 
+  		 geom_density(fill="#ABDDA4") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -453,6 +486,12 @@ dev.off()
 key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
 		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+ctDNA_fraction = read_csv(file=url_ctdna, col_types = cols(.default = col_character())) %>%
+		   		 type_convert() %>%
+		   		 rename(GRAIL_ID = ID)
+		   		 
+key_file = left_join(key_file, ctDNA_fraction, by="GRAIL_ID")
 		   
 res = foreach (i=1:nrow(key_file)) %dopar% {
  	cat(key_file$GRAIL_ID[i], "\n")
@@ -527,9 +566,26 @@ pa = unlist(foreach (i=1:nrow(key_file)) %dopar% {
  	return(k)
 })
 
-tmp.0 = data.frame(pa = 100*pa)
+tmp.0 = data.frame(pa = 100*pa,
+				   ctdna_f = key_file$ctdna_frac,
+				   sample_id = key_file$GRAIL_ID) %>%
+				   mutate(tissue = case_when(
+				   		grepl("VB", sample_id) ~ "Breast",
+				   		grepl("VL", sample_id) ~ "Lung",
+				   		grepl("VP", sample_id) ~ "Prostate",
+				   )) %>%
+				   mutate(ctdna_cat = case_when(
+				   		ctdna_f > 0 & ctdna_f < .2 ~ 1,
+				   		ctdna_f >= .2 & ctdna_f < .4 ~ 2,
+				   		ctdna_f >= .4 & ctdna_f < .6 ~ 3,
+				   		ctdna_f >= .6 & ctdna_f < .8 ~ 4,
+				   		ctdna_f >= .8 & ctdna_f < 1 ~ 5
+				   )) %>%
+				   mutate(tissue = as.factor(tissue)) %>%
+				   mutate(ctdna_cat = as.factor(ctdna_cat))
+				   
 plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+  		 geom_density(fill="lightgrey") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -537,10 +593,24 @@ pdf(file="../res/rebuttal/Distribution_Percent_Agreement_All_CN.pdf", width=5, h
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VB", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0, aes(x=ctdna_f, y=pa, fill = tissue)) +
+		 geom_point(alpha=1, size = 2.5, shape=21) +
+		 scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4")) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\nctDNA fraction\n\n", y="Agreement (%)\n") +
+		 coord_cartesian(ylim=c(0, 100)) +
+		 theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8)) +
+		 guides(fill=guide_legend(title=c("Cancer type"), override.aes=list(shape=21)))
+pdf(file="../res/rebuttal/Percent_Agreement_ctDNA_Fraction_CN.pdf", width=6, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Breast"), aes(x=pa)) + 
+  		 geom_density(fill = "salmon") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -548,10 +618,8 @@ pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Breast_CN.pdf", width=5
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VL", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Lung"), aes(x=pa)) + 
+  		 geom_density(fill = "#FDAE61") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -559,10 +627,8 @@ pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Lung_CN.pdf", width=5, 
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = 100*pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VP", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Prostate"), aes(x=pa)) + 
+  		 geom_density(fill = "#ABDDA4") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nDensity\n", x="\nAgreement (%)\n") +
 		 coord_cartesian(xlim=c(0,100))
@@ -577,6 +643,12 @@ key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.d
 		   type_convert() %>%
 		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 		   
+ctDNA_fraction = read_csv(file=url_ctdna, col_types = cols(.default = col_character())) %>%
+		   		 type_convert() %>%
+		   		 rename(GRAIL_ID = ID)
+		   		 
+key_file = left_join(key_file, ctDNA_fraction, by="GRAIL_ID")
+
 res = foreach (i=1:nrow(key_file)) %dopar% {
  	cat(key_file$GRAIL_ID[i], "\n")
  	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
@@ -635,53 +707,95 @@ pa = unlist(foreach (i=1:nrow(key_file)) %dopar% {
  	cat(key_file$GRAIL_ID[i], "\n")
  	x = res[[i]][,"cfDNA"]
  	y = res[[i]][,"Biopsy"]
- 	k = cor(x, y, method="spearman")
+ 	k = cor(x, y, method="pearson")
  	return(k)
 })
 
-tmp.0 = data.frame(pa = pa)
+
+tmp.0 = data.frame(pa = pa,
+				   ctdna_f = key_file$ctdna_frac,
+				   sample_id = key_file$GRAIL_ID) %>%
+				   mutate(tissue = case_when(
+				   		grepl("VB", sample_id) ~ "Breast",
+				   		grepl("VL", sample_id) ~ "Lung",
+				   		grepl("VP", sample_id) ~ "Prostate",
+				   )) %>%
+				   mutate(ctdna_cat = case_when(
+				   		is.na(ctdna_f) ~ "0",
+				   		ctdna_f > 0 & ctdna_f < .2 ~ "0-19",
+				   		ctdna_f >= .2 & ctdna_f < .4 ~ "20-39",
+				   		ctdna_f >= .4 & ctdna_f < .6 ~ "40-59",
+				   		ctdna_f >= .6 & ctdna_f < .8 ~ "60-79",
+				   		ctdna_f >= .8 & ctdna_f < 1 ~ "80-100"
+				   )) %>%
+				   mutate(tissue = as.factor(tissue)) %>%
+				   mutate(ctdna_cat = as.factor(ctdna_cat))
+
 plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+  		 geom_density(fill = "lightgrey") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 labs(y="\nDensity\n", x="\nPearson's r\n") +
 		 coord_cartesian(xlim=c(-1,1))
 pdf(file="../res/rebuttal/Distribution_Percent_Agreement_All_Log2.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VB", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0, aes(x=ctdna_f, y=pa, fill = tissue)) +
+		 geom_point(alpha=1, size = 2.5, shape=21) +
+		 scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4")) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 labs(x="\nctDNA fraction\n\n", y="Pearson's r\n") +
+		 coord_cartesian(ylim=c(-1,1)) +
+		 theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8)) +
+		 guides(fill=guide_legend(title=c("Cancer type"), override.aes=list(shape=21)))
+pdf(file="../res/rebuttal/Percent_Agreement_ctDNA_Fraction_Log2.pdf", width=6, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(tmp.0, aes(x=ctdna_cat, y=pa)) +
+		 geom_boxplot(alpha=1, outlier.size=2.5, outlier.shape=21, fill="grey80") +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\nctDNA fraction (%)\n\n", y=expression("Pearson"~r)) +
+		 coord_cartesian(ylim=c(-1,1)) +
+		 theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8))
+pdf(file="../res/rebuttal/Percent_Agreement_ctDNA_Fraction_Log2_b.pdf", width=6, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Breast"), aes(x=pa)) + 
+  		 geom_density(fill = "salmon") +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(y="\nDensity\n", x="\nPearson's r\n") +
 		 coord_cartesian(xlim=c(-1,1))
 pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Breast_Log2.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VL", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Lung"), aes(x=pa)) + 
+  		 geom_density(fill = "#FDAE61") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 labs(y="\nDensity\n", x="\nPearson's r\n") +
 		 coord_cartesian(xlim=c(-1,1))
 pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Lung_Log2.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
-tmp.0 = data.frame(pa = pa, patient_id=key_file$GRAIL_ID) %>%
-		filter(grepl("VP", patient_id))
-plot.0 = ggplot(tmp.0, aes(x=pa)) + 
-  		 geom_density() +
+plot.0 = ggplot(tmp.0 %>% filter(tissue == "Prostate"), aes(x=pa)) + 
+  		 geom_density(fill = "#ABDDA4") +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="\nDensity\n", x="\nSpearman's rho\n") +
+		 labs(y="\nDensity\n", x="\nPearson's r\n") +
 		 coord_cartesian(xlim=c(-1,1))
 pdf(file="../res/rebuttal/Distribution_Percent_Agreement_Prostate_Log2.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
-
 
 # #==================================================
 # # Comparison of copy number aberrations by gene
