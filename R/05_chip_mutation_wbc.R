@@ -221,7 +221,7 @@ all_vars = all_vars %>%
 		   filter(!(n_indel > 1 & indel))
 		   
 #==================================================
-# Variant classe filter
+# Variant class filter
 #==================================================
 all_vars = all_vars %>%
  		   filter(Variant_Classification!="3'Flank") %>%
