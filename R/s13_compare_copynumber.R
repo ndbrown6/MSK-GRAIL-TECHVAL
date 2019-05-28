@@ -634,6 +634,46 @@ pdf(file="../res/rebuttal/MSK-VB-0069_cfDNA.pdf", width=9.25, height=4)
 plot_log3_(x=tmp2, y=tmp, title = "MSK-VB-0069 | cfDNA")
 dev.off()
 
+load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0044-T.RData")
+tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp2[tmp2[,"Chromosome"]==11,"Log2Ratio"] = CN[CN[,"Chromosome"]==11,"Log2Ratio"]
+tmp = list()
+for (i in 1:23) {
+	if (i==11) {
+		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=50, gamma=50, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	} else {
+		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=100, gamma=150, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	}
+}
+tmp = do.call(rbind, tmp)
+tmp = undo_(tmp, n=5)
+pdf(file="../res/rebuttal/MSK-VB-0044_cfDNA.pdf", width=9.25, height=4)
+plot_log3_(x=tmp2, y=tmp, title = "MSK-VB-0044 | cfDNA")
+dev.off()
+
+load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0008-T.RData")
+tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp2[tmp2[,"Chromosome"]==11,"Log2Ratio"] = CN[CN[,"Chromosome"]==11,"Log2Ratio"]
+tmp = list()
+for (i in 1:23) {
+	if (i==11) {
+		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=50, gamma=50, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	} else {
+		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=100, gamma=150, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	}
+}
+tmp = do.call(rbind, tmp)
+tmp = undo_(tmp, n=5)
+pdf(file="../res/rebuttal/MSK-VB-0008_cfDNA.pdf", width=9.25, height=4)
+plot_log3_(x=tmp2, y=tmp, title = "MSK-VB-0008 | cfDNA")
+dev.off()
+
 load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VL-0056-T.RData")
 tmp2 = winsorize(CN, method="mad", tau=3.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
@@ -724,13 +764,290 @@ box(lwd=1.5)
 dev.off()
 
 
-# # #==================================================
-# # # Comparison of copy number aberrations by gene
-# # #==================================================
-# # tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
-# # 		  type_convert() %>%
-# # 		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
-# # 
+#==================================================
+# Breast HER2 amplified cases
+#==================================================
+'prunesegments.cn' <- function(x, n=10)
+{
+	cnm = matrix(NA, nrow=nrow(x), ncol=nrow(x))
+	for (j in 1:nrow(x)) {
+		cnm[,j] = abs(2^x[j,"Log2Ratio"] - 2^x[,"Log2Ratio"])
+	}
+	cnt = hclust(as.dist(cnm), "average")
+	cnc = cutree(tree=cnt, k=n)
+	for (j in unique(cnc)) {
+		indx = which(cnc==j)
+		if (length(indx)>2) {
+			mcl = mean(x[indx,"Log2Ratio"])
+			scl = sd(x[indx,"Log2Ratio"])
+			ind = which(x[indx,"Log2Ratio"]<(mcl+1.96*scl) & x[indx,"Log2Ratio"]>(mcl-1.96*scl))
+			x[indx[ind],"Log2Ratio"] = mean(x[indx[ind],"Log2Ratio"])
+		} else {
+			x[indx,"Log2Ratio"] = mean(x[indx,"Log2Ratio"])
+		}
+	}
+	return(x)
+}
+	
+'plotIdeogram' <- function (chrom, cyto.text = FALSE, cex = 0.6, cyto.data, cyto.unit = "bp", unit)
+{
+	if (chrom == 23) {
+			chrom.cytoband <- cyto.data[cyto.data[, 1] == "chrX", ]
+	} else {
+		if (chrom == 24) {
+			chrom.cytoband <- cyto.data[cyto.data[, 1] == "chrY", ]
+		} else {
+			chrom.cytoband <- cyto.data[cyto.data[, 1] == paste("chr", chrom, sep = ""), ]
+		}
+	}
+	cyto.start <- chrom.cytoband[, 2]
+	cyto.end <- chrom.cytoband[, 3]
+	scale <- copynumber:::convert.unit(unit1 = unit, unit2 = cyto.unit)
+	xleft <- cyto.start * scale
+	xright <- cyto.end * scale
+	n <- length(xleft)
+	chrom.length <- xright[n] - xleft[1]
+	stain <- chrom.cytoband[, 5]
+	sep.stain <- c("gpos", "gneg", "acen", "gvar", "stalk")
+	g <- sapply(sep.stain, grep, x = stain, fixed = TRUE)
+	centromere <- g$acen
+	stalk <- g$stalk
+	col <- rep("", n)
+	col[stain == "gneg"] <- "white"
+	col[stain == "gpos100"] <- "black"
+	col[stain == "gpos75"] <- "gray25"
+	col[stain == "gpos50"] <- "gray50"
+	col[stain == "gpos25"] <- "gray75"
+	col[stain == "stalk"] <- "gray90"
+	col[stain == "gvar"] <- "grey"
+	col[stain == "acen"] <- "yellow"
+	density <- rep(NA, n)
+	angle <- rep(45, n)
+	density[stain == "gvar"] <- 15
+	ylow <- 0
+	yhigh <- 1
+	plot(x = c(0, max(xright)), y = c(ylow, yhigh), type = "n", axes = FALSE, xlab = "", ylab = "", xlim = c(0, max(xright)), ylim = c(0, 1), xaxs = "i")
+	skip.rect <- c(1, n, stalk)
+	rect(xleft[-skip.rect], rep(ylow, n - length(skip.rect)), xright[-skip.rect], rep(yhigh, n - length(skip.rect)), 
+	col = col[-skip.rect], border = "black", density = density[-skip.rect], 
+	angle = angle[-skip.rect])
+	draw.roundEdge(start = xleft[1], stop = xright[1], y0 = ylow, y1 = yhigh, col = col[1], bow = "left", density = density[1], angle = angle[1], chrom.length = chrom.length)
+	draw.roundEdge(start = xleft[n], stop = xright[n], y0 = ylow, y1 = yhigh, col = col[n], bow = "right", density = density[n], angle = angle[n], chrom.length = chrom.length)
+	if (length(stalk) > 0) {
+		for (i in 1:length(stalk)) {
+			copynumber:::drawStalk(xleft[stalk[i]], xright[stalk[i]], ylow, yhigh, col = col[stalk[i]])
+		}
+	}
+	if (cyto.text) {
+		mtext(text = paste(chrom.cytoband[, 4], "-", sep = " "), side = 1, at = (xleft + (xright - xleft)/2), cex = cex, las = 2, adj = 1, xpd = NA)
+	}
+}
+
+'draw.roundEdge' <- function (start, stop, y0, y1, col, bow, density = NA, angle = 45, lwd = 1, chrom.length)
+{
+	f <- rep(0, 0)
+	f[1] <- 0.001
+	i = 1
+	half <- y0 + (y1 - y0)/2
+	while (f[i] < half) {
+		f[i + 1] <- f[i] * 1.3
+		i <- i + 1
+	}
+	f <- f[-length(f)]
+	Y <- c(y1, y1, y1 - f, half, y0 + rev(f), y0, y0)
+	cyto.length <- stop - start
+	share <- cyto.length/chrom.length
+	if (share > 0.2) {
+		share <- 0.2
+	}
+	if (bow == "left") {
+		round.start <- start + cyto.length * (1 - share)^20
+		x <- seq(round.start, start, length.out = (length(f) + 2))
+		revx <- rev(x[-length(x)])
+		x <- c(x, revx)
+		X <- c(stop, x, stop)
+	} else {
+		if (bow == "right") {
+			round.start <- stop - cyto.length * (1 - share)^20
+			x <- seq(round.start, stop, length.out = (length(f) + 2))
+			revx <- rev(x[-length(x)])
+			x <- c(x, revx)
+			X <- c(start, x, start)
+		}
+	}
+	polygon(x = X, y = Y, col = col, border = "black", density = density, angle = angle, lwd = lwd)
+}
+
+tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+ 		  type_convert() %>%
+ 		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+i_cn = read.csv(file="~/share/data/common/cbioportal_repos/msk-impact/msk-impact/data_CNA.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+colnames(i_cn) = gsub(pattern=".", replacement="-", x=colnames(i_cn), fixed=TRUE)
+rownames(i_cn) = i_cn$Hugo_Symbol
+i_cn = i_cn[,tracker$DMP_ID,drop=FALSE]
+colnames(i_cn) = tracker$GRAIL_ID
+
+## MSK-IMPACT
+index = i_cn["ERBB2",]==2 & grepl("VB", colnames(i_cn))
+sample_names = tracker$TUMOR_ID[index]
+for (j in 1:length(sample_names)) {
+	load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", sample_names[j], ".RData"))
+	pdf(file=paste0("../res/rebuttal/Chr17_", sample_names[j], ".pdf"))
+	par(mar = c(6.1, 6, 4.1, 3))
+	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
+	screen(zz[1])
+	start = 0
+	load("../res/etc/CytoBand.RData")
+	end = max(as.numeric(CytoBand[CytoBand[,1]==17,4]))
+	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+	index = CN[,"Chromosome"]==17
+	z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
+	z1 = winsorize(data=z0, tau=2.5, k=50)
+	z2 = pcf(data=z1, kmin=15, gamma=50)
+	tmp = z2[,c("chrom","start.pos","end.pos","mean")]
+	colnames(tmp) = c("Chromosome", "Start", "End", "Log2Ratio")
+	points(z1[,"pos"], z1[,"Log2Ratio"], type="p", pch=".", cex=3.25, col="grey75")
+	for (i in 1:nrow(tmp)) {
+		points(c(tmp[i,"Start"], tmp[i,"End"]), rep(tmp[i,"Log2Ratio"],2), type="l", col="red", lwd=4)
+	}
+	for (i in 1:(nrow(tmp)-1)) {
+		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
+	}
+	abline(h=0, lwd=1)
+	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
+	box(lwd=2)
+	screen(zz[2])
+	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
+	close.screen(all.screens=TRUE)
+	dev.off()
+}
+
+## GRAIL
+index = i_cn["ERBB2",]==2 & grepl("VB", colnames(i_cn))
+sample_names = tracker$GRAIL_ID[index]
+for (j in 1:length(sample_names)) {
+	load(paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", sample_names[j], "-T.RData"))
+	pdf(file=paste0("../res/rebuttal/Chr17_", sample_names[j], ".pdf"))
+	par(mar = c(6.1, 6, 4.1, 3))
+	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
+	screen(zz[1])
+	start = 0
+	load("../res/etc/CytoBand.RData")
+	end = max(as.numeric(CytoBand[CytoBand[,1]==17,4]))
+	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+	index = CN[,"Chromosome"]==17
+	z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
+	z1 = winsorize(data=z0, tau=4.5)
+	z2 = pcf(data=z1, kmin=10, gamma=50)
+	tmp = z2[,c("chrom","start.pos","end.pos","mean")]
+	colnames(tmp) = c("Chromosome", "Start", "End", "Log2Ratio")
+	points(z1[,"pos"], CN[CN$Chromosome==17,"Log2Ratio"], type="p", pch=".", cex=3.25, col="grey75")
+	for (i in 1:nrow(tmp)) {
+		points(c(tmp[i,"Start"], tmp[i,"End"]), rep(tmp[i,"Log2Ratio"],2), type="l", col="red", lwd=4)
+	}
+	for (i in 1:(nrow(tmp)-1)) {
+		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
+	}
+	abline(h=0, lwd=1)
+	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
+	box(lwd=2)
+	screen(zz[2])
+	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
+	close.screen(all.screens=TRUE)
+	dev.off()
+}
+ 
+ 
+#==================================================
+# Lung MET amplified cases
+#==================================================
+tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+ 		  type_convert() %>%
+ 		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+i_cn = read.csv(file="~/share/data/common/cbioportal_repos/msk-impact/msk-impact/data_CNA.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+colnames(i_cn) = gsub(pattern=".", replacement="-", x=colnames(i_cn), fixed=TRUE)
+rownames(i_cn) = i_cn$Hugo_Symbol
+i_cn = i_cn[,tracker$DMP_ID,drop=FALSE]
+colnames(i_cn) = tracker$GRAIL_ID
+
+## MSK-IMPACT
+index = i_cn["MET",]==2 & grepl("VL", colnames(i_cn))
+sample_names = tracker$TUMOR_ID[index]
+for (j in 1:length(sample_names)) {
+	load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", sample_names[j], ".RData"))
+	pdf(file=paste0("../res/rebuttal/Chr7_", sample_names[j], ".pdf"))
+	par(mar = c(6.1, 6, 4.1, 3))
+	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
+	screen(zz[1])
+	start = 0
+	load("../res/etc/CytoBand.RData")
+	end = max(as.numeric(CytoBand[CytoBand[,1]==7,4]))
+	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+	index = CN[,"Chromosome"]==7
+	z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
+	z1 = winsorize(data=z0, tau=2.5, k=50)
+	z2 = pcf(data=z1, kmin=15, gamma=50)
+	tmp = z2[,c("chrom","start.pos","end.pos","mean")]
+	colnames(tmp) = c("Chromosome", "Start", "End", "Log2Ratio")
+	points(z1[,"pos"], z1[,"Log2Ratio"], type="p", pch=".", cex=3.25, col="grey75")
+	for (i in 1:nrow(tmp)) {
+		points(c(tmp[i,"Start"], tmp[i,"End"]), rep(tmp[i,"Log2Ratio"],2), type="l", col="red", lwd=4)
+	}
+	for (i in 1:(nrow(tmp)-1)) {
+		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
+	}
+	abline(h=0, lwd=1)
+	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
+	box(lwd=2)
+	screen(zz[2])
+	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
+	close.screen(all.screens=TRUE)
+	dev.off()
+}
+
+## GRAIL
+index = i_cn["MET",]==2 & grepl("VL", colnames(i_cn))
+sample_names = tracker$GRAIL_ID[index]
+for (j in 1:length(sample_names)) {
+	load(paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", sample_names[j], "-T.RData"))
+	pdf(file=paste0("../res/rebuttal/Chr7_", sample_names[j], ".pdf"))
+	par(mar = c(6.1, 6, 4.1, 3))
+	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
+	screen(zz[1])
+	start = 0
+	load("../res/etc/CytoBand.RData")
+	end = max(as.numeric(CytoBand[CytoBand[,1]==7,4]))
+	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+	index = CN[,"Chromosome"]==7
+	z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
+	z1 = winsorize(data=z0, tau=6.5, k=100)
+	z2 = pcf(data=z1, kmin=10, gamma=50)
+	tmp = z2[,c("chrom","start.pos","end.pos","mean")]
+	colnames(tmp) = c("Chromosome", "Start", "End", "Log2Ratio")
+	points(z1[,"pos"], z1[,"Log2Ratio"], type="p", pch=".", cex=3.25, col="grey75")
+	for (i in 1:nrow(tmp)) {
+		points(c(tmp[i,"Start"], tmp[i,"End"]), rep(tmp[i,"Log2Ratio"],2), type="l", col="red", lwd=4)
+	}
+	for (i in 1:(nrow(tmp)-1)) {
+		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
+	}
+	abline(h=0, lwd=1)
+	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
+	box(lwd=2)
+	screen(zz[2])
+	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
+	close.screen(all.screens=TRUE)
+	dev.off()
+}
+
 # # i_bygene = foreach (i=1:nrow(tracker)) %dopar% {
 # #  	cat(tracker$GRAIL_ID[i], "\n")
 # #  	impact_path = paste0("../res/rebuttal/MSK-IMPACT/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
@@ -1183,12 +1500,7 @@ dev.off()
 # #     g_cn_jrf[,i] = z
 # # }
 # # 
-# # i_cn = read.csv(file="~/share/data/common/cbioportal_repos/msk-impact/msk-impact/data_CNA.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-# #            filter(Hugo_Symbol %in% rownames(g_cn))
-# # colnames(i_cn) = gsub(pattern=".", replacement="-", x=colnames(i_cn), fixed=TRUE)
-# # rownames(i_cn) = i_cn$Hugo_Symbol
-# # i_cn = i_cn[,tracker$DMP_ID,drop=FALSE]
-# # colnames(i_cn) = tracker$GRAIL_ID
+
 # # i_cn = i_cn[rownames(g_cn),,drop=FALSE]
 # # i_cn[i_cn>0] = 1
 # # i_cn[i_cn<0] = -1
