@@ -105,7 +105,7 @@ all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -136,10 +136,10 @@ for (i in 1:length(cancer_types)) {
 	ordered_patient_ids = subj_small_vars %>%
  						  group_by(patient_id) %>%
  						  mutate(max_af = max(af_nobaq)) %>%
- 						  select(patient_id, max_af) %>%
+ 						  dplyr::select(patient_id, max_af) %>%
  						  unique() %>%
  						  arrange(max_af) %>%
- 						  select(patient_id) %>%
+ 						  dplyr::select(patient_id) %>%
  						  unlist()
    
  	if (cancer_types[i] == "Control") {
@@ -157,7 +157,7 @@ for (i in 1:length(cancer_types)) {
                                    	 bio_source = "VUSo",
                                    	 af_nobaq = NA)
      	subj_small_vars = bind_rows(sample_id_table, subj_small_vars %>%
-                                     select(patient_id, bio_source, af_nobaq))
+                                     dplyr::select(patient_id, bio_source, af_nobaq))
      	ordered_patient_ids = c(zero_ids, ordered_patient_ids)
  	}
    	subj_small_vars = subj_small_vars %>%
@@ -245,10 +245,10 @@ for (i in 1:length(cancer_types)) {
  	ordered_patient_ids = subj_small_vars %>%
  						  group_by(patient_id) %>%
  						  mutate(max_af = max(af_nobaq)) %>%
- 						  select(patient_id, max_af) %>%
+ 						  dplyr::select(patient_id, max_af) %>%
  						  unique() %>%
  						  arrange(max_af) %>%
- 						  select(patient_id) %>%
+ 						  dplyr::select(patient_id) %>%
  						  unlist()
    
  	if (cancer_types[i] == "Control") {
@@ -266,7 +266,7 @@ for (i in 1:length(cancer_types)) {
                                    	 bio_source = "VUSo",
                                    	 af_nobaq = NA)
      	subj_small_vars = bind_rows(sample_id_table, subj_small_vars %>%
-                                    select(patient_id, bio_source, af_nobaq))
+                                    dplyr::select(patient_id, bio_source, af_nobaq))
     	ordered_patient_ids = c(zero_ids, ordered_patient_ids)
  	}
    	subj_small_vars = subj_small_vars %>%
@@ -340,7 +340,7 @@ dev.off()
 # Barplot of recurrent genes
 #==================================================
 variants = label_bio_source(small_vars_plasma) %>%
-		   left_join(msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+		   left_join(msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
                              
 variants = variants %>%
 		   mutate(bio_source = case_when(
@@ -396,7 +396,7 @@ top_cancer_genes_ordered = gene_recurrences %>%
    
 top_cancer_genes_table = gene_recurrences %>%
  						 filter(bio_source %in% c("biopsy_matched", "IMPACT-BAM_matched", "VUSo"), gene %in% gene_list, subj_type != "Control") %>%
- 						 select(subj_type, gene, percent_patient, bio_source)
+ 						 dplyr::select(subj_type, gene, percent_patient, bio_source)
    
 top_cancer_genes_table = top_cancer_genes_table %>%
  						 mutate(gene = factor(gene, levels = top_cancer_genes_ordered),
@@ -444,7 +444,7 @@ dev.off()
 #==================================================
 # Violin plot of cfDNA fraction by cancer type
 #==================================================
-cfdna_frac = read.csv(file="../res/etc/ctdna_frac.csv", header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 			 filter(!is.na(ctdna_frac)) %>%
 			 mutate(index = order_samples(ID)) %>%
  			 arrange(desc(ctdna_frac)) %>%
@@ -470,7 +470,7 @@ dev.off()
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
 		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
-cfdna_frac = read.csv(file="../res/etc/ctdna_frac.csv", header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 			 filter(!is.na(ctdna_frac)) %>%
 			 mutate(index = order_samples(ID)) %>%
  			 arrange(desc(ctdna_frac)) %>%

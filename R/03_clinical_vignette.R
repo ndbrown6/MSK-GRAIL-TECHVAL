@@ -9,19 +9,16 @@ if (!dir.exists("../res/figure3")) {
 	dir.create("../res/figure3")
 }
 
-msi_processed_data_file = "../modified_v11/MSIMSK/data/20180423_msi_global_df.tsv"
-subject_alias_file = "../modified_v11/MSIMSK/data/MSK_TechVal_MS_patient_ID_alias_mapping.tsv"
+all_msi_df = read_tsv(file=url_msi_processed_data)
 
-all_msi_df = read_tsv(msi_processed_data_file)
-
-alias_df = read_tsv(subject_alias_file)
+alias_df = read_tsv(file=url_subject_alias)
 
 type_frame_df = data_frame(type=c("VB","VL","VP"), expand=c("Metastatic Breast","Metastatic Lung","Metastatic Prostate"), subject_type=c("Breast","Lung","Prostate"))
 
 useful_msi_df = all_msi_df %>%
 				left_join(alias_df %>% mutate(id=patient_id)) %>%
 				mutate(id=alias) %>%
-				select(patient_id,original_msi,fixed_msi,subject_type,sample)
+				dplyr::select(patient_id,original_msi,fixed_msi,subject_type,sample)
 				
 #==================================================
 # Scatter plot of MSI scores
@@ -41,7 +38,7 @@ z = cols[as.vector(useful_msi_df$subject_type)]
 z2 = shapes[as.vector(useful_msi_df$subject_type)]
 
 screen(zz[1])
-plot(x[x<5], y[x<5], xlim=c(0,4.15), ylim=c(0,4), pch=z2[x<5], bg=unlist(lapply(z[x<5], transparentRgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
+plot(x[x<5], y[x<5], xlim=c(0,4.15), ylim=c(0,4), pch=z2[x<5], bg=unlist(lapply(z[x<5], transparent_rgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
 axis(1, at = c(0,1,2), labels=c(0,1,2), cex.axis = 1.5, padj = 0.25)
 axis(2, at = c(0,1,2), labels=c(0,1,2), cex.axis = 1.5, las = 1)
 axis(1, at = c(2,2.9), labels=c("",""), lwd.ticks=-1)
@@ -52,10 +49,10 @@ mtext(side = 1, text = "Tumor MSI score", line = 4, cex = 1.5)
 mtext(side = 2, text = "cfDNA MSI score", line = 4, cex = 1.5)
 legend(x=.03, y=4.1, legend=c("Breast", "Lung", "Prostate"), pt.bg=cols, col="#231F20", pch=shapes, pt.cex=1.55, box.lwd=-1, pt.lwd=1)
 screen(zz[2])
-plot(x[x>2 & x<10], y[x>2 & x<10], xlim=c(-10,25), ylim=c(0,20), pch=z2[x>5 & x<10], bg=unlist(lapply(z[x>5 & x<10], transparentRgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
+plot(x[x>2 & x<10], y[x>2 & x<10], xlim=c(-10,25), ylim=c(0,20), pch=z2[x>5 & x<10], bg=unlist(lapply(z[x>5 & x<10], transparent_rgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
 axis(1, at = c(9,15,20,25), labels=c(9,15,20,25), cex.axis = 1.5, padj = 0.25)
 screen(zz[3])
-plot(x[x>10], y[x>10], xlim=c(-10,25), ylim=c(-10,20), pch=z2[x>10], bg=unlist(lapply(z[x>10], transparentRgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
+plot(x[x>10], y[x>10], xlim=c(-10,25), ylim=c(-10,20), pch=z2[x>10], bg=unlist(lapply(z[x>10], transparent_rgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
 axis(2, at = c(9,15,20), labels=c(9,15,20), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
@@ -200,7 +197,7 @@ z1 = cols[subj_type]
 z2 = shapes[subj_type]
 z2[y>30] = 24
 screen(zz[1])
-plot(x[y<150], y[y<150], xlim=c(0,40), ylim=c(0,150), pch=z2[y<150], bg=unlist(lapply(z1[y<150], transparentRgb, 155)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.45, lwd=.55)
+plot(x[y<150], y[y<150], xlim=c(0,40), ylim=c(0,150), pch=z2[y<150], bg=unlist(lapply(z1[y<150], transparent_rgb, 155)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.45, lwd=.55)
 points(x=c(-10,40), y=rep(22.6996,2), type="l", lty=3, col="goldenrod3", lwd=1.5)
 points(x=rep(13.8,2), y=c(-10,150), type="l", lty=3, col="goldenrod3", lwd=1.5)
 axis(1, at = c(0,10,20,30,40), labels=c(0,10,20,30,40), cex.axis = 1.5, padj = 0.25)
@@ -213,7 +210,7 @@ legend(x=30, y=155, legend=c("Breast", "Lung", "Prostate"), col="#231F20", pt.bg
 legend(x=30, y=120, legend="Non-hyper-\nmutated", pch=21, col="#231F20", pt.bg="#231F20", pt.cex=1.55, box.lwd=-1, pt.lwd=.55)
 legend(x=30, y=105, legend="Hyper-\nmutated", pch=24, col="#231F20", pt.bg="#231F20", pt.cex=1.55, box.lwd=-1, pt.lwd=.55)
 screen(zz[2])
-plot(x[y>=150], y[y>=150], xlim=c(0,50), ylim=c(150,600), pch=24, col="#231F20", bg=unlist(lapply(z1[y>=150], transparentRgb, 155)), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.45, lwd=.55)
+plot(x[y>=150], y[y>=150], xlim=c(0,50), ylim=c(150,600), pch=24, col="#231F20", bg=unlist(lapply(z1[y>=150], transparent_rgb, 155)), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.45, lwd=.55)
 axis(2, at = c(550,600), labels=c(550,600), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
@@ -376,7 +373,7 @@ small_vars_plasma = small_vars_plasma %>%
 					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))  					
 
 variants = label_bio_source(small_vars_plasma)
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   		MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -421,16 +418,16 @@ fit = euler(c("VUSo_nonh" = sum(variants_nohyper$bio_source=="VUSo"),
 			  "VUSo_hyp" = sum(variants_hyper$bio_source=="VUSo"),
 			  "Biopsy_only_hyp" = sum(variants_hyper$bio_source=="biopsy_only"),
 		      "VUSo_hyp&Biopsy_only_hyp" = sum(variants_hyper$bio_source=="biopsy_matched" | variants_hyper$bio_source=="IMPACT-BAM_matched")))
-plot(fit, fills=rep(unlist(lapply(c("salmon3", "steelblue"), transparentRgb, 155)), 2))
+plot(fit, fills=rep(unlist(lapply(c("salmon3", "steelblue"), transparent_rgb, 155)), 2))
 dev.off()
 
 #==================================================
 # RECIST and PSA
 #==================================================
-PSA = read_tsv(file=psa_file, col_types = cols(.default = col_character())) %>%
+PSA = read_tsv(file=url_psa, col_types = cols(.default = col_character())) %>%
 	  type_convert()
-RECIST = read_tsv(file=recist_file, col_types = cols(.default = col_character())) %>%
-	  type_convert()
+RECIST = read_tsv(file=url_recist, col_types = cols(.default = col_character())) %>%
+	     type_convert()
 
 pdf(file="../res/figure3/PSA.pdf", width=10, height=7)
 par(mar = c(6.1, 9, 4.1, 1))

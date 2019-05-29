@@ -21,11 +21,11 @@ clean_target_region = read_tsv(url_target.bed, col_names = c("chrom", "start", "
 clean_target_region$in_target = TRUE
 
 gdna_params = data_frame(
-				subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
-				min_p = c(0.8, 0.79, 0.82, 0.79))
+		subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
+		min_p = c(0.8, 0.79, 0.82, 0.79))
 
 replicate2_id = techval_repeats %>%
-				select(patient_id) %>%
+				dplyr::select(patient_id) %>%
 				distinct() %>%
 				mutate(subject_id = substr(patient_id, 1, 11), replicate = "merlin")
 replicate2 = left_join(replicate2_id, techval_repeats) %>%
@@ -51,7 +51,7 @@ replicate2_fixed2 = replicate2_fixed %>%
 									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~p4)) %>%
 					mutate(hgvs_p = sub(".*:", "", hgvs_p),
 						   is_nonsyn = ifelse(is.na(hgvs_p), FALSE, TRUE)) %>%
-					select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4)
+					dplyr::select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4)
 
 replicate2_filtered = replicate2_fixed2 %>%
 					  mutate(filter = "",
@@ -66,7 +66,7 @@ replicate2_filtered = replicate2_fixed2 %>%
 					  		  pgtkxgdna = pgtkxgdna,
 					  		  is_edge = isedge,
 					  		  min_p = min_p)) %>%
-					  select(-min_p)
+					  dplyr::select(-min_p)
 
 depth_lowest <- 200
 replicate2_annotated = replicate2_filtered %>%
@@ -112,7 +112,7 @@ replicate_all = full_join(replicate1_annotated, replicate2_annotated,
                            		  end = position +1) %>%
                            genome_left_join(clean_target_region, by = c("chrom", "start", "end")) %>%
                            mutate(chrom = chrom.x) %>%
-                           select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y))
+                           dplyr::select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y))
 
 replicate_all_filtered = replicate_all %>%
 						 filter(in_target) %>%
@@ -254,18 +254,18 @@ ddpcr = gs_url(url_ddpcr) %>%
 retest = read_tsv(url_retest)
 original = read_tsv(url_original)
 ddpcr_filtered = ddpcr %>%
-				 select(patient_id = X3, probe, af_ddPCR = `% MT`) %>%
+				 dplyr::select(patient_id = X3, probe, af_ddPCR = `% MT`) %>%
 				 full_join(ddpcr_manifest)
 
 retest_filtered = retest %>%
 				  filter(patient_id %in% ddpcr_manifest$patient_id & genename %in% ddpcr_manifest$gene & hgvsp %in% ddpcr_manifest$hgvsp) %>%
-				  select(sample_id, patient_id, gene = genename, hgvsp, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
+				  dplyr::select(sample_id, patient_id, gene = genename, hgvsp, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
 				  mutate(af_grail = adnobaq/dpnobaq*100) %>%
 				  mutate(Protocol = "V2")
 
 original_filtered = original %>%
 					filter(patient_id %in% ddpcr_manifest$patient_id & gene_id %in% ddpcr_manifest$gene & hgvs_p %in% ddpcr_manifest$hgvsp) %>%
-					select(sample_id, patient_id, gene = gene_id, hgvsp = hgvs_p, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
+					dplyr::select(sample_id, patient_id, gene = gene_id, hgvsp = hgvs_p, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
 					mutate(af_grail = adnobaq/dpnobaq*100) %>%
 					mutate(Protocol = "V1")
 

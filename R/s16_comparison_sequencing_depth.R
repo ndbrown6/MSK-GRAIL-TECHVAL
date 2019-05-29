@@ -23,25 +23,25 @@ clinical = read_tsv(clinical_file, col_types = cols(.default = col_character()))
  			   
 valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
 
-qc_metrics_cfdna = read.csv(file="../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	   filter(sample_type=="cfDNA")
 tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					  select(patient_id, cfdna_sample_id) %>%
+					  dplyr::select(patient_id, cfdna_sample_id) %>%
 					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
 qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
 
-qc_metrics_wbc = read.csv(file="../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
-			 	   filter(sample_type=="gDNA")
+qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	 filter(sample_type=="gDNA")
 tracker_grail_wbc = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					select(patient_id, gdna_sample_id) %>%
+					dplyr::select(patient_id, gdna_sample_id) %>%
 					rename(msk_id = patient_id, sample_id = gdna_sample_id)
 qc_metrics_wbc = left_join(qc_metrics_wbc, tracker_grail_wbc, by="sample_id")
 
 qc_metrics = rbind(qc_metrics_cfdna, qc_metrics_wbc) %>%
 			 filter(msk_id %in% valid_patient_ids) %>%
-			 select(-sample_id, -msk_id) %>%
+			 dplyr::select(-sample_id, -msk_id) %>%
 			 rename(Patient_ID = patient_id,
 			 		Sample_Type = sample_type,
 			 		Tissue = tissue,

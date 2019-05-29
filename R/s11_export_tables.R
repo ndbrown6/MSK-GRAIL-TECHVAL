@@ -9,7 +9,7 @@ if (!dir.exists("../res/tables")) {
 }
 
 #==================================================
-# export vcf tables for vcf2maf
+# Export vcf tables for vcf2maf
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%

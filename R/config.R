@@ -49,6 +49,7 @@ suppressPackageStartupMessages(library("ggrepel"))
 suppressPackageStartupMessages(library("copynumber"))
 suppressPackageStartupMessages(library("eulerr"))
 suppressPackageStartupMessages(library("maftools"))
+suppressPackageStartupMessages(library("GAP"))
 
 registerDoMC(32)
 
@@ -142,9 +143,10 @@ wbc_variants <- list(
 	),
 	annotations = str_c(
 		"../",
-		"res/",
-		"etc/",
-		"wbc_annotations.maf"
+		"modified_v11/",
+		"Resources/",
+		"MSK_additional_data/",
+		"wbc_scored_annotated.maf"
 	)
 )
 
@@ -166,51 +168,65 @@ clinical_file_updated <- str_c(
 
 somatic_vars_breast <- str_c(
 	"../",
-	"res/",
-	"etc/",
+	"modified_v11/",
+	"Variants_Calls/",
+	"IMPACT_annotated_variants/",
 	"normal_silent_common_intron_target.tables_merged_breast.tsv"
 )
 
 somatic_vars_lung <- str_c(
 	"../",
-	"res/",
-	"etc/",
+	"modified_v11/",
+	"Variants_Calls/",
+	"IMPACT_annotated_variants/",
 	"normal_silent_common_intron_target.tables_merged_lung.tsv"
 )
 
 somatic_vars_prostate <- str_c(
 	"../",
-	"res/",
-	"etc/",
+	"modified_v11/",
+	"Variants_Calls/",
+	"IMPACT_annotated_variants/",
 	"normal_silent_common_intron_target.tables_merged_prostate.tsv"
 )
 
 cosmic_v84 <- str_c(
 	"../",
-	"res/",
-	"etc/",
+	"modified_v11/",
+	"Resources/",
+	"External_database/",
 	"cosmic_v84.tsv"
 )
 
 gnomad_r2.0.1 <- str_c(
 	"../",
-	"res/",
-	"etc/",
+	"modified_v11/",
+	"Resources/",
+	"External_database/",
 	"gnomad_r2.0.1.tsv"
 )
 
 hotspot_v2 <- str_c(
 	"../",
-	"res/",
-	"etc/",
+	"modified_v11/",
+	"Resources/",
+	"External_database/",
 	"cancer_hotspots_v2.tsv"
 )
 
-all_vars_and_clinical <- str_c(
-	"../",
-	"res/",
-	"etc/",
-	"all_vars_and_clinical.RData"
+wbc_scored_annotated_and_clinical <- list(
+	scored = str_c(
+				"../",
+				"modified_v11/",
+				"Variants_Calls/",
+				"Stacked_Scored_WBC/",
+				"wbc_scored_annotated_280519.tsv"),
+	clinical = str_c(
+				"../",
+				"modified_v11/",
+				"Variants_Calls/",
+				"Stacked_Scored_WBC/",
+				"clinical_280519.tsv")
 )
 
 chip_genes <- c(
@@ -292,18 +308,18 @@ url_retest <- str_c(
 
 url_cell.line <- str_c(
 	"../",
-	"res/",
-	"etc/",
-	"2018-01-10/",
+	"modified_v11/",
+	"Variants_Calls/",
+	"Titrations_cell_line/",
 	"scored/",
 	"annotated.tsv"
 )
 
 url_HD753.truth <- str_c(
 	"../",
-	"res/",
-	"etc/",
-	"2018-01-10/",
+	"modified_v11/",
+	"Variants_Calls/",
+	"Titrations_cell_line/",
 	"hd753_manifest.tsv"
 )
 
@@ -314,20 +330,119 @@ url_qc.metrics <- str_c(
 	"TechVal_Merlin_QC_metrics.tsv"
 )
 
-url_ctdna <- str_c(
+url_ctdna_frac <- str_c(
 	"../",
-	"res/",
-	"etc/",
-	"ctdna_frac.csv"
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"ctDNA_fraction.csv"
 )
 
 url_volumetric_data <- str_c(
 	"../",
-	"res/",
-	"etc/",
-	"MSK_GRAIL_Volumetric_Data.xls"
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"Volumetric_data.xls"
 )
-						
+
+url_psa <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"PSA_MSK_VP_0041.txt"
+)
+
+url_recist <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"RECIST_MSK_VP_0041.txt"
+)
+
+url_msi_processed_data <- str_c(
+	"../",
+	"modified_v11/",
+	"MSIMSK/",
+	"data/",
+	"20180423_msi_global_df.tsv"
+)
+
+url_subject_alias <- str_c(
+	"../",
+	"modified_v11/",
+	"MSIMSK/",
+	"data/",
+	"MSK_TechVal_MS_patient_ID_alias_mapping.tsv"
+)
+
+url_prior_tx <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"prior_tx_techval_0818.txt"
+)
+
+url_master_key <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"master_sample_key.tsv"
+)
+
+url_cytogenetic_data <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"hg19_cytoBandIdeo.txt"
+)
+
+url_qc_metrics_cfdna <- str_c(
+	"../",
+	"modified_v11/",
+	"QC_metrics/",
+	"TechVal_Merlin_QC_metrics.tsv"
+)
+
+url_leftover_samples <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"ddPCR/",
+	"msk_techval_ddpcr_samples.tsv"
+)
+
+url_ddpcr_results <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"ddPCR/",
+	"msk_techval_ddprc_results.csv"
+)
+
+url_smoking_history <- list(
+	breast = str_c(
+		"../",
+		"modified_v11/",
+		"Resources/",
+		"MSK_additional_data/",
+		"MSK_VB_SMOKING.csv"
+	),
+	prostate = str_c(
+		"../",
+		"modified_v11/",
+		"Resources/",
+		"MSK_additional_data/",
+		"MSK_VP_SMOKING.csv"
+	)
+)
+
+
 url_sample.tracker <- patient_tracker
 url_msk.snv <- snv_file$scored
 url_msk.indel <- indel_file$scored
@@ -338,35 +453,6 @@ ref_genome <- BSgenome.Hsapiens.UCSC.hg19
 url_original <- url_msk.snv
 url_target.bed <- common_bed
 
-psa_file <- str_c(
-	"../",
-	"res/",
-	"etc/",
-	"PSA_MSK_VP_0041.txt"
-)
-
-recist_file <- str_c(
-	"../",
-	"res/",
-	"etc/",
-	"RECIST_MSK_VP_0041.txt"
-)
-
-msi_processed_data_file <- str_c(
-	"../",
-	"modified_v11/",
-	"MSIMSK/",
-	"data/",
-	"20180423_msi_global_df.tsv"
-)
-
-subject_alias_file <- str_c(
-	"../",
-	"modified_v11/",
-	"MSIMSK/",
-	"data/",
-	"MSK_TechVal_MS_patient_ID_alias_mapping.tsv"
-)
 
 'in_common_bed' <- function (chromosome, position)
 {
@@ -394,7 +480,7 @@ subject_alias_file <- str_c(
 }
 
 
-'transparentRgb' <- function (col = "black", alpha = 85)
+'transparent_rgb' <- function (col = "black", alpha = 85)
 {
 	tmp = c(col2rgb(col), alpha, 255)
 	names(tmp) = c("red", "green", "blue", "alpha", "maxColorValue")
@@ -402,7 +488,7 @@ subject_alias_file <- str_c(
     return(invisible(out))
 }
 
-'geneRanges' <-  function(db, column="ENTREZID")
+'gene_ranges' <-  function(db, column="ENTREZID")
 {
     g = genes(db, columns=column)
     col = mcols(g)[[column]]
@@ -412,7 +498,7 @@ subject_alias_file <- str_c(
 }
 
 
-'splitColumnByOverlap' <- function(query, subject, column="ENTREZID", ...)
+'split_column_by_overlap' <- function(query, subject, column="ENTREZID", ...)
 {
     olaps = findOverlaps(query, subject, ...)
     f1 = factor(subjectHits(olaps), levels=seq_len(subjectLength(olaps)))
@@ -425,8 +511,8 @@ subject_alias_file <- str_c(
 	bed = read.csv(file=common_bed, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	colnames(bed) = c("chrom", "start", "end")
 	grbed = makeGRangesFromDataFrame(bed)
-	gene_symbols = geneRanges(Homo.sapiens, column="SYMBOL")
-	res = unlist(splitColumnByOverlap(gene_symbols, grbed, "SYMBOL"))
+	gene_symbols = gene_ranges(Homo.sapiens, column="SYMBOL")
+	res = unlist(split_column_by_overlap(gene_symbols, grbed, "SYMBOL"))
 	gene_symbols = rep(NA, nrow(bed))
 	gene_symbols[as.numeric(names(res))] = res
 	bed = cbind(bed, gene_symbols)
@@ -650,7 +736,7 @@ subject_alias_file <- str_c(
     }
 }
 
-'corrplot2' <- function (corr, corr2, method = c("circle", "square", "ellipse", "number",
+'corr_plot' <- function (corr, corr2, method = c("circle", "square", "ellipse", "number",
     "shade", "color", "pie"), type = c("full", "lower", "upper"), 
     add = FALSE, col = NULL, bg = "white", title = "", is.corr = TRUE, 
     diag = TRUE, outline = FALSE, mar = c(0, 0, 0, 0), addgrid.col = NULL, 
@@ -1253,26 +1339,6 @@ subject_alias_file <- str_c(
 	return(invisible(y0))
 }
 
-'fun_zerob_adj' <- function(x, y, n=100, seed=0)
-{
-	set.seed(seed)
-	init = data.frame(y, x)
-	y0 = NULL
-	for (i in 1:n) {
-		index = sample(x=(1:nrow(init)), size=nrow(init), replace=TRUE)
-		data = init[index,,drop=FALSE]
-		z = try(zeroinfl(y ~ x, dist = "poisson", data = data), silent=TRUE)
-		if ("try-error" %in% is(z)) {
-			y0[[i]] = rep(NA, times=100)
-		} else {
-			x0 = data.frame(x=seq(20, 90, l=100))
-			y0[[i]] = predict(object=z, newdata=x0, type = "count")
-		}
-	}
-	y0 = do.call(cbind, y0)
-	return(invisible(y0))
-}
-
 'box_plot' <- function (x, main = "", sub  = "", xlab = "", ylab = "", col, lwd  = 2, ...)
 {
 	if ("list" %in% is(x)) {
@@ -1290,7 +1356,7 @@ subject_alias_file <- str_c(
 		col = vector(mode="character", length=nboxes)
 		ucol = rainbow_hcl(nboxes, start=30, end=300)
 		for (i in 1:nboxes) {
-			col[i] = transparentRgb(col=ucol[i], alpha=126)
+			col[i] = transparent_rgb(col=ucol[i], alpha=126)
 		}
 	}
     boxplot(x, outline=FALSE, main="", xlab="", ylab="", axes=FALSE, frame=FALSE, lwd=1, ...)

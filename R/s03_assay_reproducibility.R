@@ -24,7 +24,7 @@ gdna_params = data_frame(
 				min_p = c(0.8, 0.79, 0.82, 0.79))
 
 replicate2_id = techval_repeats %>%
-				select(patient_id) %>%
+				dplyr::select(patient_id) %>%
 				distinct() %>%
 				mutate(subject_id = substr(patient_id, 1, 11), replicate = "merlin")
 replicate2 = left_join(replicate2_id, techval_repeats) %>%
@@ -50,7 +50,7 @@ replicate2_fixed2 = replicate2_fixed %>%
 									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~p4)) %>%
 					mutate(hgvs_p = sub(".*:", "", hgvs_p),
 						   is_nonsyn = ifelse(is.na(hgvs_p), FALSE, TRUE)) %>%
-					select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4)
+					dplyr::select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4)
 
 replicate2_filtered = replicate2_fixed2 %>%
 					  mutate(filter = "",
@@ -65,7 +65,7 @@ replicate2_filtered = replicate2_fixed2 %>%
 					  		  pgtkxgdna = pgtkxgdna,
 					  		  is_edge = isedge,
 					  		  min_p = min_p)) %>%
-					  select(-min_p)
+					  dplyr::select(-min_p)
 
 depth_lowest <- 200
 replicate2_annotated = replicate2_filtered %>%
@@ -111,7 +111,7 @@ replicate_all = full_join(replicate1_annotated, replicate2_annotated,
                           		 end = position +1) %>%
                           genome_left_join(clean_target_region, by = c("chrom", "start", "end")) %>%
                           mutate(chrom = chrom.x) %>%
-                          select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y))
+                          dplyr::select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y))
 
 replicate_all_filtered = replicate_all %>%
 						 filter(in_target) %>%
@@ -202,8 +202,8 @@ z1 = as.character(df1$MSK)
 z2 = as.character(df1$cat_minus)
 z2[which(z1=="Biopsy-matched" & z2=="Incorrect assignment between replicates")] = "Called in both replicates"
 points(x, y, pch=shapes[z1], col="black", bg=cols[z2], cex=1.25)
-rect(xleft=0, ybottom=0.55, xright=0.4, ytop=1.0, col=transparentRgb("white", 205), border=transparentRgb("white", 205))
-rect(xleft=0.475, ybottom=0, xright=1.0, ytop=0.475, col=transparentRgb("white", 205), border=transparentRgb("white", 205))
+rect(xleft=0, ybottom=0.55, xright=0.4, ytop=1.0, col=transparent_rgb("white", 205), border=transparent_rgb("white", 205))
+rect(xleft=0.475, ybottom=0, xright=1.0, ytop=0.475, col=transparent_rgb("white", 205), border=transparent_rgb("white", 205))
 mtext(side=3, text="Variant category", line=-.85, at=.13, font=2)
 legend(x=-.01, y=1.01, pch=21, col="black", pt.bg=cols[1], pt.cex=1.35, legend="Not detected in one replicate", box.lwd=-1, cex=.85)
 legend(x=-.01, y=.97, pch=21, col="black", pt.bg=cols[2], pt.cex=1.35, legend="Not called in one replicate\ndue to low quality", box.lwd=-1, cex=.85)

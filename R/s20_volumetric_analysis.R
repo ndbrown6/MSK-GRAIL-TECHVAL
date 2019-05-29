@@ -16,7 +16,7 @@ if (!dir.exists("../res/rebuttal")) {
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
 		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
-cfdna_frac = read.csv(file=url_ctdna, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 			 filter(!is.na(ctdna_frac)) %>%
 			 mutate(index = order_samples(ID)) %>%
  			 arrange(desc(ctdna_frac)) %>%
@@ -96,7 +96,7 @@ dev.off()
 # Box plot for cfDNA fraction by disease
 # volume
 #==================================================
-ctdna_fraction = read_csv(file=url_ctdna, col_types = cols(.default = col_character()))  %>%
+ctdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character()))  %>%
  				 type_convert() %>%
  				 rename(GRAIL_ID = ID)
 
@@ -551,7 +551,7 @@ dev.off()
 #==================================================
 # Disease volume versus number of metastatic sites
 #==================================================
-ctdna_fraction = read_csv(file=url_ctdna, col_types = cols(.default = col_character()))  %>%
+ctdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character()))  %>%
  				 type_convert() %>%
  				 rename(GRAIL_ID = ID)
 
@@ -592,7 +592,7 @@ volumetric_data = volumetric_data %>%
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
 		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
-cfdna_frac = read.csv(file=url_ctdna, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 			 filter(!is.na(ctdna_frac)) %>%
 			 mutate(index = order_samples(ID)) %>%
  			 arrange(desc(ctdna_frac)) %>%

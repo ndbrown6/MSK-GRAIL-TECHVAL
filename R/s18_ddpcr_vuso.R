@@ -29,16 +29,16 @@ bed = read_tsv(file=s3_target, col_names = c("chrom", "start", "end"), col_types
 vuso = read_tsv(file="../res/tables/Table_S7_vuso_biorad_ddpcr_annot.tsv", col_types = cols(.default = col_character())) %>%
 		        type_convert()
 
-leftover = read_tsv(file="../res/etc/msk_techval_ddpcr_samples.tsv", col_types = cols(.default = col_character())) %>%
+leftover = read_tsv(file=url_leftover_samples, col_types = cols(.default = col_character())) %>%
 		            type_convert()
 
-results = read_csv(file="../res/etc/msk_techval_ddprc_results.csv", col_types = cols(.default = col_character())) %>%
+results = read_csv(file=url_ddpcr_results, col_types = cols(.default = col_character())) %>%
 		           type_convert()
 		           
 vuso_target = vuso %>%
   			  filter(!is.na(FAM_Assay_ID)) %>%
   			  mutate(chrom = paste0("chr", Chromosome)) %>%
-  			  select(patient_id = Tumor_Sample_Barcode,
+  			  dplyr::select(patient_id = Tumor_Sample_Barcode,
   			  		 gene = Hugo_Symbol,
   			  		 chrom,
   			  		 position = Start_Position,
@@ -54,7 +54,7 @@ vuso_target = vuso %>%
 id_candidate = as.character(unique(vuso_target$patient_id))
 
 ddpcr_target = vuso_target %>%
-  			   select(-patient_id) %>%
+  			   dplyr::select(-patient_id) %>%
   			   unique()
   			   
 lib_op = data.frame(Library_preparation_performed_by = c("OP1", "OP2", "OP3", "OP4", "OP5"),
@@ -65,7 +65,7 @@ qc_short = qc %>%
   		   filter(Study == "TechVal" & tissue != "Healthy") %>%
   		   left_join(lib_op) %>%
   		   mutate(Library_yield_ng = ifelse(is.na(Library_yield_ng), Adapter_dimer_ng*(100-Percent_dimer)/Percent_dimer, Library_yield_ng)) %>%
-  		   select(patient_id,
+  		   dplyr::select(patient_id,
   		   		  sample_id,
   		   		  tube_id,
   		   		  tissue,
@@ -77,7 +77,7 @@ qc_short = qc %>%
                   
 leftover_samples = leftover %>%
 				   filter(cfDNA_evaluable) %>%
-				   select(patient_id,
+				   dplyr::select(patient_id,
 				   		  tube_id,
 				   		  ddPCR_candidate_sample,
 				   		  striptube_label,
@@ -99,7 +99,7 @@ snv_short = snv %>%
 			mutate(start = position, end = position +1) %>%
 			genome_left_join(bed, by = c("chrom", "start", "end")) %>%
 			mutate(chrom = chrom.x) %>%
-			select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
+			dplyr::select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
 			filter(is_clean) %>%
 			filter(patient_id %in% id_leftover) %>%
 			mutate(ref = ifelse(is.na(ref), c_ref, ref),
@@ -109,7 +109,7 @@ snv_short = snv %>%
 				   hgvsp = ifelse(is.na(hgvs_p), cdna_change, hgvs_p),
          		   hgvsp_short = ifelse(is.na(hgvsp_short), amino_acid_change, hgvsp_short)) %>%
         	mutate(adnobaq = ifelse(is.na(adnobaq), 0, adnobaq), af_cfdna = ifelse(is.na(dpnobaq), 0, adnobaq/dpnobaq)) %>%
-        	select(patient_id,
+        	dplyr::select(patient_id,
         		   chrom,
         		   position,
         		   ref,
@@ -136,7 +136,7 @@ df_merged %>% filter(ddPCR_candidate_sample) %>%
   			filter(!is.na(FAM_HEX_Assay_ID)) %>%
   			arrange(patient_id, -af_cfdna) %>%
   			mutate(`cfDNA MAF (%)` = round(af_cfdna*100, 2)) %>%
-  			select(patient_id, gene, HGVSp_Short, `cfDNA MAF (%)`, `ddPCR assay` = FAM_HEX_Assay_ID) %>%
+  			dplyr::select(patient_id, gene, HGVSp_Short, `cfDNA MAF (%)`, `ddPCR assay` = FAM_HEX_Assay_ID) %>%
   			pandoc.table(caption = "Candidate VUSo for ddPCR Retest", split.table = Inf)
   			
 df_leftover = df_merged %>%
@@ -149,7 +149,7 @@ agg_probes = aggregate(data = df_leftover, UUID ~ patient_id, toString) %>%
 			 dplyr::select(-UUID)
 
 df_leftover %>% arrange(-library_available, -cfDNA_available, patient_id) %>%
-				select(patient_id, `cfDNA (ng)` = leftover_cfDNA_ng, `library (ng)` = leftover_library_ng) %>%
+				dplyr::select(patient_id, `cfDNA (ng)` = leftover_cfDNA_ng, `library (ng)` = leftover_library_ng) %>%
 				unique() %>%
 				full_join(agg_probes) %>%
 				pandoc.table(caption = "Estimated Leftover cfDNA and Library Amount", split.table = Inf, round = 0)
@@ -173,7 +173,7 @@ retest %>% filter(select_ddPCR_assay) %>%
 		   mutate(af_cfdna = round(af_cfdna*100,2),
          		  max_af_cfdna = round(max_af_cfdna*100,2),
          		  max_af_matched = round(max_af_matched*100,2)) %>%
-           select(patient_id, `ddPCR assay` = UUID, `MAF (%)` = af_cfdna, `Highest MAF SNV` = variant_max_af_cfdna, `Highest MAF (%)` = max_af_cfdna) %>%
+           dplyr::select(patient_id, `ddPCR assay` = UUID, `MAF (%)` = af_cfdna, `Highest MAF SNV` = variant_max_af_cfdna, `Highest MAF (%)` = max_af_cfdna) %>%
            pandoc.table(split.table = Inf, caption = "Selected Paient Samples for ddPCR Retest")
 
 n_cfDNA <- length(unique(retest$patient_id[retest$cfDNA_available]))
@@ -184,7 +184,7 @@ n_negative_runs <- 3*n_ddPCR_assay
 
 select_ddPCR = retest %>%
 			   filter(select_ddPCR_assay) %>%
-			   select(UUID, chrom, position, ref, alt) %>%
+			   dplyr::select(UUID, chrom, position, ref, alt) %>%
 			   unique()
 
 id_blacklisted = df_merged %>%
@@ -207,7 +207,7 @@ neg = df_merged %>%
 	  ungroup()
 
 neg %>% arrange(tissue, max_af_cfdna) %>%
-		select(patient_id, `library (ng)` = leftover_library_ng, `Highest cfDNA MAF (%)` = max_af_cfdna, `N cfDNA variants` = n_variants,  `ddPCR target` = UUID) %>%
+		dplyr::select(patient_id, `library (ng)` = leftover_library_ng, `Highest cfDNA MAF (%)` = max_af_cfdna, `N cfDNA variants` = n_variants,  `ddPCR target` = UUID) %>%
   		unique() %>%
   		pandoc.table(split.table = Inf, caption = "Candidate Negative Patient Samples")
 
@@ -216,7 +216,7 @@ ddpcr_results = results %>%
 				filter(Target != "WT") %>%
 				mutate(patient_id = gsub("_", "-", patient_id)) %>%
 				mutate(af_ddPCR = ifelse(is.na(`Fractional Abundance`), 0, `Fractional Abundance`/100)) %>%
-				select(patient_id, input_type, rep, Sample, UUID = Target, af_ddPCR)
+				dplyr::select(patient_id, input_type, rep, Sample, UUID = Target, af_ddPCR)
 
 ddpcr_results2 = df_merged %>%
 				 filter(filter == "PASS" | MSK == 1) %>%
@@ -240,7 +240,7 @@ ddpcr_results_neg = ddpcr_results2 %>%
 ddpcr_results_summary = rbind(ddpcr_results_pos, ddpcr_results_neg)
 
 ddpcr_results_summary %>% arrange(UUID, ddPCR_retest, patient_id) %>%
-						  select(`ddPCR assay` = UUID,
+						  dplyr::select(`ddPCR assay` = UUID,
 						  		 ddPCR_retest,
 						  		 patient_id,
 						  		 input_type, 
@@ -250,7 +250,7 @@ ddpcr_results_summary %>% arrange(UUID, ddPCR_retest, patient_id) %>%
   						  pandoc.table(split.table = Inf, caption = "ddPCR Tested Samples")
   						  
 tmp = ddpcr_results_summary %>%
-	  select(patient_id, UUID, ddPCR_retest, input_type, af_ddPCR_mean, af_ddPCR_sd, af_cfdna) %>%
+	  dplyr::select(patient_id, UUID, ddPCR_retest, input_type, af_ddPCR_mean, af_ddPCR_sd, af_cfdna) %>%
 	  mutate(af_ddPCR_mean = ifelse(af_ddPCR_mean < 5e-5, 1e-5, af_ddPCR_mean)) %>%
 	  mutate(af_cfdna = ifelse(af_cfdna == 0, 1e-5, af_cfdna)) %>%
 	  mutate(af_ddPCR_mean = af_ddPCR_mean*100) %>%

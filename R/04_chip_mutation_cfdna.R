@@ -98,7 +98,7 @@ small_vars_plasma = small_vars_plasma %>%
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -193,7 +193,7 @@ for (i in 1:length(subj)) {
   	biopsy_matched = biopsy_matched[index,,drop=FALSE]
   	biopsy_subthreshold = biopsy_subthreshold[index,,drop=FALSE]
   	
-  	barplot(wbc_matched[,"num"]-.9, col=transparentRgb(cols["WBC_matched"], 255), border="black", space=.16, axes=FALSE, ylim=c(-30,30), lwd=.01)
+  	barplot(wbc_matched[,"num"]-.9, col=transparent_rgb(cols["WBC_matched"], 255), border="black", space=.16, axes=FALSE, ylim=c(-30,30), lwd=.01)
   	abline(h=0, col="white", lwd=4)
   	barplot(vuso[,"num"]+biopsy_matched[,"num"]+biopsy_subthreshold[,"num"], col=cols["VUSo"], border="black", space=.16, add=TRUE, axes=FALSE, lwd=.01)
   	barplot(biopsy_matched[,"num"]+biopsy_subthreshold[,"num"], col=cols["IMPACT-BAM_matched"], border="black", space=.16, add=TRUE, axes=FALSE, lwd=.01)
@@ -300,7 +300,7 @@ small_vars_plasma = small_vars_plasma %>%
 					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))  					
 
 variants = label_bio_source(small_vars_plasma)
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -453,7 +453,7 @@ text(42, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coef
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
 x1 = seq(20, 90, l=100)
 y1 = t(apply(y0, 1, quantile, probs=c(.025, .5, .975), na.rm=TRUE))
-polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparentRgb("grey10", 55), border=NA)
+polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparent_rgb("grey10", 55), border=NA)
 points(x1, y1[,"50%"], type="l", col="grey50", lwd=3)
 data = data.frame(burden_healthy[,c("age", "num_called", "study", "bio_source"),drop=FALSE]) %>%
   	   filter(bio_source=="WBC_matched")
@@ -493,7 +493,7 @@ text(42, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coef
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
 x1 = seq(20, 90, l=100)
 y1 = t(apply(y0, 1, quantile, probs=c(.025, .5, .975), na.rm=TRUE))
-polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparentRgb("grey10", 55), border=NA)
+polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparent_rgb("grey10", 55), border=NA)
 points(x1, y1[,"50%"], type="l", col="grey50", lwd=3)
 data = data.frame(burden_healthy[,c("age", "num_called", "study", "bio_source"),drop=FALSE]) %>%
  	   filter(bio_source=="VUSo")
@@ -532,7 +532,7 @@ text(45, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coef
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
 x1 = seq(20, 90, l=100)
 y1 = t(apply(y0, 1, quantile, probs=c(.025, .5, .975), na.rm=TRUE))
-polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparentRgb("grey10", 55), border=NA)
+polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparent_rgb("grey10", 55), border=NA)
 points(x1, y1[,"50%"], type="l", col="grey50", lwd=3)
 points(as.numeric(data$age), as.numeric(data$num_called), bg="#EAA411", col="#231F20", pch=21, cex=1.35, lwd=0.5)
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
@@ -565,7 +565,7 @@ text(45, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coef
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
 x1 = seq(20, 90, l=100)
 y1 = t(apply(y0, 1, quantile, probs=c(.025, .5, .975), na.rm=TRUE))
-polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparentRgb("grey10", 55), border=NA)
+polygon(c(x1, rev(x1)), c(y1[,"97.5%"], rev(y1[,"2.5%"])), col=transparent_rgb("grey10", 55), border=NA)
 points(x1, y1[,"50%"], type="l", col="grey50", lwd=3)
 points(as.numeric(data$age), as.numeric(data$num_called), bg="#EAA411", col="#231F20", pch=21, cex=1.35, lwd=0.5)
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
@@ -645,7 +645,7 @@ for (subj in subj_num_smry$subj_type) {
 for (subj in c("Control", "Breast", "Lung", "Prostate")) {
   subj_smry = gene_recurrences %>%
    			  filter(subj_type == subj, bio_source == "WBC_matched", is_nonsyn, gene %in% unique(gene_list)) %>%
-  			  select(gene, num_patient)
+  			  dplyr::select(gene, num_patient)
    
   gene_stats_table_list[[subj]] = subj_smry
 }
@@ -664,7 +664,7 @@ gene_stats_smry = bind_cols(gene_stats_smry, Mean = gene_stats_mean) %>%
 				  arrange(-Mean)
 
 gene_stats_matrix = as.matrix(gene_stats_smry %>%
-					select(-gene, -Mean))
+					dplyr::select(-gene, -Mean))
 rownames(gene_stats_matrix) = gene_stats_smry$gene
 idx_names = match(colnames(gene_stats_matrix), subj_num_smry$subj_type)
 colnames(gene_stats_matrix) = unlist(lapply(strsplit(subj_num_smry$subj_type_num[idx_names], "(", fixed=TRUE), function(x) {x[1]}))
@@ -699,7 +699,7 @@ x[x>15] = NA
 y[y>15] = NA
 for (i in c("VUSo", "WBC_matched", "biopsy_matched", "IMPACT-BAM_matched")) {
 	index = cfdna_vs_gdna_vaf_plot$bio_source==i
-	points(x[index], y[index], type="p", col="black", bg=transparentRgb(cols[i], 205), pch=21, lwd=.5)
+	points(x[index], y[index], type="p", col="black", bg=transparent_rgb(cols[i], 205), pch=21, lwd=.5)
 }
 points(x=c(0.005, 15), y=c(0.005,15), type="l", lty=1, lwd=2, col="goldenrod3")
 axis(1, at = c(.005, .01, .05, .10, .50, 1.0, 5.0, 10.0, 15.0), labels = c(".005", ".01", ".05", ".1", ".5", "1", "5", "10", ""), cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)

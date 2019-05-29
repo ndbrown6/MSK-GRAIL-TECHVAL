@@ -97,7 +97,7 @@ small_vars_plasma = small_vars_plasma %>%
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -188,7 +188,7 @@ for (i in 1:length(subj)) {
   	biopsy_matched = biopsy_matched[index,,drop=FALSE]
   	biopsy_subthreshold = biopsy_subthreshold[index,,drop=FALSE]
   	
-  	zzz = barplot(wbc_matched[,"num"]-.9, col=transparentRgb(cols["WBC_matched"], 175), border="black", space=.16, axes=FALSE, ylim=c(-30,150), lwd=.01)
+  	zzz = barplot(wbc_matched[,"num"]-.9, col=transparent_rgb(cols["WBC_matched"], 175), border="black", space=.16, axes=FALSE, ylim=c(-30,150), lwd=.01)
   	abline(h=0, col="white", lwd=4)
   	barplot(ifelse((vuso[,"num"]+biopsy_matched[,"num"]+biopsy_subthreshold[,"num"])<110, (vuso[,"num"]+biopsy_matched[,"num"]+biopsy_subthreshold[,"num"]), 120), col=cols["VUSo"], border="black", space=.16, add=TRUE, axes=FALSE, lwd=.01)
   	barplot(biopsy_matched[,"num"]+biopsy_subthreshold[,"num"], col=cols["IMPACT-BAM_matched"], border="black", space=.16, add=TRUE, axes=FALSE, lwd=.01)

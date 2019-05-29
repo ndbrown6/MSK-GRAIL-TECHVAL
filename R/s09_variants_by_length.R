@@ -100,7 +100,7 @@ all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",

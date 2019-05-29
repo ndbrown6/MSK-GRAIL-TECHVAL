@@ -26,25 +26,25 @@ clinical = read_tsv(clinical_file, col_types = cols(.default = col_character()))
  			   
 valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
 
-qc_metrics_cfdna = read.csv(file="../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	   filter(sample_type=="cfDNA")
 tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					  select(patient_id, cfdna_sample_id) %>%
+					  dplyr::select(patient_id, cfdna_sample_id) %>%
 					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
 qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
 
-qc_metrics_wbc = read.csv(file="../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
-			 	   filter(sample_type=="gDNA")
+qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	 filter(sample_type=="gDNA")
 tracker_grail_wbc = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					select(patient_id, gdna_sample_id) %>%
+					dplyr::select(patient_id, gdna_sample_id) %>%
 					rename(msk_id = patient_id, sample_id = gdna_sample_id)
 qc_metrics_wbc = left_join(qc_metrics_wbc, tracker_grail_wbc, by="sample_id")
 
 qc_metrics = rbind(qc_metrics_cfdna, qc_metrics_wbc) %>%
 			 filter(msk_id %in% valid_patient_ids) %>%
-			 select(-sample_id, -msk_id) %>%
+			 dplyr::select(-sample_id, -msk_id) %>%
 			 rename(Patient_ID = patient_id,
 			 		Sample_Type = sample_type,
 			 		Tissue = tissue,
@@ -155,7 +155,7 @@ all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -175,7 +175,7 @@ variants = variants %>%
 #==================================================		   		  
 tmp = variants %>%
 	  filter(bio_source=="biopsy_matched" | bio_source=="IMPACT-BAM_matched") %>%
-	  select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
+	  dplyr::select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
 	  rename(afnobaq = af_nobaq) %>%
 	  mutate(bio_source = ifelse(bio_source=="biopsy_matched", "Biopsy matched", "Biopsy sub-\nthrehold")) %>%
 	  mutate(sample_type = "Tissue matched cfDNA variants") %>%
@@ -219,7 +219,7 @@ dev.off()
 #==================================================		   		  
 tmp = variants %>%
 	  filter(bio_source=="biopsy_matched" | bio_source=="IMPACT-BAM_matched") %>%
-	  select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
+	  dplyr::select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
 	  rename(afnobaq = af_nobaq) %>%
 	  mutate(bio_source = ifelse(bio_source=="biopsy_matched", "Biopsy matched", "Biopsy sub-\nthrehold")) %>%
 	  mutate(sample_type = "Tissue matched cfDNA variants") %>%
@@ -271,7 +271,7 @@ dev.off()
 #==================================================		   		  
 tmp = variants %>%
 	  filter(bio_source=="biopsy_matched" | bio_source=="IMPACT-BAM_matched") %>%
-	  select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
+	  dplyr::select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
 	  rename(afnobaq = af_nobaq) %>%
 	  mutate(bio_source = ifelse(bio_source=="biopsy_matched", "Biopsy matched", "Biopsy sub-\nthrehold")) %>%
 	  mutate(sample_type = "Tissue matched cfDNA variants") %>%
@@ -323,7 +323,7 @@ dev.off()
 #==================================================		   		  
 tmp = variants %>%
 	  filter(bio_source=="biopsy_matched" | bio_source=="IMPACT-BAM_matched") %>%
-	  select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
+	  dplyr::select(af_nobaq, adnobaq, dpnobaq, subj_type, bio_source, patient_id) %>%
 	  rename(afnobaq = af_nobaq) %>%
 	  mutate(bio_source = ifelse(bio_source=="biopsy_matched", "Biopsy matched", "Biopsy sub-\nthrehold")) %>%
 	  mutate(sample_type = "Tissue matched cfDNA variants") %>%

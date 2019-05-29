@@ -101,7 +101,7 @@ all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   				MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -125,7 +125,7 @@ tmp.0 = variants %>%
 		count(patient_id) %>%
 		full_join(data.frame(patient_id = patient_ids), by="patient_id") %>%
 		mutate(n_low = ifelse(is.na(n), 0, n)) %>%
-		select(-n)
+		dplyr::select(-n)
 	
 tmp.1 = variants %>%
 		filter(bio_source %in% c("biopsy_matched", "WBC_matched", "IMPACT-BAM_matched", "VUSo")) %>%
@@ -134,7 +134,7 @@ tmp.1 = variants %>%
 		count(patient_id) %>%
 		full_join(data.frame(patient_id = patient_ids), by="patient_id") %>%
 		mutate(n_high = ifelse(is.na(n), 0, n)) %>%
-		select(-n)
+		dplyr::select(-n)
 		
 tmp = left_join(tmp.0, tmp.1, by="patient_id") %>%
 	  mutate(Hypermutated = ifelse(patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id), "Yes", "No")) %>%
@@ -292,24 +292,24 @@ clinical = read_tsv(clinical_file, col_types = cols(.default = col_character()))
 valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
 
 qc_metrics_cfdna = read.csv(file="../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	   filter(sample_type=="cfDNA")
 tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					  select(patient_id, cfdna_sample_id) %>%
+					  dplyr::select(patient_id, cfdna_sample_id) %>%
 					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
 qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
 
 qc_metrics_wbc = read.csv(file="../modified_v11/QC_metrics/TechVal_Merlin_QC_metrics.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
-			 	   filter(sample_type=="gDNA")
+			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	 filter(sample_type=="gDNA")
 tracker_grail_wbc = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					select(patient_id, gdna_sample_id) %>%
+					dplyr::select(patient_id, gdna_sample_id) %>%
 					rename(msk_id = patient_id, sample_id = gdna_sample_id)
 qc_metrics_wbc = left_join(qc_metrics_wbc, tracker_grail_wbc, by="sample_id")
 
 qc_metrics = rbind(qc_metrics_cfdna, qc_metrics_wbc) %>%
 			 filter(msk_id %in% valid_patient_ids) %>%
-			 select(-sample_id, -msk_id) %>%
+			 dplyr::select(-sample_id, -msk_id) %>%
 			 rename(Patient_ID = patient_id,
 			 		Sample_Type = sample_type,
 			 		Tissue = tissue,
@@ -424,7 +424,7 @@ cols = c("tumor_matched"="#D7191C",
 
 pdf(file="../res/rebuttal/MSK-VB-0023_Manhattan-Plot_High_DP.pdf", width=10, height=2.25)
 par(mar=c(5, 5, 4, 2)+.1)
-load("../res/etc/CytoBand.RData")
+data(CytoBand)
 end = NULL
 for (i in 1:23) {
 	end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
@@ -439,16 +439,16 @@ for (i in 1:23) {
 indx = tmp$dpnobaq>=10000
 plot(0, 0, type="n", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-.07,.1), xlim=c(1,max(index)))
 points(index[indx], rep(0, sum(indx)), type="p", pch="|", cex=2, col=cols[tmp$bio_source[indx]])
-abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 for (j in 1:23) {
-	abline(v=CytoBand[j,"end"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	abline(v=CytoBand[j,"end"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 }
 axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
 dev.off()
 
 pdf(file="../res/rebuttal/MSK-VB-0023_Manhattan-Plot_Low_DP.pdf", width=10, height=2.25)
 par(mar=c(5, 5, 4, 2)+.1)
-load("../res/etc/CytoBand.RData")
+data(CytoBand)
 end = NULL
 for (i in 1:23) {
 	end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
@@ -463,9 +463,9 @@ for (i in 1:23) {
 indx = tmp$dpnobaq<10000
 plot(0, 0, type="n", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-.07,.1), xlim=c(1,max(index)))
 points(index[indx], rep(0, sum(indx)), type="p", pch="|", cex=2, col=cols[tmp$bio_source[indx]])
-abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 for (j in 1:23) {
-	abline(v=CytoBand[j,"end"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	abline(v=CytoBand[j,"end"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 }
 axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
 dev.off()
@@ -567,7 +567,7 @@ all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type
 
 variants = label_bio_source(small_vars_plasma)
 
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -611,7 +611,7 @@ techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAs
 									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~p4)) %>%
 				  mutate(hgvs_p = sub(".*:", "", hgvs_p),
 						 is_nonsyn = ifelse(is.na(hgvs_p), FALSE, TRUE)) %>%
-				  select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4) %>%
+				  dplyr::select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4) %>%
 				  mutate(filter = "",
 					  		 subj_type = case_when(
 					  		 				grepl("VB", .$patient_id) ~ "Breast",
@@ -624,7 +624,7 @@ techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAs
 					  	  pgtkxgdna = pgtkxgdna,
 					  	  is_edge = isedge,
 					  	  min_p = min_p)) %>%
-				  select(-min_p) %>%
+				  dplyr::select(-min_p) %>%
 				  mutate(loc = str_c(chrom, ":", pos, "_", ref, ">", alt)) %>%
 				  mutate(position_orig = pos, ref_orig = ref, alt_orig = alt, position = pos) %>%
 				  mutate(gratio = (adnobaq+2)*(dpgdna+4)/((adgdna+2)*(dpnobaq+4)),
@@ -633,8 +633,8 @@ techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAs
                          end = position_orig + 1) %>%
                   genome_left_join(clean_target_region, by = c("chrom", "start", "end")) %>%
                   mutate(chrom = chrom.x) %>%
-                  select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
-				  left_join(variants %>% select(patient_id, chrom, position_orig, ref_orig, alt_orig, MSK, grail), by=c("patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
+                  dplyr::select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
+				  left_join(variants %>% dplyr::select(patient_id, chrom, position_orig, ref_orig, alt_orig, MSK, grail), by=c("patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
 				  mutate(MSK = ifelse(is.na(MSK), 0, MSK)) %>%
 				  mutate(grail = 1) %>%
 				  mutate(study = "TechVal") %>%
@@ -646,7 +646,7 @@ repeat_variants = bind_rows(small_vars_plasma[,feature_names,drop=FALSE] %>%
 							techval_repeats[,feature_names,drop=FALSE])
 
 repeat_variants = label_bio_source(repeat_variants)
-repeat_variants = left_join(repeat_variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+repeat_variants = left_join(repeat_variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 repeat_variants = repeat_variants %>%
 		   				mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -683,7 +683,7 @@ techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAs
 									(.$t1 != TRUE & .$t2 != TRUE & .$t3 != TRUE & .$t4 == TRUE) ~p4)) %>%
 				  mutate(hgvs_p = sub(".*:", "", hgvs_p),
 						 is_nonsyn = ifelse(is.na(hgvs_p), FALSE, TRUE)) %>%
-				  select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4) %>%
+				  dplyr::select(-t1, -t2, -t3, -t4, -g1, -g2, -g3, -g4, -p1, -p2, -p3, -p4) %>%
 				  mutate(filter = "",
 					  		 subj_type = case_when(
 					  		 				grepl("VB", .$patient_id) ~ "Breast",
@@ -696,7 +696,7 @@ techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAs
 					  	  pgtkxgdna = pgtkxgdna,
 					  	  is_edge = isedge,
 					  	  min_p = min_p)) %>%
-				  select(-min_p) %>%
+				  dplyr::select(-min_p) %>%
 				  mutate(loc = str_c(chrom, ":", pos, "_", ref, ">", alt)) %>%
 				  mutate(position_orig = pos, ref_orig = ref, alt_orig = alt, position = pos) %>%
 				  mutate(gratio = (adnobaq+2)*(dpgdna+4)/((adgdna+2)*(dpnobaq+4)),
@@ -705,8 +705,8 @@ techval_repeats = read.csv(url_techval.repeats, header=TRUE, sep="\t", stringsAs
                          end = position_orig + 1) %>%
                   genome_left_join(clean_target_region, by = c("chrom", "start", "end")) %>%
                   mutate(chrom = chrom.x) %>%
-                  select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
-				  left_join(variants %>% select(patient_id, chrom, position_orig, ref_orig, alt_orig, MSK, grail), by=c("patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
+                  dplyr::select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
+				  left_join(variants %>% dplyr::select(patient_id, chrom, position_orig, ref_orig, alt_orig, MSK, grail), by=c("patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
 				  mutate(MSK = ifelse(is.na(MSK), 0, MSK)) %>%
 				  mutate(grail = 1) %>%
 				  mutate(study = "TechVal") %>%
@@ -718,7 +718,7 @@ repeat_variants = bind_rows(small_vars_plasma[,feature_names,drop=FALSE] %>%
 							techval_repeats[,feature_names,drop=FALSE])
 
 repeat_variants = label_bio_source(repeat_variants)
-repeat_variants = left_join(repeat_variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+repeat_variants = left_join(repeat_variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 repeat_variants = repeat_variants %>%
 		   				mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -738,7 +738,7 @@ vars_rep2 = repeat_variants %>%
 
 all_vars = full_join(vars_rep0 %>% mutate(replicate = 1),
 					 vars_rep1 %>% mutate(replicate = 2), by=c("study", "subj_type", "patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
-		   select(patient_id, adnobaq.x, adnobaq.y, dpnobaq.x, dpnobaq.y, bio_source.x, bio_source.y) %>%
+		   dplyr::select(patient_id, adnobaq.x, adnobaq.y, dpnobaq.x, dpnobaq.y, bio_source.x, bio_source.y) %>%
 		   mutate(af_rep1 = 100*adnobaq.x/dpnobaq.x) %>%
 		   mutate(af_rep2 = 100*adnobaq.y/dpnobaq.y) %>%
 		   mutate(bio_source.x = ifelse(is.na(bio_source.x), "unmatched", bio_source.x)) %>%
@@ -812,7 +812,7 @@ dev.off()
 
 all_vars = full_join(vars_rep0 %>% mutate(replicate = 1),
 					 vars_rep2 %>% mutate(replicate = 3), by=c("study", "subj_type", "patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
-		   select(patient_id, adnobaq.x, adnobaq.y, dpnobaq.x, dpnobaq.y, bio_source.x, bio_source.y) %>%
+		   dplyr::select(patient_id, adnobaq.x, adnobaq.y, dpnobaq.x, dpnobaq.y, bio_source.x, bio_source.y) %>%
 		   mutate(af_rep1 = 100*adnobaq.x/dpnobaq.x) %>%
 		   mutate(af_rep2 = 100*adnobaq.y/dpnobaq.y) %>%
 		   mutate(bio_source.x = ifelse(is.na(bio_source.x), "unmatched", bio_source.x)) %>%

@@ -102,7 +102,7 @@ all_patient_table = cbind.data.frame(subj_type = rep(all_patient_table$subj_type
                                                        each = nrow(all_patient_table)))
 
 variants = label_bio_source(small_vars_plasma)
-variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
 		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -152,7 +152,7 @@ for (subj in subj_num_smry$subj_type) {
 for (subj in c("Control", "Breast", "Lung", "Prostate")) {
   subj_smry = gene_recurrences %>%
    			  filter(subj_type == subj, bio_source == "VUSo", is_nonsyn, gene %in% unique(gene_list)) %>%
-  			  select(gene, num_patient)
+  			  dplyr::select(gene, num_patient)
    
   gene_stats_table_list[[subj]] = subj_smry
 }
@@ -173,7 +173,7 @@ gene_stats_smry = bind_cols(gene_stats_smry, Mean = gene_stats_mean) %>%
 gene_stats_smry = gene_stats_smry[1:41,,drop=FALSE]
 
 gene_stats_matrix = as.matrix(gene_stats_smry %>%
-					select(-gene, -Mean))
+					dplyr::select(-gene, -Mean))
 rownames(gene_stats_matrix) = gene_stats_smry$gene
 idx_names = match(colnames(gene_stats_matrix), subj_num_smry$subj_type)
 colnames(gene_stats_matrix) = subj_num_smry$subj_type_num[idx_names]
@@ -229,7 +229,7 @@ for (subj in subj_num_smry$subj_type) {
 for (subj in c("Breast", "Lung", "Prostate")) {
   subj_smry = gene_recurrences %>%
    			  filter(subj_type == subj, bio_source == "VUSo", is_nonsyn, gene %in% unique(gene_list)) %>%
-  			  select(gene, num_patient)
+  			  dplyr::select(gene, num_patient)
    
   gene_stats_table_list[[subj]] = subj_smry
 }
@@ -249,7 +249,7 @@ gene_stats_smry = bind_cols(gene_stats_smry, Mean = gene_stats_mean) %>%
 gene_stats_smry = gene_stats_smry[1:41,,drop=FALSE]
 
 gene_stats_matrix = as.matrix(gene_stats_smry %>%
-					select(-gene, -Mean))
+					dplyr::select(-gene, -Mean))
 rownames(gene_stats_matrix) = gene_stats_smry$gene
 idx_names = match(colnames(gene_stats_matrix), subj_num_smry$subj_type)
 colnames(gene_stats_matrix) = subj_num_smry$subj_type_num[idx_names]

@@ -93,18 +93,20 @@ small_vars_plasma = small_vars_plasma %>%
 
 variants = label_bio_source(small_vars_plasma)
 
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 variants = variants %>%
 		   mutate(bio_source = case_when(
-		   MSK == 1 & grail == 1 ~ "biopsy_matched",
-		   MSK == 1 & grail == 0 ~ "biopsy_only",
-		   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
-		   category %in% c("germline", "germlineish") ~ "germline",
-		   category %in% c("blood", "bloodier") ~ "WBC_matched",
- 		   category == "somatic" ~ "VUSo",
- 		   TRUE ~ "other"),
- 		   af = ifelse(is.na(af), 0, af),
- 		   af_nobaq = round(adnobaq / dpnobaq * 100, 2),
- 		   af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+		   					   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   					   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   					   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   					   category %in% c("germline", "germlineish") ~ "germline",
+		   					   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   					   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+		   					   category == "somatic" ~ "VUSo",
+		   					   TRUE ~ "other"),
+		   		  af = ifelse(is.na(af), 0, af),
+		   		  af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+		   		  af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
 
 variants = variants %>%
 		   filter(is_nonsyn) %>%

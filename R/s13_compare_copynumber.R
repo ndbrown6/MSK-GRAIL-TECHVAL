@@ -86,9 +86,9 @@ if (!dir.exists("../res/rebuttal")) {
 {
 
 	cn = x$jointseg %>%
-		 select(chrom, pos = maploc, log2 = cnlr)
+		 dplyr::select(chrom, pos = maploc, log2 = cnlr)
 	seg = y$cncf %>%
-		  select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+		  dplyr::select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
 	if (fix_6) {
 		fixed_cn = fix_6(cn, seg, ix)
 		cn = fixed_cn[[1]]
@@ -98,7 +98,7 @@ if (!dir.exists("../res/rebuttal")) {
 		  mutate(n = cumsum(n))
 	
    	par(mar=c(5, 5, 4, 2)+.1)
-   	load("../res/etc/CytoBand.RData")
+   	data(CytoBand)
    	end = NULL
    	for (i in 1:23) {
    		end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
@@ -120,13 +120,13 @@ if (!dir.exists("../res/rebuttal")) {
   	}
   	axis(2, at = c(-4, -2, 0, 2, 4), labels = c(-4, -2, 0, 2, 4), cex.axis = 1, las = 1)
 	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
-	abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 	for (j in 1:23) {
-		abline(v=CytoBand[j,"end"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+		abline(v=CytoBand[j,"end"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 	}
 	axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
     for (k in c(1, 2, 4, 8, 14)) {
-		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparentRgb("brown", 155), lty=3)
+		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparent_rgb("brown", 155), lty=3)
 	}
 	rect(xleft=1-1e10, xright=CytoBand[23,"end"]+1e10, ybottom=4, ytop=6, col="lightgrey", border="black", lwd=1.5)
 	title(main = title, line=-1, cex.main=.75, font.main=1)
@@ -136,7 +136,7 @@ if (!dir.exists("../res/rebuttal")) {
 'plot_log3_' <- function(x, y, title = "")
 {
    	par(mar=c(5, 5, 4, 2)+.1)
-   	load("../res/etc/CytoBand.RData")
+   	data(CytoBand)
    	end = NULL
 	for (j in 1:23) {
 		end = c(end, max(CytoBand$End[CytoBand$Chromosome==j]))
@@ -193,20 +193,20 @@ if (!dir.exists("../res/rebuttal")) {
 #==================================================
 # update msk_impact tumor (alpha, psi)
 #==================================================
-key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
-		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 
-if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
+if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
 	print(key_file$GRAIL_ID[i])
 	impact_path = paste0("../res/rebuttal/msk_impact/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
 	impact_data = new.env()
 	load(impact_path, envir=impact_data)
 	
 	impact_cn = impact_data$out2$jointseg %>%
-			    select(chrom, pos = maploc, log2 = cnlr)
+			    dplyr::select(chrom, pos = maploc, log2 = cnlr)
 	impact_seg = impact_data$fit$cncf %>%
-				 select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+				 dplyr::select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
 	impact_seg = prune_(x=impact_seg) %>%
 				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
 										  psi=key_file$IMPACT_psi[i],
@@ -227,11 +227,11 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
  	}
  	axis(2, at = NULL, cex.axis = 1.15, las = 1)
 	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
-	abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+	abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 	abline(h=0, col="black")
 	for (j in 1:23) {
 		v = max(which(impact_seg[,"chrom"]==j))
-		abline(v=impact_seg[v,"n"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+		abline(v=impact_seg[v,"n"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
 	}
 	start = end = 1:23
 	for (j in 2:23) {
@@ -245,7 +245,7 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
     purity = key_file$IMPACT_alpha[i]
     ploidy = key_file$IMPACT_psi[i]
     for (k in c(1, 2, 3, 4, 8, 14)) {
-		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparentRgb("brown", 155), lty=3)
+		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparent_rgb("brown", 155), lty=3)
 	}
     box(lwd=1.5)
 	dev.off()
@@ -254,20 +254,20 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
 #==================================================
 # update grail cfDNA uncollapsed (alpha, psi)
 #==================================================
-key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
-		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 
-if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
+if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
  	print(key_file$GRAIL_ID[i])
  	grail_path = paste0("../res/rebuttal/uncollapsed_bam/facets/cncf/", key_file$GRAIL_ID[i], "-T_", key_file$GRAIL_ID[i], "-N.Rdata")
  	grail_data = new.env()
  	load(grail_path, envir=grail_data)
  	
  	grail_cn = grail_data$out2$jointseg %>%
- 			   select(chrom, pos = maploc, log2 = cnlr)
+ 			   dplyr::select(chrom, pos = maploc, log2 = cnlr)
  	grail_seg = grail_data$fit$cncf %>%
- 				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+ 				dplyr::select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
  	
  	fixed_cn = fix_6(grail_cn, grail_seg)
  	grail_cn = fixed_cn[[1]]
@@ -294,11 +294,11 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
   	}
   	axis(2, at = NULL, cex.axis = 1.15, las = 1)
  	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
- 	abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+ 	abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
  	abline(h=0, col="black")
  	for (j in 1:23) {
  		v = max(which(grail_seg[,"chrom"]==j))
- 		abline(v=grail_seg[v,"n"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+ 		abline(v=grail_seg[v,"n"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
  	}
  	start = end = 1:23
  	for (j in 2:23) {
@@ -312,7 +312,7 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
      purity = key_file$GRAIL_alpha[i]
      ploidy = key_file$GRAIL_psi[i]
      for (k in c(1, 2, 3, 4, 8, 14)) {
- 		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparentRgb("brown", 155), lty=3)
+ 		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparent_rgb("brown", 155), lty=3)
  	}
     box(lwd=1.5)
  	dev.off()
@@ -321,16 +321,16 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
 #==================================================
 # update grail cfDNA collapsed (alpha, psi)
 #==================================================
-if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
+if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
  	print(key_file$GRAIL_ID[i])
  	grail_path = paste0("../res/rebuttal/collapsed_bam/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
  	grail_data = new.env()
  	load(grail_path, envir=grail_data)
  	
  	grail_cn = grail_data$out2$jointseg %>%
- 			   select(chrom, pos = maploc, log2 = cnlr)
+ 			   dplyr::select(chrom, pos = maploc, log2 = cnlr)
  	grail_seg = grail_data$fit$cncf %>%
- 				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
+ 				dplyr::select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
  	
  	fixed_cn = fix_6(grail_cn, grail_seg)
  	grail_cn = fixed_cn[[1]]
@@ -357,11 +357,11 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
   	}
   	axis(2, at = NULL, cex.axis = 1.15, las = 1)
  	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
- 	abline(v=1, col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+ 	abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
  	abline(h=0, col="black")
  	for (j in 1:23) {
  		v = max(which(grail_seg[,"chrom"]==j))
- 		abline(v=grail_seg[v,"n"], col=transparentRgb("goldenrod3", 255), lty=3, lwd=.5)
+ 		abline(v=grail_seg[v,"n"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
  	}
  	start = end = 1:23
  	for (j in 2:23) {
@@ -375,20 +375,20 @@ if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
      purity = key_file$GRAIL_alpha[i]
      ploidy = key_file$GRAIL_psi[i]
      for (k in c(1, 2, 3, 4, 8, 14)) {
- 		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparentRgb("brown", 155), lty=3)
+ 		abline(h=(log2(((purity)*k + (1-purity)*2)/((purity)*ploidy + (1-purity)*2))), col=transparent_rgb("brown", 155), lty=3)
  	}
     box(lwd=1.5)
  	dev.off()
 } }
  
 #==================================================
-# % agreement based on Log2 ratios
+# % agreement based on log2 ratios
 #==================================================
-key_file = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
- 		   select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+ 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 		   
-ctDNA_fraction = read_csv(file=url_ctdna, col_types = cols(.default = col_character())) %>%
+ctDNA_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character())) %>%
 		   		 type_convert() %>%
 		   		 rename(GRAIL_ID = ID)
 		   		 
@@ -401,7 +401,7 @@ res = foreach (i=1:nrow(key_file)) %dopar% {
  	load(impact_path, envir=impact_data)
  	
  	impact_seg = impact_data$tmp %>%
- 				 select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+ 				 dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
  				 filter(chrom<23)
  	impact_seg = prune_(x=impact_seg) %>%
  				 bind_cols(cn = absolute_(rho=key_file$IMPACT_alpha[i],
@@ -421,8 +421,8 @@ res = foreach (i=1:nrow(key_file)) %dopar% {
  	load(grail_path, envir=grail_data)
  	
  	grail_seg = grail_data$tmp %>%
- 			   select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
- 			   filter(chrom<23)
+ 			    dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+ 			    filter(chrom<23)
  	
 
  	grail_seg = prune_(x=grail_seg) %>%
@@ -500,7 +500,7 @@ d = data_frame(x=d$x, y=d$y, facets=paste0("Breast (n = ", sum(tmp.0$tissue=="Br
 
 pdf(file="../res/rebuttal/distribution_correlation_coefficient_breast_log2_ratio.pdf", width=5, height=6)
 plot(d$x, d$y, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,1.6))
-polygon(x=d$x, y=d$y, col=transparentRgb("salmon", 205), border="salmon", lwd=1.5)
+polygon(x=d$x, y=d$y, col=transparent_rgb("salmon", 205), border="salmon", lwd=1.5)
 abline(v=0, lty=3, lwd=1, col="grey10")
 axis(1, at = NULL, cex.axis = 1.15, las = 1)
 axis(2, at = NULL, cex.axis = 1.15, las = 1)
@@ -518,7 +518,7 @@ d = data_frame(x=d$x, y=d$y, facets=paste0("Lung (n = ", sum(tmp.0$tissue=="Lung
 
 pdf(file="../res/rebuttal/distribution_correlation_coefficient_lung_log2_ratio.pdf", width=5, height=6)
 plot(d$x, d$y, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,1.6))
-polygon(x=d$x, y=d$y, col=transparentRgb("#FDAE61", 205), border="#FDAE61", lwd=1.5)
+polygon(x=d$x, y=d$y, col=transparent_rgb("#FDAE61", 205), border="#FDAE61", lwd=1.5)
 abline(v=0, lty=3, lwd=1, col="grey10")
 axis(1, at = NULL, cex.axis = 1.15, las = 1)
 axis(2, at = NULL, cex.axis = 1.15, las = 1)
@@ -536,7 +536,7 @@ d = data_frame(x=d$x, y=d$y, facets=paste0("Prostate (n = ", sum(tmp.0$tissue=="
 
 pdf(file="../res/rebuttal/distribution_correlation_coefficient_prostate_log2_ratio.pdf", width=5, height=6)
 plot(d$x, d$y, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,1.6))
-polygon(x=d$x, y=d$y, col=transparentRgb("#ABDDA4", 205), border="#ABDDA4", lwd=1.5)
+polygon(x=d$x, y=d$y, col=transparent_rgb("#ABDDA4", 205), border="#ABDDA4", lwd=1.5)
 abline(v=0, lty=3, lwd=1, col="grey10")
 axis(1, at = NULL, cex.axis = 1.15, las = 1)
 axis(2, at = NULL, cex.axis = 1.15, las = 1)
@@ -550,7 +550,7 @@ dev.off()
 colours = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4")
 shapes = c("Yes"=17, "No"=19)
 pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2.pdf", width=5, height=6)
-plot(tmp.0$ctdna_fraction_w_ne*100, tmp.0$correlation_coefficient, type="p", xlab="", ylab="", col=unlist(lapply(colours[tmp.0$tissue], transparentRgb, alpha=205)), pch=shapes[tmp.0$ctdna_fraction_cat_w_ne], cex=1.15, frame.plot=FALSE, axes=FALSE, ylim=c(-.5,1.09375))
+plot(tmp.0$ctdna_fraction_w_ne*100, tmp.0$correlation_coefficient, type="p", xlab="", ylab="", col=unlist(lapply(colours[tmp.0$tissue], transparent_rgb, alpha=205)), pch=shapes[tmp.0$ctdna_fraction_cat_w_ne], cex=1.15, frame.plot=FALSE, axes=FALSE, ylim=c(-.5,1.09375))
 axis(1, at = NULL, cex.axis = 1.15, las = 1)
 axis(2, at = NULL, cex.axis = 1.15, las = 1)
 mtext(side = 1, text = "ctDNA fraction (%)", line = 3.15, cex = 1.25)
@@ -575,7 +575,7 @@ legend(x=60, y=-.2, legend=names(colours), pch=19, col=colours, title="Cancer ty
 dev.off()
 
 pdf(file="../res/rebuttal/Tumor_Purity_versus_Correlation_Coefficient_Log2.pdf", width=5, height=6)
-plot(tmp.0$tumor_purity*100, tmp.0$correlation_coefficient, type="p", xlab="", ylab="", col=unlist(lapply(colours[tmp.0$tissue], transparentRgb, alpha=205)), pch=19, cex=1.15, frame.plot=FALSE, axes=FALSE, ylim=c(-.5,1.09375), xlim=c(10,100))
+plot(tmp.0$tumor_purity*100, tmp.0$correlation_coefficient, type="p", xlab="", ylab="", col=unlist(lapply(colours[tmp.0$tissue], transparent_rgb, alpha=205)), pch=19, cex=1.15, frame.plot=FALSE, axes=FALSE, ylim=c(-.5,1.09375), xlim=c(10,100))
 axis(1, at = NULL, cex.axis = 1.15, las = 1)
 axis(2, at = NULL, cex.axis = 1.15, las = 1)
 mtext(side = 1, text = "Tumor purity (%)", line = 3.15, cex = 1.25)
@@ -614,46 +614,6 @@ dev.off()
 #==================================================
 # Log2 ratio plots grail cfdna tumor samples
 #==================================================
-load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0069-T.RData")
-tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
-colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
-tmp2[tmp2[,"Chromosome"]==17,"Log2Ratio"] = CN[CN[,"Chromosome"]==17,"Log2Ratio"]
-tmp = list()
-for (i in 1:23) {
-	if (i==17) {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=100, gamma=50, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
-}
-tmp = do.call(rbind, tmp)
-tmp = undo_(tmp, n=5)
-pdf(file="../res/rebuttal/MSK-VB-0069_cfDNA.pdf", width=9.25, height=4)
-plot_log3_(x=tmp2, y=tmp, title = "MSK-VB-0069 | cfDNA")
-dev.off()
-
-load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0044-T.RData")
-tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
-colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
-tmp2[tmp2[,"Chromosome"]==11,"Log2Ratio"] = CN[CN[,"Chromosome"]==11,"Log2Ratio"]
-tmp = list()
-for (i in 1:23) {
-	if (i==11) {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=50, gamma=50, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=100, gamma=150, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
-}
-tmp = do.call(rbind, tmp)
-tmp = undo_(tmp, n=5)
-pdf(file="../res/rebuttal/MSK-VB-0044_cfDNA.pdf", width=9.25, height=4)
-plot_log3_(x=tmp2, y=tmp, title = "MSK-VB-0044 | cfDNA")
-dev.off()
-
 load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0008-T.RData")
 tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
@@ -732,7 +692,7 @@ pdf(file="../res/rebuttal/Histogram_Log2_Ratio_Healthy_M.pdf", width=4, height=6
 plot(0, 0, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,10.625), xlim=c(-2,2))
 for (i in 1:length(fileNames)) {
 	if (res[[i]]$z=="M") {
-		points(res[[i]]$x, res[[i]]$y, type="l", col=transparentRgb("salmon"), lwd=1.5)
+		points(res[[i]]$x, res[[i]]$y, type="l", col=transparent_rgb("salmon"), lwd=1.5)
 	}
 }
 abline(v=0, lty=3, col="grey10", lwd=1)
@@ -750,7 +710,7 @@ pdf(file="../res/rebuttal/Histogram_Log2_Ratio_Healthy_F.pdf", width=4, height=6
 plot(0, 0, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,10.625), xlim=c(-2,2))
 for (i in 1:length(fileNames)) {
 	if (res[[i]]$z=="F") {
-		points(res[[i]]$x, res[[i]]$y, type="l", col=transparentRgb("steelblue"), lwd=1.5)
+		points(res[[i]]$x, res[[i]]$y, type="l", col=transparent_rgb("steelblue"), lwd=1.5)
 	}
 }
 abline(v=0, lty=3, col="grey10", lwd=1)
@@ -878,9 +838,9 @@ dev.off()
 	polygon(x = X, y = Y, col = col, border = "black", density = density, angle = angle, lwd = lwd)
 }
 
-tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
  		  type_convert() %>%
- 		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+ 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 i_cn = read.csv(file="~/share/data/common/cbioportal_repos/msk-impact/msk-impact/data_CNA.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
 colnames(i_cn) = gsub(pattern=".", replacement="-", x=colnames(i_cn), fixed=TRUE)
 rownames(i_cn) = i_cn$Hugo_Symbol
@@ -897,7 +857,7 @@ for (j in 1:length(sample_names)) {
 	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
 	screen(zz[1])
 	start = 0
-	load("../res/etc/CytoBand.RData")
+	data(CytoBand)
 	end = max(as.numeric(CytoBand[CytoBand[,1]==17,4]))
 	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 	index = CN[,"Chromosome"]==17
@@ -918,7 +878,7 @@ for (j in 1:length(sample_names)) {
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
 	box(lwd=2)
 	screen(zz[2])
-	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 	close.screen(all.screens=TRUE)
 	dev.off()
@@ -934,7 +894,7 @@ for (j in 1:length(sample_names)) {
 	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
 	screen(zz[1])
 	start = 0
-	load("../res/etc/CytoBand.RData")
+	data(CytoBand)
 	end = max(as.numeric(CytoBand[CytoBand[,1]==17,4]))
 	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 	index = CN[,"Chromosome"]==17
@@ -955,7 +915,7 @@ for (j in 1:length(sample_names)) {
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
 	box(lwd=2)
 	screen(zz[2])
-	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 	close.screen(all.screens=TRUE)
 	dev.off()
@@ -965,9 +925,9 @@ for (j in 1:length(sample_names)) {
 #==================================================
 # Lung MET amplified cases
 #==================================================
-tracker = read_tsv(file="../res/etc/master_sample_key.tsv", col_types = cols(.default = col_character())) %>%
+tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
  		  type_convert() %>%
- 		  select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+ 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 i_cn = read.csv(file="~/share/data/common/cbioportal_repos/msk-impact/msk-impact/data_CNA.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
 colnames(i_cn) = gsub(pattern=".", replacement="-", x=colnames(i_cn), fixed=TRUE)
 rownames(i_cn) = i_cn$Hugo_Symbol
@@ -984,7 +944,7 @@ for (j in 1:length(sample_names)) {
 	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
 	screen(zz[1])
 	start = 0
-	load("../res/etc/CytoBand.RData")
+	data(CytoBand)
 	end = max(as.numeric(CytoBand[CytoBand[,1]==7,4]))
 	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 	index = CN[,"Chromosome"]==7
@@ -1005,7 +965,7 @@ for (j in 1:length(sample_names)) {
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
 	box(lwd=2)
 	screen(zz[2])
-	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 	close.screen(all.screens=TRUE)
 	dev.off()
@@ -1021,7 +981,7 @@ for (j in 1:length(sample_names)) {
 	zz = split.screen(figs=matrix(c(0,1,.15,1, 0,1,0.0775,.4), nrow=2, ncol=4, byrow=TRUE))
 	screen(zz[1])
 	start = 0
-	load("../res/etc/CytoBand.RData")
+	data(CytoBand)
 	end = max(as.numeric(CytoBand[CytoBand[,1]==7,4]))
 	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 	index = CN[,"Chromosome"]==7
@@ -1042,7 +1002,7 @@ for (j in 1:length(sample_names)) {
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
 	box(lwd=2)
 	screen(zz[2])
-	assembly = read.csv(file="../res/rebuttal/msk_impact/modules/copy_number/hg19_cytoBandIdeo.txt", header=FALSE, sep="\t", stringsAsFactors=FALSE)
+	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 	close.screen(all.screens=TRUE)
 	dev.off()

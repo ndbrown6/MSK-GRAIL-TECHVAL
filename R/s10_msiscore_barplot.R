@@ -8,16 +8,16 @@ if (!dir.exists("../res/figureS10")) {
 	dir.create("../res/figureS10")
 }
 
-all_msi_df = read_tsv(file=msi_processed_data_file)
+all_msi_df = read_tsv(file=url_msi_processed_data)
 
-alias_df = read_tsv(file=subject_alias_file)
+alias_df = read_tsv(file=url_subject_alias)
 
 type_frame_df = data_frame(type=c("VB","VL","VP"), expand=c("Metastatic Breast","Metastatic Lung","Metastatic Prostate"), subject_type=c("Breast","Lung","Prostate"))
 
 useful_msi_df = all_msi_df %>%
 				left_join(alias_df %>% mutate(id=patient_id)) %>%
 				mutate(id=alias) %>%
-				select(patient_id,original_msi,fixed_msi,subject_type,sample)
+				dplyr::select(patient_id,original_msi,fixed_msi,subject_type,sample)
 				
 pdf(file="../res/figureS10/all_msi_score_original.pdf", height=10, width=18)
 par(mar = c(6.1, 6, 4.1, 1), mfcol=c(1,3))

@@ -92,7 +92,7 @@ if (FLAG) {
 						mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))  					
 
 	variants = label_bio_source(small_vars_plasma)
-	variants = left_join(variants, msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+	variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
 	variants = variants %>%
 			   mutate(bio_source = case_when(
 			   MSK == 1 & grail == 1 ~ "biopsy_matched",
@@ -167,9 +167,14 @@ if (FLAG) {
   		   	   mutate(in_gnomad = loc_lng %in% gnomad$id) %>%
   		   	   mutate(is_hotspot = loc_lng %in% hotspots$id)
   		   	   
-  	save(all_vars, clinical, file=all_vars_and_clinical)
+  	write_tsv(all_vars, path=wbc_scored_annotated_and_clinical$scored, append = FALSE, col_names = TRUE)
+  	write_tsv(clinical, path=wbc_scored_annotated_and_clinical$clinical, append = FALSE, col_names = TRUE)
+  	
 } else {
- 	load(all_vars_and_clinical)
+	all_vars = read_tsv(file=wbc_scored_annotated_and_clinical$scored, col_types = cols(.default = col_character())) %>%
+		   	   type_convert()
+ 	clinical = read_tsv(file=wbc_scored_annotated_and_clinical$clinical, col_types = cols(.default = col_character())) %>%
+ 			   type_convert()
 }
 
 #==================================================
@@ -273,7 +278,7 @@ burden_healthy = all_vars %>%
 patient_ids = save_vars %>%
 			  filter(is_patient_valid) %>%
 			  filter(subj_type=="Control") %>%
-			  select(patient_id) %>%
+			  dplyr::select(patient_id) %>%
 			  distinct() %>%
 			  .[["patient_id"]]
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_healthy$patient_id)
@@ -289,7 +294,7 @@ burden_cancer = all_vars %>%
 patient_ids = save_vars %>%
 			  filter(is_patient_valid) %>%
 			  filter(subj_type!="Control") %>%
-			  select(patient_id) %>%
+			  dplyr::select(patient_id) %>%
 			  distinct() %>%
 			  .[["patient_id"]]			  
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_cancer$patient_id)
@@ -306,14 +311,14 @@ p1 = glm(num_called ~ age, family="poisson", data=data)
 #text(20, 40, cex = .95, labels = paste("(P = ", toupper(signif(summary(p1)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
 #text(20, 30, cex = .95, labels = paste("N = ", sum(burden_cancer$num_called),sep = ""), pos = 4)
 p1 = ggplot_build(qplot(age, num_called, data=burden_cancer) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_cancer$age, ifelse(burden_cancer$num_called==0, 0.5, burden_cancer$num_called), bg=transparentRgb("#EAA411", 255), pch=21, cex=1.05, lwd=0)
+points(burden_cancer$age, ifelse(burden_cancer$num_called==0, 0.5, burden_cancer$num_called), bg=transparent_rgb("#EAA411", 255), pch=21, cex=1.05, lwd=0)
 data = data.frame(burden_healthy[,c("age", "num_called", "study"),drop=FALSE])
 p2 = glm(num_called ~ age, family="poisson", data=data)
 #text(20, 20, cex = .95, labels = bquote(AIC == .(summary(p2)$aic, 3)), pos = 4)
 #text(20, 15, cex = .95, labels = paste("(P = ", toupper(signif(summary(p2)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
 #text(20, 10, cex = .95, labels = paste("N = ", sum(burden_healthy$num_called),sep = ""), pos = 4)
 p2 = ggplot_build(qplot(age, num_called, data=burden_healthy) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_healthy$age, ifelse(burden_healthy$num_called==0, 0.5, burden_healthy$num_called), bg=transparentRgb("#1F6784", 255), pch=21, cex=1.05, lwd=0)
+points(burden_healthy$age, ifelse(burden_healthy$num_called==0, 0.5, burden_healthy$num_called), bg=transparent_rgb("#1F6784", 255), pch=21, cex=1.05, lwd=0)
 points(p1[,"x"], p1[,"y"], type="l", col="#EAA411", lwd=2)
 points(p2[,"x"], p2[,"y"], type="l", col="#1F6784", lwd=2)
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
@@ -321,7 +326,7 @@ axis(1, at = seq(30, 90, by=20), labels=rep("", 4), padj = 0.25, lwd=-1, lwd.tic
 axis(2, at = c(.5, 1, 2, 5, 10, 20, 50), labels = c("0", "1", "2", "5", "10", "20", "50"), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
 mtext(side = 1, text = "Age (years)", line = 4, cex = 1.5)
 mtext(side = 2, text = "Number of variants", line = 4.5, cex = 1.5)
-legend(x=20, y=55, pch=21, legend=c("Cancer","Control"), box.lwd=-1, pt.cex=1.05, cex=.95, pt.bg=unlist(lapply(c("#EAA411", "#1F6784"), transparentRgb, 255)), pt.lwd=0)
+legend(x=20, y=55, pch=21, legend=c("Cancer","Control"), box.lwd=-1, pt.cex=1.05, cex=.95, pt.bg=unlist(lapply(c("#EAA411", "#1F6784"), transparent_rgb, 255)), pt.lwd=0)
 dev.off()
  
 #==================================================
@@ -338,7 +343,7 @@ burden_healthy = all_vars %>%
 patient_ids = save_vars %>%
 			  filter(is_patient_valid) %>%
 			  filter(subj_type=="Control") %>%
-			  select(patient_id) %>%
+			  dplyr::select(patient_id) %>%
 			  distinct() %>%
 			  .[["patient_id"]]
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_healthy$patient_id)
@@ -355,7 +360,7 @@ burden_cancer = all_vars %>%
 patient_ids = save_vars %>%
 			  filter(is_patient_valid) %>%
 			  filter(subj_type!="Control") %>%
-			  select(patient_id) %>%
+			  dplyr::select(patient_id) %>%
 			  distinct() %>%
 			  .[["patient_id"]]			  
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_cancer$patient_id)
@@ -372,14 +377,14 @@ p1 = glm(num_called ~ age, family="poisson", data=data)
 #text(20, 40, cex = .95, labels = paste("(P = ", toupper(signif(summary(p1)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
 #text(20, 30, cex = .95, labels = paste("N = ", sum(burden_cancer$num_called),sep = ""), pos = 4)
 p1 = ggplot_build(qplot(age, num_called, data=burden_cancer) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_cancer$age, ifelse(burden_cancer$num_called==0, 0.5, burden_cancer$num_called), bg=transparentRgb("#EAA411", 255), pch=21, cex=1.05, lwd=0)
+points(burden_cancer$age, ifelse(burden_cancer$num_called==0, 0.5, burden_cancer$num_called), bg=transparent_rgb("#EAA411", 255), pch=21, cex=1.05, lwd=0)
 data = data.frame(burden_healthy[,c("age", "num_called", "study"),drop=FALSE])
 p2 = glm(num_called ~ age, family="poisson", data=data)
 #text(20, 20, cex = .95, labels = bquote(AIC == .(summary(p2)$aic, 3)), pos = 4)
 #text(20, 15, cex = .95, labels = paste("(P = ", toupper(signif(summary(p2)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
 #text(20, 10, cex = .95, labels = paste("N = ", sum(burden_healthy$num_called),sep = ""), pos = 4)
 p2 = ggplot_build(qplot(age, num_called, data=burden_healthy) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_healthy$age, ifelse(burden_healthy$num_called==0, 0.5, burden_healthy$num_called), bg=transparentRgb("#1F6784", 255), pch=21, cex=1.05, lwd=0)
+points(burden_healthy$age, ifelse(burden_healthy$num_called==0, 0.5, burden_healthy$num_called), bg=transparent_rgb("#1F6784", 255), pch=21, cex=1.05, lwd=0)
 points(p1[,"x"], p1[,"y"], type="l", col="#EAA411", lwd=2)
 points(p2[,"x"], p2[,"y"], type="l", col="#1F6784", lwd=2)
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
@@ -387,7 +392,7 @@ axis(1, at = seq(30, 90, by=20), labels=rep("", 4), padj = 0.25, lwd=-1, lwd.tic
 axis(2, at = c(.5, 1, 2, 5, 10, 20, 50), labels = c("0", "1", "2", "5", "10", "20", "50"), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
 mtext(side = 1, text = "Age (years)", line = 4, cex = 1.5)
 mtext(side = 2, text = "Number of variants", line = 4.5, cex = 1.5)
-legend(x=20, y=55, pch=21, legend=c("Cancer","Control"), box.lwd=-1, pt.cex=1.05, cex=.95, pt.bg=unlist(lapply(c("#EAA411", "#1F6784"), transparentRgb, 255)), pt.lwd=0)
+legend(x=20, y=55, pch=21, legend=c("Cancer","Control"), box.lwd=-1, pt.cex=1.05, cex=.95, pt.bg=unlist(lapply(c("#EAA411", "#1F6784"), transparent_rgb, 255)), pt.lwd=0)
 dev.off()
   
 #==================================================
@@ -411,7 +416,7 @@ burden_healthy = all_vars %>%
 patient_ids = save_vars %>%
 			  filter(is_patient_valid) %>%
 			  filter(subj_type=="Control") %>%
-			  select(patient_id) %>%
+			  dplyr::select(patient_id) %>%
 			  distinct() %>%
 			  .[["patient_id"]]
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_healthy$patient_id)  	 	   		 
@@ -449,7 +454,7 @@ burden_cancer = all_vars %>%
 patient_ids = save_vars %>%
 			  filter(is_patient_valid) %>%
 			  filter(subj_type!="Control") %>%
-			  select(patient_id) %>%
+			  dplyr::select(patient_id) %>%
 			  distinct() %>%
 			  .[["patient_id"]]			  
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_cancer$patient_id)
@@ -547,11 +552,11 @@ data_cfdna = data_cfdna[rownames(data_all),,drop=FALSE]
 data_ch = do.call(rbind, data_ch)
 data_ch = data_ch[rownames(data_all),,drop=FALSE]
 cols = ifelse(grepl("MSK", rownames(data_all)), "#EAA411", "#1F6784")
-zzz = barplot(data_all[,"num_called"], col=unlist(lapply(cols, transparentRgb, 105)), border=cols, space=.15, axes=FALSE, ylim=c(-3,41), xlim=c(0,220))
-barplot(data_cfdna[,"num_called"], col=unlist(lapply(cols, transparentRgb, 255)), border=NA, space=.15, lwd=0.01, add=TRUE, axes=FALSE)
+zzz = barplot(data_all[,"num_called"], col=unlist(lapply(cols, transparent_rgb, 105)), border=cols, space=.15, axes=FALSE, ylim=c(-3,41), xlim=c(0,220))
+barplot(data_cfdna[,"num_called"], col=unlist(lapply(cols, transparent_rgb, 255)), border=NA, space=.15, lwd=0.01, add=TRUE, axes=FALSE)
 axis(2, at = NULL, cex.axis = 1.25, las = 1)
 mtext(side = 2, text = "Number of variants", line = 3.75, cex = 1.35)
-legend(x=0, y=42, legend=c("Cancer: WBC only", "Cancer: WBC and cfDNA", "Control: WBC only", "Control: WBC and cfDNA"), col=c(transparentRgb("#EAA411"), "#EAA411", transparentRgb("#1F6784"), "#1F6784"), pch=15, box.lwd=-1, cex=1.05, pt.cex=1.65)
+legend(x=0, y=42, legend=c("Cancer: WBC only", "Cancer: WBC and cfDNA", "Control: WBC only", "Control: WBC and cfDNA"), col=c(transparent_rgb("#EAA411"), "#EAA411", transparent_rgb("#1F6784"), "#1F6784"), pch=15, box.lwd=-1, cex=1.05, pt.cex=1.65)
 legend(x=65, y=42, legend=c("DNMT3A", "TP53", "TET2", "ASXL1", "PPM1D", "Other CH"),
 				      col=c("#01985C", "#F7DC02", "#1E4665", "#FF7175", "#8CDB5E", "#3D98D3"),
 				      pch=19, box.lwd=-1, cex=1.05, pt.cex=1.45, text.font=3)
@@ -561,7 +566,7 @@ for (i in 1:6) {
  	ix = c(ix, length(indx))
 }
 ix = cumsum(ix)
-colss = unlist(lapply(c("#F7F7F7", "#D9D9D9", "#BDBDBD", "#969696", "#636363", "#252525"), transparentRgb, 225))
+colss = unlist(lapply(c("#F7F7F7", "#D9D9D9", "#BDBDBD", "#969696", "#636363", "#252525"), transparent_rgb, 225))
 colss2 = c(rep("black", 4), rep("white", 2))
 for (i in 2:length(ix)) {
  	rect(xleft=zzz[ix[i-1],1]+0.7, xright=zzz[ix[i],1]+.18, ybottom=-3, ytop=-.5, col=colss[i], border="white", lwd=1)
@@ -638,7 +643,7 @@ n[names(f3),"Cancer"] = f3
 pc1 = chisq.test(x=f, simulate.p.value=TRUE, B=10000)
 barplot(f, horiz=TRUE, col=c(cols,"grey80"), axes=FALSE, xlab="", las=1)
 screen(zz[2])
-tx = read.csv(file="../res/etc/prior_tx_techval_0818.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE, row.names=1)
+tx = read.csv(file=url_prior_tx, header=TRUE, sep="\t", stringsAsFactors=FALSE, row.names=1)
 index = !(rownames(data_ch) %in% rownames(tx))
 tx2 = matrix(0,nrow=sum(index), ncol=4)
 rownames(tx2) = rownames(data_ch)[index]
@@ -716,7 +721,7 @@ tmp_vars = tmp_vars %>%
 		   mutate(is_truncating = nchar(ref)!=1 | nchar(alt)!=1 | Variant_Classification=="Nonsense_Mutation" | Variant_Classification=="Nonstop_Mutation")
 variants_cancer = table(tmp_vars$is_truncating, tmp_vars$SYMBOL)/sum(grepl("V", unique(all_vars$patient_id)))
 
-tx = read.csv(file="../res/etc/prior_tx_techval_0818.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
+tx = read.csv(file=url_prior_tx, header=TRUE, sep="\t", stringsAsFactors=FALSE)
 index = !(all_vars$patient_id %in% tx[tx$prior_rt==1 | tx$prior_chemo==1,1])
 tmp_vars = all_vars[index,,drop=FALSE]
 index = tmp_vars[,"SYMBOL",drop=TRUE] %in% c(top_ch, other_ch)
@@ -750,7 +755,7 @@ m = m[,c("DNMT3A", "TP53", "TET2", "ASXL1", "PPM1D", "OTHER CH"),drop=FALSE]
 m2 = m2[,c("DNMT3A", "TP53", "TET2", "ASXL1", "PPM1D", "OTHER CH"),drop=FALSE]
 colnames(m) = colnames(m2) = c("DNMT3A", "TP53", "TET2", "ASXL1", "PPM1D", "Other CH")
 rownames(m) = rownames(m2) = c("Control", "Cancer", "Treatment naïve", "RT or CT")
-corrplot2(corr=m, corr2=m2, method="circle", is.corr=FALSE, addgrid.col=NA,
+corr_plot(corr=m, corr2=m2, method="circle", is.corr=FALSE, addgrid.col=NA,
 		  col=colorRampPalette(c("#ffffff", rep("#c33764", 4), "#1d2671"))(100),
 		  cl.lim=c(-0.01,1.6), tl.cex=1.25, tl.col="black", cl.pos = "n")
 dev.off()

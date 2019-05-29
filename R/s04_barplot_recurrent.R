@@ -91,7 +91,7 @@ small_vars_plasma = small_vars_plasma %>%
 					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))
 					
 variants = label_bio_source(small_vars_plasma) %>%
-		   left_join(msk_anno %>% select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+		   left_join(msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
                              
 variants = variants %>%
 		   mutate(bio_source = case_when(
@@ -147,7 +147,7 @@ top_cancer_genes_ordered = gene_recurrences %>%
    
 top_cancer_genes_table = gene_recurrences %>%
  						 filter(bio_source %in% c("biopsy_matched", "IMPACT-BAM_matched", "VUSo"), gene %in% gene_list, subj_type != "Control") %>%
- 						 select(subj_type, gene, percent_patient, bio_source)
+ 						 dplyr::select(subj_type, gene, percent_patient, bio_source)
    
 top_cancer_genes_table = top_cancer_genes_table %>%
  						 mutate(gene = factor(gene, levels = top_cancer_genes_ordered),

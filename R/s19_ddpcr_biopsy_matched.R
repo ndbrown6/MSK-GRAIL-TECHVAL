@@ -35,18 +35,18 @@ ddpcr = gs_url(url_ddpcr) %>%
 retest = read_tsv(url_retest)
 original = read_tsv(url_original)
 ddpcr_filtered = ddpcr %>%
-				 select(patient_id = X3, probe, af_ddPCR = `% MT`) %>%
+				 dplyr::select(patient_id = X3, probe, af_ddPCR = `% MT`) %>%
 				 full_join(ddpcr_manifest)
 
 retest_filtered = retest %>%
 				  filter(patient_id %in% ddpcr_manifest$patient_id & genename %in% ddpcr_manifest$gene & hgvsp %in% ddpcr_manifest$hgvsp) %>%
-				  select(sample_id, patient_id, gene = genename, hgvsp, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
+				  dplyr::select(sample_id, patient_id, gene = genename, hgvsp, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
 				  mutate(af_grail = adnobaq/dpnobaq*100) %>%
 				  mutate(Protocol = "V2")
 
 original_filtered = original %>%
 					filter(patient_id %in% ddpcr_manifest$patient_id & gene_id %in% ddpcr_manifest$gene & hgvs_p %in% ddpcr_manifest$hgvsp) %>%
-					select(sample_id, patient_id, gene = gene_id, hgvsp = hgvs_p, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
+					dplyr::select(sample_id, patient_id, gene = gene_id, hgvsp = hgvs_p, adnobaq, dpnobaq, qualnobaq, isedge, pgtkxgdna) %>%
 					mutate(af_grail = adnobaq/dpnobaq*100) %>%
 					mutate(Protocol = "V1")
 
