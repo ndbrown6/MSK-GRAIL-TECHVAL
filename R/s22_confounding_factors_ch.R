@@ -36,7 +36,6 @@ tmp = clinical %>%
 	  filter(cat != "") %>%
 	  mutate(facet = "Age by cancer status")
 	  
-	  
 p = signif(wilcox.test(tmp$age[tmp$cat=="Cancer"], tmp$age[tmp$cat=="Control"], alternative="two.sided", correct=FALSE)$p.value, 3)
 		
 plot.0 = ggplot(tmp, aes(x=cat, y=age, fill = cat)) +
@@ -308,10 +307,8 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
-data = data %>%
-	   type_convert()
+data = data %>% type_convert()
 p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
-
 
 smoking_history_prostate = read_csv(file=url_smoking_history$prostate, col_types = cols(.default = col_character()))  %>%
 						   type_convert() %>%
@@ -332,26 +329,26 @@ p1 = zeroinfl(num_called ~ age + smoking_history, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "WBC-matched")
+	  mutate(bio_source = "WBC-matched") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 guides(fill=guide_legend(title=c("Cancer status"))) +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5) +
-		 annotate(geom="text", x=56.4, y=40, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5) +
+		 annotate(geom="text", x=56.4, y=37, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/WBC_matched_vs_Age_Combined.pdf", width=5, height=6)
 print(plot.0)
@@ -365,7 +362,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "VUSo"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -374,8 +371,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
-data = data %>%
-	   type_convert()
+data = data %>% type_convert()
 p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 
 smoking_history_prostate = read_csv(file=url_smoking_history$prostate, col_types = cols(.default = col_character()))  %>%
@@ -398,25 +394,25 @@ p1 = zeroinfl(num_called ~ age + smoking_history, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0)
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 guides(fill=guide_legend(title=c("Cancer status"))) +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5) +
-		 annotate(geom="text", x=54, y=40, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5) +
+		 annotate(geom="text", x=54, y=37, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/VUSo_vs_Age_Combined.pdf", width=5, height=6)
 print(plot.0)
@@ -430,7 +426,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "biopsy_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -439,8 +435,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
-data = data %>%
-	   type_convert()
+data = data %>% type_convert()
 p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 signif(summary(p0)$coefficients$count[2,4], 3)
 
@@ -464,26 +459,27 @@ signif(summary(p0)$coefficients$count[2,4], 3)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "Biopsy-matched")
+	  mutate(bio_source = "Biopsy-matched") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called)) %>%
+	  filter(subj_type=="Cancer")
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5) +
-		 annotate(geom="text", x=56.4, y=40, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5) +
+		 annotate(geom="text", x=56.4, y=37, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/Biopsy_matched_vs_Age_Combined.pdf", width=5, height=6)
 print(plot.0)
@@ -497,7 +493,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "IMPACT-BAM_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -506,8 +502,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
-data = data %>%
-	   type_convert()
+data = data %>% type_convert()
 p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 signif(summary(p0)$coefficients$count[2,4], 3)
 
@@ -531,26 +526,27 @@ signif(summary(p0)$coefficients$count[2,4], 3)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "Biopsy-subthreshold")
+	  mutate(bio_source = "Biopsy-subthreshold") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called)) %>%
+	  filter(subj_type=="Cancer")
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5) +
-		 annotate(geom="text", x=55.5, y=40, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5) +
+		 annotate(geom="text", x=55.5, y=37, label=paste0("p* = ", signif(summary(p1)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/Biopsy_subthreshold_vs_Age_Combined.pdf", width=5, height=6)
 print(plot.0)
@@ -600,25 +596,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "WBC-matched")
+	  mutate(bio_source = "WBC-matched") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(0.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/WBC_matched_vs_Age_Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -632,7 +628,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "VUSo"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -663,25 +659,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "VUSo")
+	  mutate(bio_source = "VUSo") %>%
+	  mutate(num_called = ifelse(num_called == 0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(0.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/VUSo_vs_Age_Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -695,7 +691,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "biopsy_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -726,25 +722,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "Biopsy-matched")
+	  mutate(bio_source = "Biopsy-matched") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/Biopsy_matched_vs_Age_Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -758,7 +754,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "IMPACT-BAM_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -789,25 +785,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "Biopsy-subrthreshold")
+	  mutate(bio_source = "Biopsy-subthreshold") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/Biopsy_subthreshold_vs_Age_Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -857,25 +853,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "WBC-matched")
+	  mutate(bio_source = "WBC-matched") %>%
+	  mutate(num_called = ifelse(num_called==0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/WBC_matched_vs_Age_Non-Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -889,7 +885,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "VUSo"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -920,25 +916,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "VUSo")
+	  mutate(bio_source = "VUSo") %>%
+	  mutate(num_called = ifelse(num_called == 0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/VUSo_vs_Age_Non-Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -952,7 +948,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "biopsy_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -983,25 +979,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "Biopsy-matched")
+	  mutate(bio_source = "Biopsy-matched") %>%
+	  mutate(num_called = ifelse(num_called == 0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/Biopsy_matched_vs_Age_Non-Smoker.pdf", width=5, height=6)
 print(plot.0)
@@ -1015,7 +1011,7 @@ if (length(indx)!=0) {
 	tmp = matrix(NA, nrow=length(indx), ncol=5)
 	tmp[,1] = indx
 	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
+	tmp[,5] = "IMPACT-BAM_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% indx,c("patient_id","age","subj_type")])
 	rownames(zzz) = zzz[,"patient_id"]
 	tmp[,2] = zzz[indx,"age"]
@@ -1046,25 +1042,25 @@ p0 = zeroinfl(num_called ~ age, dist = "poisson", data = data)
 tmp = data %>%
 	  mutate(subj_type = ifelse(subj_type=="Control", "Control", "Cancer")) %>%
 	  mutate(subj_type = as.factor(subj_type)) %>%
-	  filter(num_called !=0) %>%
-	  mutate(bio_source = "Biopsy-subrthreshold")
+	  mutate(bio_source = "Biopsy-subthreshold") %>%
+	  mutate(num_called = ifelse(num_called == 0, 0.5, num_called))
 	   
 plot.0 = ggplot(tmp , aes(x = age, y = num_called, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Control"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp, inherit.aes = FALSE, color="grey50", fill="grey50") +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called), data=tmp %>% filter(num_called!=0.5), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
 		 annotation_logticks(side="l") +
 		 theme(legend.position="none") +
-		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=3.5)
+		 annotate(geom="text", x=55, y=50, label=paste0("p = ", signif(summary(p0)$coefficients$count[2,4], 3)), size=4.5)
 	  	
 pdf(file="../res/rebuttal/Biopsy_subthreshold_vs_Age_Non-Smoker.pdf", width=5, height=6)
 print(plot.0)
