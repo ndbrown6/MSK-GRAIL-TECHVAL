@@ -190,6 +190,17 @@ if (!dir.exists("../res/rebuttal")) {
 	return(x)
 }
 
+'ploidy_' <- function(x, y, w)
+{
+	psi = seq(from=1.5, to=3, length=100)
+	sse = vector(mode="numeric", length=length(psi))
+	for (i in 1:length(psi)) {
+		z = absolute_(rho=y, psi=psi[i], gamma=.85, x=x)
+		sse[i] = sum(((w/sum(w)) * (z-round(z)))^2)
+	}
+	return(sse)
+}
+
 #==================================================
 # update msk_impact tumor (alpha, psi)
 #==================================================
@@ -612,6 +623,318 @@ box(lwd=1.5)
 dev.off()
 
 #==================================================
+# % agreement based on calls
+#==================================================
+key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+ 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+ctDNA_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character())) %>%
+		   		 type_convert() %>%
+		   		 rename(GRAIL_ID = ID)
+		   		 
+key_file = left_join(key_file, ctDNA_fraction, by="GRAIL_ID")
+ 
+sse = foreach (i=1:nrow(key_file)) %dopar% {
+ 	cat(key_file$GRAIL_ID[i], "\n")
+ 	if (!is.na(key_file$ctdna_frac[i]) & key_file$ctdna_frac[i]>.15) {
+	  	grail_path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", key_file$GRAIL_ID[i], "-T.RData")
+	 	grail_data = new.env()
+	 	load(grail_path, envir=grail_data)
+ 	 	grail_seg = grail_data$tmp %>%
+ 				    dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+ 				    filter(chrom<23)
+ 		grail_seg = prune_(x=grail_seg)
+ 		sse = ploidy_(x=grail_seg$log2, y=key_file$ctdna_frac[i], w=grail_seg$n)
+ 	} else {
+ 		sse = rep(NA, 100)
+ 	}
+ 	return(sse)
+}
+min_sse = unlist(lapply(sse, min))
+index = rep(NA, length(sse))
+index[!is.na(min_sse)] = unlist(lapply(sse, which.min))
+ploidy = seq(from=1.5, to=3, length=100)[index]
+key_file$GRAIL_psi = ploidy
+key_file = key_file %>%
+		   filter(!is.na(GRAIL_psi) & !is.na(ctdna_frac))
+		   
+i_cn = foreach (i=1:nrow(key_file)) %dopar% {
+	cat(key_file$GRAIL_ID[i], "\n")
+ 	path = paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[i], ".RData")
+	data = new.env()
+	load(path, envir=data)
+ 	seg = data$tmp %>%
+ 		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+ 		  filter(chrom<23)
+ 	seg = prune_(x=seg)
+ 	a_cn = abs(absolute_(rho=key_file$IMPACT_alpha[i], psi=key_file$IMPACT_psi[i], gamma=1, seg$log2))
+	c_cn = rep(0, length(a_cn))
+ 	if (round(key_file$IMPACT_psi[i])==2) {
+ 		c_cn[a_cn<1] = -1
+ 		c_cn[a_cn>6] = 1
+ 	} else if (round(key_file$IMPACT_psi[i])==3) {
+ 		c_cn[a_cn<2] = -1
+ 		c_cn[a_cn>7] = 1
+ 	}
+ 	seg = cbind(seg, a_cn, c_cn)
+ 	
+ 	Chromosome = seg[,"chrom"]
+ 	Start = seg[,"start"]
+ 	End = seg[,"end"]
+ 	Calls = seg[,"a_cn"]
+ 	res = data.frame(Chromosome, Start, End, Calls)
+ 	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+ 			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
+ 			rename(Hugo_Symbol = hgnc_symbol,
+ 				   Chromosome = chr,
+ 				   Start = start_position,
+ 				   End = end_position) %>%
+ 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+ 			arrange(as.numeric(Chromosome), as.numeric(Start))
+ 				   
+ 	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+ 	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+ 	fo <- findOverlaps(res_by_segment, annot_by_gene)
+ 
+ 	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+ 	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+ 	for (j in 1:length(Hugo_Symbol)) {
+ 		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+ 		df[index,2] = mean(df[index,2], na.rm=TRUE)
+ 	}
+ 	df = df %>% filter(!duplicated(Hugo_Symbol))
+ 	df[,2] = round(df[,2])
+ 	res = rep(0, nrow(annot))
+ 	names(res) = annot[,"Hugo_Symbol"]
+ 	res[as.character(df$Hugo_Symbol)] = df$Calls
+ 	return(invisible(res))
+}
+i_cn = do.call(cbind, i_cn)
+colnames(i_cn) = key_file$GRAIL_ID
+
+
+g_cn = foreach (i=1:nrow(key_file)) %dopar% {
+	cat(key_file$GRAIL_ID[i], "\n")
+ 	path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", key_file$GRAIL_ID[i], "-T.RData")
+	data = new.env()
+	load(path, envir=data)
+ 	seg = data$tmp %>%
+ 		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+ 		  filter(chrom<23)
+ 	seg = prune_(x=seg)
+ 	a_cn = abs(absolute_(rho=key_file$ctdna_frac[i], psi=key_file$GRAIL_psi[i], gamma=.85, seg$log2))
+	c_cn = rep(0, length(a_cn))
+ 	if (round(key_file$GRAIL_psi[i])==2) {
+ 		c_cn[a_cn<1] = -1
+ 		c_cn[a_cn>6] = 1
+ 	} else if (round(key_file$GRAIL_psi[i])==3) {
+ 		c_cn[a_cn<2] = -1
+ 		c_cn[a_cn>7] = 1
+ 	}
+ 	seg = cbind(seg, a_cn, c_cn)
+ 	
+ 	Chromosome = seg[,"chrom"]
+ 	Start = seg[,"start"]
+ 	End = seg[,"end"]
+ 	Calls = seg[,"a_cn"]
+ 	res = data.frame(Chromosome, Start, End, Calls)
+ 	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+ 			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
+ 			rename(Hugo_Symbol = hgnc_symbol,
+ 				   Chromosome = chr,
+ 				   Start = start_position,
+ 				   End = end_position) %>%
+ 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+ 			arrange(as.numeric(Chromosome), as.numeric(Start))
+ 				   
+ 	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+ 	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+ 	fo <- findOverlaps(res_by_segment, annot_by_gene)
+ 
+ 	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+ 	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+ 	for (j in 1:length(Hugo_Symbol)) {
+ 		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+ 		df[index,2] = mean(df[index,2], na.rm=TRUE)
+ 	}
+ 	df = df %>% filter(!duplicated(Hugo_Symbol))
+ 	df[,2] = round(df[,2])
+ 	res = rep(0, nrow(annot))
+ 	names(res) = annot[,"Hugo_Symbol"]
+ 	res[as.character(df$Hugo_Symbol)] = df$Calls
+ 	return(invisible(res))
+}
+g_cn = do.call(cbind, g_cn)
+colnames(g_cn) = key_file$GRAIL_ID
+
+featureNames = intersect(rownames(i_cn), rownames(g_cn))
+i_cn = i_cn[featureNames,,drop=FALSE]
+g_cn = g_cn[featureNames,,drop=FALSE]
+
+index = apply(i_cn, 1, function(x) {sum(x==2)})==ncol(i_cn) | 
+		apply(g_cn, 1, function(x) {sum(x==2)})==ncol(g_cn)
+
+i_cn = i_cn[!index,,drop=FALSE]
+g_cn = g_cn[!index,,drop=FALSE]
+
+#==========================
+# Amplifications
+#==========================
+xy = foreach (i=1:nrow(key_file)) %dopar% {
+	x_ = rep(0, nrow(i_cn))
+	x_[i_cn[,i]>6]=1
+	y_ = g_cn[,i,drop=TRUE]
+	return(list(x=x_, y=y_))
+}
+x = unlist(lapply(xy, function(x) {x$x}))
+y = unlist(lapply(xy, function(x) {x$y}))
+
+z = roc(x, y, smooth=TRUE, auc=TRUE, ci=TRUE, ci.alpha=0.99, stratified=FALSE, plot=FALSE)
+z.ci = ci.se(z, specificities = seq(0, 1, .01))
+
+tmp = data_frame(x = 1-z$specificities,
+				 y = z$sensitivities) %>%
+	  mutate(facet = "Amplifications")
+	  
+tmp.0 = data.frame(z.ci) %>%
+		rename(`2.5%` = `X2.5.`, `50%` = `X50.`, `97.5%` = `X97.5.`) %>%
+		mutate(x = 1-as.numeric(rownames(z.ci)))
+		
+plot.0 = ggplot(tmp , aes(x = x, y = y)) +
+		 geom_line(alpha=1, size=1.5, color = "salmon") +
+		 geom_line(alpha=1, size=.5, color = "salmon", linetype = "dashed", aes(x=x, y=`2.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 geom_line(alpha=1, size=.5, color = "salmon", linetype = "dashed", aes(x=x, y=`97.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\n1- Specificity\n", y="Sensitivity\n") +
+		 coord_cartesian(xlim = c(0,1), ylim = c(0,1)) +
+		 annotate(geom="text", x=.49, y=.5, label=paste0("AUC = ", signif(z$auc, 3)), size=4.5) +
+		 annotate(geom="text", x=.59, y=.44, label=paste0("95%CI = ", signif(z$ci[1], 3), "-", signif(z$ci[3], 3)), size=4.5)
+	  	
+pdf(file="../res/rebuttal/ROC_CN_Amplifcations.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+#==========================
+# Deletions
+#==========================
+xy = foreach (i=1:nrow(key_file)) %dopar% {
+	x_ = rep(0, nrow(i_cn))
+	x_[i_cn[,i]<1]=-1
+	y_ = g_cn[,i,drop=TRUE]
+	return(list(x=x_, y=y_))
+}
+x = unlist(lapply(xy, function(x) {x$x}))
+y = unlist(lapply(xy, function(x) {x$y}))
+
+z = roc(x, y, smooth=TRUE, auc=TRUE, ci=TRUE, ci.alpha=0.99, stratified=FALSE, plot=FALSE)
+z.ci = ci.se(z, specificities = seq(0, 1, .01))
+
+tmp = data_frame(x = 1-z$specificities,
+				 y = z$sensitivities) %>%
+	  mutate(facet = "Homozygous deletions")
+	  
+tmp.0 = data.frame(z.ci) %>%
+		rename(`2.5%` = `X2.5.`, `50%` = `X50.`, `97.5%` = `X97.5.`) %>%
+		mutate(x = 1-as.numeric(rownames(z.ci)))
+		
+plot.0 = ggplot(tmp , aes(x = x, y = y)) +
+		 geom_line(alpha=1, size=1.5, color = "steelblue") +
+		 geom_line(alpha=1, size=.5, color = "steelblue", linetype = "dashed", aes(x=x, y=`2.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 geom_line(alpha=1, size=.5, color = "steelblue", linetype = "dashed", aes(x=x, y=`97.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\n1- Specificity\n", y="Sensitivity\n") +
+		 coord_cartesian(xlim = c(0,1), ylim = c(0,1)) +
+		 annotate(geom="text", x=.5, y=.5, label=paste0("AUC = ", signif(z$auc, 3)), size=4.5) +
+		 annotate(geom="text", x=.59, y=.44, label=paste0("95%CI = ", signif(z$ci[1], 3), "-", signif(z$ci[3], 3)), size=4.5)
+	  	
+pdf(file="../res/rebuttal/ROC_CN_Homozygous_Deletions.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+#==========================
+# CN >= 3
+#==========================
+xy = foreach (i=1:nrow(key_file)) %dopar% {
+	x_ = rep(0, nrow(i_cn))
+	x_[i_cn[,i]>=3]=1
+	y_ = g_cn[,i,drop=TRUE]
+	return(list(x=x_, y=y_))
+}
+x = unlist(lapply(xy, function(x) {x$x}))
+y = unlist(lapply(xy, function(x) {x$y}))
+
+z = roc(x, y, smooth=TRUE, auc=TRUE, ci=TRUE, ci.alpha=0.99, stratified=FALSE, plot=FALSE)
+z.ci = ci.se(z, specificities = seq(0, 1, .01))
+
+tmp = data_frame(x = 1-z$specificities,
+				 y = z$sensitivities) %>%
+	  mutate(facet = "Amplifications")
+	  
+tmp.0 = data.frame(z.ci) %>%
+		rename(`2.5%` = `X2.5.`, `50%` = `X50.`, `97.5%` = `X97.5.`) %>%
+		mutate(x = 1-as.numeric(rownames(z.ci)))
+		
+plot.0 = ggplot(tmp , aes(x = x, y = y)) +
+		 geom_line(alpha=1, size=1.5, color = "salmon") +
+		 geom_line(alpha=1, size=.5, color = "salmon", linetype = "dashed", aes(x=x, y=`2.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 geom_line(alpha=1, size=.5, color = "salmon", linetype = "dashed", aes(x=x, y=`97.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\n1- Specificity\n", y="Sensitivity\n") +
+		 coord_cartesian(xlim = c(0,1), ylim = c(0,1)) +
+		 annotate(geom="text", x=.49, y=.5, label=paste0("AUC = ", signif(z$auc, 3)), size=4.5) +
+		 annotate(geom="text", x=.59, y=.44, label=paste0("95%CI = ", signif(z$ci[1], 3), "-", signif(z$ci[3], 3)), size=4.5)
+	  	
+pdf(file="../res/rebuttal/ROC_CN_3.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+#==========================
+# CN >= 4
+#==========================
+xy = foreach (i=1:nrow(key_file)) %dopar% {
+	x_ = rep(0, nrow(i_cn))
+	x_[i_cn[,i]>=4]=1
+	y_ = g_cn[,i,drop=TRUE]
+	return(list(x=x_, y=y_))
+}
+x = unlist(lapply(xy, function(x) {x$x}))
+y = unlist(lapply(xy, function(x) {x$y}))
+
+z = roc(x, y, smooth=TRUE, auc=TRUE, ci=TRUE, ci.alpha=0.99, stratified=FALSE, plot=FALSE)
+z.ci = ci.se(z, specificities = seq(0, 1, .01))
+
+tmp = data_frame(x = 1-z$specificities,
+				 y = z$sensitivities) %>%
+	  mutate(facet = "Amplifications")
+	  
+tmp.0 = data.frame(z.ci) %>%
+		rename(`2.5%` = `X2.5.`, `50%` = `X50.`, `97.5%` = `X97.5.`) %>%
+		mutate(x = 1-as.numeric(rownames(z.ci)))
+		
+plot.0 = ggplot(tmp , aes(x = x, y = y)) +
+		 geom_line(alpha=1, size=1.5, color = "salmon") +
+		 geom_line(alpha=1, size=.5, color = "salmon", linetype = "dashed", aes(x=x, y=`2.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 geom_line(alpha=1, size=.5, color = "salmon", linetype = "dashed", aes(x=x, y=`97.5%`), data=tmp.0, inherit.aes=FALSE) +
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\n1- Specificity\n", y="Sensitivity\n") +
+		 coord_cartesian(xlim = c(0,1), ylim = c(0,1)) +
+		 annotate(geom="text", x=.49, y=.5, label=paste0("AUC = ", signif(z$auc, 3)), size=4.5) +
+		 annotate(geom="text", x=.59, y=.44, label=paste0("95%CI = ", signif(z$ci[1], 3), "-", signif(z$ci[3], 3)), size=4.5)
+	  	
+pdf(file="../res/rebuttal/ROC_CN_4.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+#==================================================
 # Log2 ratio plots grail cfdna tumor samples
 #==================================================
 load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0008-T.RData")
@@ -725,7 +1048,7 @@ dev.off()
 
 
 #==================================================
-# Breast HER2 amplified cases
+# Breast ERBB2 amplified cases
 #==================================================
 'prunesegments.cn' <- function(x, n=10)
 {
@@ -1057,60 +1380,6 @@ for (j in 1:length(sample_names)) {
 # # colnames(i_bygene) = tracker$GRAIL_ID
 # # 
 # #  
-# # g_bygene = foreach (i=1:nrow(tracker)) %dopar% {
-# #  	cat(tracker$GRAIL_ID[i], "\n")
-# # 	grail_path = paste0("../res/rebuttal/GRAIL/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
-# # 	grail_data = new.env()
-# # 	load(grail_path, envir=grail_data)
-# # 	
-# # 	grail_cn = grail_data$out2$jointseg %>%
-# # 			   select(chrom, pos = maploc, log2 = cnlr)
-# # 	grail_seg = grail_data$fit$cncf %>%
-# # 				select(chrom, start = start, end = end, log2 = cnlr.median, n=num.mark)
-# # 	
-# # 	fixed_cn = fix_6(grail_cn, grail_seg)
-# # 	grail_cn = fixed_cn[[1]]
-# # 	grail_seg = fixed_cn[[2]]
-# # 	
-# # 	grail_seg = prune_(x=grail_seg) %>%
-# # 				bind_cols(cn = absolute_(rho=key_file$GRAIL_alpha[i],
-# # 										 psi=key_file$GRAIL_psi[i],
-# # 										 x=grail_seg$log2)) %>%
-# # 				mutate(n = cumsum(n))
-# #  	
-# #  	Chromosome = grail_seg[,"chrom"]
-# #  	Start = grail_seg[,"start"]
-# #  	End = grail_seg[,"end"]
-# #  	Calls = grail_seg[,"cn"]
-# #  	res = data.frame(Chromosome, Start, End, Calls)
-# #  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-# #  			select(hgnc_symbol, chr, start_position, end_position) %>%
-# #  			rename(Hugo_Symbol = hgnc_symbol,
-# #  				   Chromosome = chr,
-# #  				   Start = start_position,
-# #  				   End = end_position) %>%
-# #  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
-# #  			arrange(as.numeric(Chromosome), as.numeric(Start))
-# #  				   
-# #  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
-# #  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
-# #  	fo <- findOverlaps(res_by_segment, annot_by_gene)
-# #  
-# #  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
-# #  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
-# #  	for (j in 1:length(Hugo_Symbol)) {
-# #  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
-# #  		df[index,2] = mean(df[index,2], na.rm=TRUE)
-# #  	}
-# #  	df = df %>% filter(!duplicated(Hugo_Symbol))
-# #  	df[,2] = round(df[,2])
-# #  	res = rep(0, nrow(annot))
-# #  	names(res) = annot[,"Hugo_Symbol"]
-# #  	res[as.character(df$Hugo_Symbol)] = df$Calls
-# #  	return(invisible(res))
-# # }
-# # g_bygene = do.call(cbind, g_bygene)
-# # colnames(g_bygene) = tracker$GRAIL_ID
 # # 
 # # index = c("CRLF2", "HLA-A", "HLA-B", "HLA-C", "AR", "HIST2H3D", "HIST2H3C", "HIST3H3",
 # # 		  "HIST1H3A", "HIST1H3B", "HIST1H3C", "HIST1H1C", "HIST1H2BD", "HIST1H3D",

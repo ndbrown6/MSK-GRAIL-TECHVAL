@@ -50,6 +50,7 @@ suppressPackageStartupMessages(library("copynumber"))
 suppressPackageStartupMessages(library("eulerr"))
 suppressPackageStartupMessages(library("maftools"))
 suppressPackageStartupMessages(library("GAP"))
+suppressPackageStartupMessages(library("pROC"))
 
 registerDoMC(32)
 
