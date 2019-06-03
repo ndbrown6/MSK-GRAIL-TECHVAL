@@ -992,6 +992,22 @@ for (i in 1:length(patient_ids)) {
 		  	 mutate(r = uuid %in% tmp_r1$uuid)
 	pander(table(tmp_r0$r, tmp_r0$bio_source))
 }
+
+#==================================================
+# Variants with VAF < 1%
+#==================================================
+for (i in 1:length(patient_ids)) {
+	tmp_r1 = vars_rep1 %>%
+			 filter(patient_id == patient_ids[i]) %>%
+			 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_"))
+	tmp_r0 = vars_rep0 %>%
+		  	 filter(patient_id == patient_ids[i]) %>%
+		  	 filter(is_nonsyn) %>%
+		  	 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_")) %>%
+		  	 filter(af_nobaq<1) %>%
+		  	 mutate(r = uuid %in% tmp_r1$uuid)
+	pander(table(tmp_r0$r, tmp_r0$bio_source))
+}
 				
 #==================================================
 # Tabulate %PPA for 3 patients used to test
@@ -1196,6 +1212,22 @@ for (i in 1:length(patient_ids)) {
 		  	 filter(patient_id == patient_ids[i]) %>%
 		  	 filter(is_nonsyn) %>%
 		  	 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_")) %>%
+		  	 mutate(r = uuid %in% tmp_r1$uuid)
+	pander(table(tmp_r0$r, tmp_r0$bio_source))
+}
+
+#==================================================
+# Variants with VAF < 1%
+#==================================================
+for (i in 1:length(patient_ids)) {
+	tmp_r1 = vars_rep1 %>%
+			 filter(patient_id == patient_ids[i]) %>%
+			 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_"))
+	tmp_r0 = vars_rep0 %>%
+		  	 filter(patient_id == patient_ids[i]) %>%
+		  	 filter(is_nonsyn) %>%
+		  	 mutate(uuid = paste(patient_id, chrom, position_orig, ref_orig, alt_orig, sep="_")) %>%
+		  	 filter(af_nobaq<1) %>%
 		  	 mutate(r = uuid %in% tmp_r1$uuid)
 	pander(table(tmp_r0$r, tmp_r0$bio_source))
 }
