@@ -533,6 +533,7 @@ for (i in c("VB", "VL", "VP")) {
  	y0[y>3] = 3
 	print(jonckheere.test(x=x, g=y0, alternative="increasing", nperm=10000)$p.value)
 }
+
 ## kendall correlation test by cancer type
 for (i in c("VB", "VL", "VP")) {
  	index = grepl(i, names(number_metastatic_sites))
