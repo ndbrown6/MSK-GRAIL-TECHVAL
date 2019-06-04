@@ -54,7 +54,7 @@ suppressPackageStartupMessages(library("pROC"))
 
 registerDoMC(32)
 
-FLAG <- TRUE
+FLAG <- FALSE
 
 snv_file <- list(
 	scored = str_c(
