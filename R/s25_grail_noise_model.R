@@ -366,31 +366,6 @@ recall_FP_qual <- roc_qual %>%
 highlight_recall_FP_q60 <- recall_FP_qual %>%
 						   filter(abs(qualnobaq_min - 60) < kNumericalTol)
 
-'plot_roc' <- function(stats, x_var, x_label = x_var, x_min, x_max, y_var, y_label = y_var, y_min, y_max, title)
-{
-	cancer_types <- stats %>%
-					pull(subj_type) %>%
-					unique() %>%
-					length()
-					
-	p <- ggplot(stats %>% mutate(facet=title), aes_string(x = x_var, y = y_var, group="subj_type")) +
-   	   	 geom_line()  
-		 facet_wrap(~facet) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		 labs(x=x_label, y=y_label) +
-		 coord_cartesian(xlim=c(x_min, x_max), ylim = c(y_min, y_max)) +
-		 theme(legend.justification = c(1, 0),
-		 	   legend.position = c(0.2, 0.6),
-		 	   legend.title = element_blank(),
-		 	   legend.background = element_blank(),
-		 	   legend.text=element_text(size=8))
-    	 
-  
-  	return(p)
-}
-
-
 plot.0 = ggplot(recall_FP_qual %>% mutate(facet = "Recall rate"), aes(x = sample_mean, y = recall, color=subj_type)) +
 		 geom_line(size=1) +
 		 scale_color_manual(values=c("salmon", "#FDAE61", "#ABDDA4")) +
