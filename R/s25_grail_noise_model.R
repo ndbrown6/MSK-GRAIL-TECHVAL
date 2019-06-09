@@ -385,3 +385,70 @@ plot.0 = ggplot(recall_FP_qual %>% mutate(facet = "Recall rate"), aes(x = sample
 pdf(file="../res/rebuttal/Number_SNVs_Recall.pdf", width=7, height=6)
 print(plot.0)
 dev.off()
+
+recall_FP_joint <- roc_joint %>%
+				   inner_join(roc_noncancer_joint, by = "joint_min")
+
+highlight_recall_FP_joint <- recall_FP_joint %>%
+							 filter((subj_type == "Breast" & abs(joint_min - 0.79) < kNumericalTol) |
+							 		(subj_type == "Lung" & abs(joint_min - 0.82) < kNumericalTol) |
+							 		(subj_type == "Prostate" & abs(joint_min - 0.79) < kNumericalTol))
+							 		
+							 		
+plot.0 = ggplot(recall_FP_joint %>% filter(subj_type=="Breast"), aes(x = sample_mean, y = recall)) +
+		 geom_line(size=1, color="salmon") +
+		 facet_wrap(~subj_type) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
+		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
+         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
+         geom_point(data = highlight_recall_FP_joint %>% filter(subj_type=="Breast"),
+         		aes(x = sample_mean, y = recall),
+         		show.legend = FALSE, color="salmon") +
+         geom_label(data = highlight_recall_FP_joint %>% filter(subj_type=="Breast"),
+         		aes(label = paste("pgtkxgdna >=", joint_min, sep = " ")),
+         		nudge_x = 0.1, nudge_y = -0.1, size = 3, color="salmon")
+         
+
+pdf("../res/rebuttal/Number_SNVs_Recall_Pr_WBC_Breast.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(recall_FP_joint %>% filter(subj_type=="Lung"), aes(x = sample_mean, y = recall)) +
+		 geom_line(size=1, color="#FDAE61") +
+		 facet_wrap(~subj_type) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
+		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
+         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
+         geom_point(data = highlight_recall_FP_joint %>% filter(subj_type=="Lung"),
+         		aes(x = sample_mean, y = recall),
+         		show.legend = FALSE, color="#FDAE61") +
+         geom_label(data = highlight_recall_FP_joint %>% filter(subj_type=="Lung"),
+         		aes(label = paste("pgtkxgdna >=", joint_min, sep = " ")),
+         		nudge_x = 0.1, nudge_y = -0.1, size = 3, color="#FDAE61")
+         
+
+pdf("../res/rebuttal/Number_SNVs_Recall_Pr_WBC_Lung.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
+
+
+plot.0 = ggplot(recall_FP_joint %>% filter(subj_type=="Prostate"), aes(x = sample_mean, y = recall)) +
+		 geom_line(size=1, color="#ABDDA4") +
+		 facet_wrap(~subj_type) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
+		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
+         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
+         geom_point(data = highlight_recall_FP_joint %>% filter(subj_type=="Prostate"),
+         		aes(x = sample_mean, y = recall),
+         		show.legend = FALSE, color="#ABDDA4") +
+         geom_label(data = highlight_recall_FP_joint %>% filter(subj_type=="Prostate"),
+         		aes(label = paste("pgtkxgdna >=", joint_min, sep = " ")),
+         		nudge_x = 0.1, nudge_y = -0.1, size = 3, color="#ABDDA4")
+         
+
+pdf("../res/rebuttal/Number_SNVs_Recall_Pr_WBC_Prostate.pdf", width=5, height=6)
+print(plot.0)
+dev.off()
