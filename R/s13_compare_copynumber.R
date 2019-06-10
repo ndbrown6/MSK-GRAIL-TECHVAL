@@ -208,7 +208,7 @@ key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_charact
 		   type_convert() %>%
 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 
-if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
+if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
 	print(key_file$GRAIL_ID[i])
 	impact_path = paste0("../res/rebuttal/msk_impact/facets/cncf/", key_file$TUMOR_ID[i], "_", key_file$NORMAL_ID[i], ".Rdata")
 	impact_data = new.env()
@@ -269,7 +269,7 @@ key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_charact
 		   type_convert() %>%
 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 
-if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
+if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
  	print(key_file$GRAIL_ID[i])
  	grail_path = paste0("../res/rebuttal/uncollapsed_bam/facets/cncf/", key_file$GRAIL_ID[i], "-T_", key_file$GRAIL_ID[i], "-N.Rdata")
  	grail_data = new.env()
@@ -332,7 +332,7 @@ if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
 #==================================================
 # update grail cfDNA collapsed (alpha, psi)
 #==================================================
-if (TRUE) { foreach (i=1:nrow(key_file)) %dopar% {
+if (FALSE) { foreach (i=1:nrow(key_file)) %dopar% {
  	print(key_file$GRAIL_ID[i])
  	grail_path = paste0("../res/rebuttal/collapsed_bam/facets/cncf/", key_file$GRAIL_ID[i], "_", key_file$GRAIL_ID[i], "-N.Rdata")
  	grail_data = new.env()
@@ -611,445 +611,611 @@ dev.off()
 
 p = jonckheere.test(x=tmp.0$correlation_coefficient, g=tmp.0$ctdna_fraction_cat, alternative = "increasing", nperm=10000)
 
-pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=8, height=5)
-boxplot(correlation_coefficient ~ ctdna_fraction_cat, data=tmp.0, axes=FALSE, frame.plot=FALSE, ylim=c(-.5,1.14375), col="salmon", lwd=1.5)
-axis(1, at = 1:5, labels=c("NE", "1-9", "10-29", "30-59", "60-100"), cex.axis = 1.15, las = 1)
-axis(2, at = NULL, cex.axis = 1.15, las = 1)
-mtext(side = 1, text = "ctDNA fraction (%)", line = 3.15, cex = 1.25)
-mtext(side = 2, text = "Correlation coefficient", line = 3.15, cex = 1.25)
-rect(-100, 1, 1000, 1.75, col="lightgrey", border="black", lwd=1.5)
-text(x=3, y=-.3, labels=paste0("p = ", signif(p$p.value, 3)), cex=1.25)
-box(lwd=1.5)
+plot.0 = ggplot(tmp.0 %>% mutate(facet="All samples (n = 124)"), aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
+		 geom_boxplot(alpha=1, outlier.size=2.5, outlier.shape=21, fill="salmon") + 
+		 facet_wrap(~facet) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
+		 labs(x="\nctDNA fraction (%)", y="Correlation coefficient\n")
+		 
+pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=7, height=5)
+print(plot.0)
 dev.off()
 
 #==================================================
-# % agreement based on calls
+# ROC curves
 #==================================================
-key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
-		   type_convert() %>%
- 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
+		  type_convert() %>%
+ 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
 		   
 ctDNA_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character())) %>%
 		   		 type_convert() %>%
 		   		 rename(GRAIL_ID = ID)
 		   		 
-key_file = left_join(key_file, ctDNA_fraction, by="GRAIL_ID") %>%
-		   filter(!is.na(ctdna_frac)) %>%
-		   filter(ctdna_frac>.1)
+tracker = left_join(tracker, ctDNA_fraction, by="GRAIL_ID") %>%
+ 		  filter(!is.na(ctdna_frac)) %>%
+		  filter(ctdna_frac>.1)
  
-sse = foreach (i=1:nrow(key_file)) %dopar% {
- 	cat(key_file$GRAIL_ID[i], "\n")
- 	if (!is.na(key_file$ctdna_frac[i]) & key_file$ctdna_frac[i]>.1) {
-	  	grail_path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", key_file$GRAIL_ID[i], "-T.RData")
-	 	grail_data = new.env()
-	 	load(grail_path, envir=grail_data)
- 	 	grail_seg = grail_data$tmp %>%
- 				    dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
- 				    filter(chrom<23)
- 		grail_seg = prune_(x=grail_seg)
- 		sse = ploidy_(x=grail_seg$log2, y=key_file$ctdna_frac[i], w=grail_seg$n)
- 	} else {
- 		sse = rep(NA, 100)
- 	}
- 	return(sse)
+sse = foreach (i=1:nrow(tracker)) %dopar% {
+  	cat(tracker$GRAIL_ID[i], "\n")
+  	if (!is.na(tracker$ctdna_frac[i]) & tracker$ctdna_frac[i]>.1) {
+ 	  	grail_path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", tracker$GRAIL_ID[i], "-T.RData")
+ 	 	grail_data = new.env()
+ 	 	load(grail_path, envir=grail_data)
+  	 	grail_seg = grail_data$tmp %>%
+  				    dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+  				    filter(chrom<23)
+  		grail_seg = prune_(x=grail_seg)
+  		sse = ploidy_(x=grail_seg$log2, y=tracker$ctdna_frac[i], w=grail_seg$n)
+  	} else {
+  		sse = rep(NA, 100)
+  	}
+  	return(sse)
 }
 min_sse = unlist(lapply(sse, min))
 index = rep(NA, length(sse))
 index[!is.na(min_sse)] = unlist(lapply(sse, which.min))
 ploidy = seq(from=1.5, to=3.5, length=100)[index]
-key_file$GRAIL_psi = ploidy
-key_file = key_file %>%
-		   filter(!is.na(GRAIL_psi) & !is.na(ctdna_frac))
-		   
-i_cn = foreach (i=1:nrow(key_file)) %dopar% {
-	cat(key_file$GRAIL_ID[i], "\n")
- 	path = paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[i], ".RData")
-	data = new.env()
-	load(path, envir=data)
- 	seg = data$tmp %>%
- 		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
- 		  filter(chrom<23)
- 	seg = prune_(x=seg)
- 	a_cn = abs(absolute_(rho=key_file$IMPACT_alpha[i], psi=key_file$GRAIL_psi[i], gamma=.85, seg$log2))
-	c_cn = rep(0, length(a_cn))
- 	if (round(key_file$IMPACT_psi[i])==2) {
- 		c_cn[a_cn<0.5] = -1
-  		c_cn[a_cn>6] = 1
- 	} else if (round(key_file$IMPACT_psi[i])==3) {
- 		c_cn[a_cn<1] = -1
-  		c_cn[a_cn>7] = 1
- 	} else if (round(key_file$IMPACT_psi[i])==4) {
- 		c_cn[a_cn<1] = -1
-  		c_cn[a_cn>8] = 1
+tracker$GRAIL_psi = ploidy
+tracker = tracker %>%
+	   	  filter(!is.na(GRAIL_psi) & !is.na(ctdna_frac))
+ 		   
+i_cn = foreach (i=1:nrow(tracker)) %dopar% {
+ 	cat(tracker$GRAIL_ID[i], "\n")
+  	path = paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", tracker$TUMOR_ID[i], ".RData")
+ 	data = new.env()
+ 	load(path, envir=data)
+  	seg = data$tmp %>%
+  		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+  		  filter(chrom<23)
+  	seg = prune_(x=seg)
+  	a_cn = round(absolute_(rho=tracker$IMPACT_alpha[i], psi=tracker$GRAIL_psi[i], gamma=.85, seg$log2))
+ 	c_cn = rep(0, length(a_cn))
+  	if (round(key_file$IMPACT_psi[i])==2) {
+  		c_cn[a_cn<0.5] = -1
+   		c_cn[a_cn>6] = 1
+  	} else if (round(key_file$IMPACT_psi[i])==3) {
+  		c_cn[a_cn<1] = -1
+   		c_cn[a_cn>7] = 1
+  	} else if (round(key_file$IMPACT_psi[i])==4) {
+  		c_cn[a_cn<1] = -1
+   		c_cn[a_cn>8] = 1
  	}
- 	
- 	sample_names = c("MSK-VB-0066", "MSK-VP-0005", "MSK-VP-0025", "MSK-VP-0047")
-
- 	if (key_file$GRAIL_ID[i] %in% sample_names) {
- 		c_cn = rep(0, length(a_cn))
- 		c_cn[a_cn<0] = -1
-  		c_cn[a_cn>7] = 1
-  	}
   	
- 	seg = cbind(seg, a_cn, c_cn)
- 	
- 	Chromosome = seg[,"chrom"]
- 	Start = seg[,"start"]
- 	End = seg[,"end"]
- 	Calls = seg[,"c_cn"]
- 	res = data.frame(Chromosome, Start, End, Calls)
- 	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
- 			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
- 			rename(Hugo_Symbol = hgnc_symbol,
- 				   Chromosome = chr,
- 				   Start = start_position,
- 				   End = end_position) %>%
- 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
- 			arrange(as.numeric(Chromosome), as.numeric(Start))
- 				   
- 	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
- 	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
- 	fo <- findOverlaps(res_by_segment, annot_by_gene)
+ 	sample_names = c("MSK-VB-0066", "MSK-VP-0005", "MSK-VP-0025", "MSK-VP-0047")
  
- 	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
- 	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
- 	for (j in 1:length(Hugo_Symbol)) {
- 		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
- 		df[index,2] = max(df[index,2], na.rm=TRUE)
- 	}
- 	df = df %>% filter(!duplicated(Hugo_Symbol))
- 	df[,2] = round(df[,2])
- 	res = rep(0, nrow(annot))
- 	names(res) = annot[,"Hugo_Symbol"]
- 	res[as.character(df$Hugo_Symbol)] = df$Calls
- 	return(invisible(res))
+  	if (tracker$GRAIL_ID[i] %in% sample_names) {
+  		c_cn = rep(0, length(a_cn))
+  		c_cn[a_cn<0] = -1
+   		c_cn[a_cn>7] = 1
+   	}
+   	
+ 	seg = cbind(seg, a_cn, c_cn)
+  	
+  	Chromosome = seg[,"chrom"]
+  	Start = seg[,"start"]
+  	End = seg[,"end"]
+  	Calls = seg[,"c_cn"]
+  	res = data.frame(Chromosome, Start, End, Calls)
+  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+  			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
+  			rename(Hugo_Symbol = hgnc_symbol,
+  				   Chromosome = chr,
+  				   Start = start_position,
+  				   End = end_position) %>%
+  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+  			arrange(as.numeric(Chromosome), as.numeric(Start))
+  				   
+  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+  	fo <- findOverlaps(res_by_segment, annot_by_gene)
+  
+  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+  	for (j in 1:length(Hugo_Symbol)) {
+  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+  		df[index,2] = max(df[index,2], na.rm=TRUE)
+  	}
+  	df = df %>% filter(!duplicated(Hugo_Symbol))
+  	df[,2] = round(df[,2])
+  	res = rep(0, nrow(annot))
+  	names(res) = annot[,"Hugo_Symbol"]
+  	res[as.character(df$Hugo_Symbol)] = df$Calls
+  	return(invisible(res))
 }
 i_cn = do.call(cbind, i_cn)
-colnames(i_cn) = key_file$GRAIL_ID
+colnames(i_cn) = tracker$GRAIL_ID
 i_cn["ERBB2","MSK-VB-0044"] = 1
-
-g_cn = foreach (i=1:nrow(key_file)) %dopar% {
-	cat(key_file$GRAIL_ID[i], "\n")
- 	path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", key_file$GRAIL_ID[i], "-T.RData")
-	data = new.env()
-	load(path, envir=data)
- 	seg = data$tmp %>%
- 		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
- 		  filter(chrom<23)
- 	seg = prune_(x=seg)
- 	a_cn = abs(absolute_(rho=key_file$ctdna_frac[i], psi=key_file$GRAIL_psi[i], gamma=.85, seg$log2))
-	c_cn = rep(0, length(a_cn))
- 	if (round(key_file$GRAIL_psi[i])==2) {
- 		c_cn[a_cn<0.5] = -1
- 		c_cn[a_cn>6] = 1
- 	} else if (round(key_file$GRAIL_psi[i])==3) {
- 		c_cn[a_cn<1] = -1
- 		c_cn[a_cn>7] = 1
- 	} else if (round(key_file$IMPACT_psi[i])==4) {
- 		c_cn[a_cn<1] = -1
-  		c_cn[a_cn>8] = 1
- 	}
- 	
- 	sample_names = c("MSK-VB-0024", "MSK-VP-0028", "MSK-VB-0032", "MSK-VB-0046", "MSK-VP-0031")
-
- 	if (key_file$GRAIL_ID[i] %in% sample_names) {
- 		c_cn = rep(0, length(a_cn))
- 		c_cn[a_cn<0] = -1
+ 
+g_cn = foreach (i=1:nrow(tracker)) %dopar% {
+	cat(tracker$GRAIL_ID[i], "\n")
+ 	path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", tracker$GRAIL_ID[i], "-T.RData")
+ 	data = new.env()
+ 	load(path, envir=data)
+  	seg = data$tmp %>%
+  		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+  		  filter(chrom<23)
+  	seg = prune_(x=seg)
+  	a_cn = round(absolute_(rho=tracker$ctdna_frac[i], psi=tracker$GRAIL_psi[i], gamma=.85, seg$log2))
+ 	c_cn = rep(0, length(a_cn))
+  	if (round(tracker$GRAIL_psi[i])==2) {
+  		c_cn[a_cn<0.5] = -1
+  		c_cn[a_cn>6] = 1
+  	} else if (round(tracker$GRAIL_psi[i])==3) {
+  		c_cn[a_cn<1] = -1
   		c_cn[a_cn>7] = 1
+  	} else if (round(tracker$IMPACT_psi[i])==4) {
+  		c_cn[a_cn<1] = -1
+   		c_cn[a_cn>8] = 1
   	}
   	
-  	
- 	
- 	seg = cbind(seg, a_cn, c_cn)
- 	
- 	Chromosome = seg[,"chrom"]
- 	Start = seg[,"start"]
- 	End = seg[,"end"]
- 	Calls = seg[,"c_cn"]
- 	res = data.frame(Chromosome, Start, End, Calls)
- 	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
- 			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
- 			rename(Hugo_Symbol = hgnc_symbol,
- 				   Chromosome = chr,
- 				   Start = start_position,
- 				   End = end_position) %>%
- 			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
- 			arrange(as.numeric(Chromosome), as.numeric(Start))
- 				   
- 	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
- 	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
- 	fo <- findOverlaps(res_by_segment, annot_by_gene)
+  	sample_names = c("MSK-VB-0024", "MSK-VP-0028", "MSK-VB-0032", "MSK-VB-0046", "MSK-VP-0031")
  
- 	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
- 	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
- 	for (j in 1:length(Hugo_Symbol)) {
- 		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
- 		df[index,2] = max(df[index,2], na.rm=TRUE)
- 	}
- 	df = df %>% filter(!duplicated(Hugo_Symbol))
- 	df[,2] = round(df[,2])
- 	res = rep(0, nrow(annot))
- 	names(res) = annot[,"Hugo_Symbol"]
- 	res[as.character(df$Hugo_Symbol)] = df$Calls
- 	return(invisible(res))
+  	if (tracker$GRAIL_ID[i] %in% sample_names) {
+  		c_cn = rep(0, length(a_cn))
+  		c_cn[a_cn<0] = -1
+   		c_cn[a_cn>7] = 1
+   	}
+   	
+   	
+  	
+  	seg = cbind(seg, a_cn, c_cn)
+  	
+  	Chromosome = seg[,"chrom"]
+  	Start = seg[,"start"]
+  	End = seg[,"end"]
+  	Calls = seg[,"a_cn"]
+  	res = data.frame(Chromosome, Start, End, Calls)
+  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+  			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
+  			rename(Hugo_Symbol = hgnc_symbol,
+  				   Chromosome = chr,
+  				   Start = start_position,
+  				   End = end_position) %>%
+  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+  			arrange(as.numeric(Chromosome), as.numeric(Start))
+  				   
+  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+  	fo <- findOverlaps(res_by_segment, annot_by_gene)
+  
+  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+  	for (j in 1:length(Hugo_Symbol)) {
+  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+  		df[index,2] = round(mean(df[index,2], na.rm=TRUE))
+  	}
+  	df = df %>% filter(!duplicated(Hugo_Symbol))
+  	res = rep(0, nrow(annot))
+  	names(res) = annot[,"Hugo_Symbol"]
+  	res[as.character(df$Hugo_Symbol)] = df$Calls
+  	return(invisible(res))
 }
 g_cn = do.call(cbind, g_cn)
-colnames(g_cn) = key_file$GRAIL_ID
-g_cn["ERBB2","MSK-VB-0044"] = 1
-
+colnames(g_cn) = tracker$GRAIL_ID
+ 
 featureNames = intersect(rownames(i_cn), rownames(g_cn))
 i_cn = i_cn[featureNames,,drop=FALSE]
 g_cn = g_cn[featureNames,,drop=FALSE]
 
-copy = NULL
-for (i in 1:ncol(i_cn)) {
-	copy = cbind(copy, i_cn[,i], g_cn[,i])
+#==================================================
+# ROC curves amplification
+#==================================================
+data = foreach (i=1:nrow(tracker)) %dopar% {
+	x = g_cn[,i]
+	y = ifelse(i_cn[,i]<=0, 0, 1)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-index = apply(copy, 1, function(x) {sum(x==0)})==98
-copy = copy[!index,,drop=FALSE]
-assay_type = rep(c("Biopsy", "cfDNA"), times=nrow(key_file))
-cancer_type = rep("Breast", times=nrow(key_file))
-cancer_type[grepl("VL", key_file$GRAIL_ID)] = "Lung"
-cancer_type[grepl("VP", key_file$GRAIL_ID)] = "Prostate"
-cancer_type = rep(cancer_type, each=2)
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.0 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Combined")
 
-pdf(file="../res/rebuttal/Heatmap_CN_Tumor_cfDNA.pdf", width=13, height=7/10*12)
-mm = split.screen(fig=matrix(c(0.02,.32,0,1,	0,.25,0,.98,	.16,1,0,1), nrow=3, ncol=4, byrow=TRUE))
-screen(mm[1])
-plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,5), ylim=c(.5,ncol(copy)-.5), axes=FALSE, frame.plot=FALSE)
-cols = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4")[cancer_type]
-z = 3.8
-for (i in 1:length(cols)) {
-	rect(xleft=z, xright=z+.2, ybottom=i-.5, ytop=i+.5, col=cols[i], border="white", lwd=.5)
+index = grep("VB", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = g_cn[,index[i]]
+	y = ifelse(i_cn[,index[i]]<=0, 0, 1)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-cols = ifelse(assay_type=="Biopsy", "#AB6E9A", "#7B1E5B")
-for (i in 1:length(cols)) {
-	rect(xleft=z+.23, xright=z+.23+.2, ybottom=i-.5, ytop=i+.5, col=cols[i], border="white", lwd=.5)
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.1 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Breast")
+					   
+index = grep("VL", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = g_cn[,index[i]]
+	y = ifelse(i_cn[,index[i]]<=0, 0, 1)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-screen(mm[2])
-z = .5
-plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,5), ylim=c(0,ncol(copy)), axes=FALSE, frame.plot=FALSE)
-points(0+z, 100, type="p", pch=22, bg="#CF3A3D", col="black", cex=1.5)
-text(x=0+z, y=100, labels="Amplification", pos=4, cex=.78)
-points(0+z, 97, type="p", pch=22, bg="#2A4B94", col="black", cex=1.5)
-text(x=0+z, y=97, labels="Homozygous deletion", pos=4, cex=.78)
-points(0+z, 90, type="p", pch=22, bg="salmon", col="black", cex=1.5)
-text(x=0+z, y=90, labels="Breast", pos=4, cex=.78)
-points(0+z, 87, type="p", pch=22, bg="#FDAE61", col="black", cex=1.5)
-text(x=0+z, y=87, labels="Lung", pos=4, cex=.78)
-points(0+z, 84, type="p", pch=22, bg="#ABDDA4", col="black", cex=1.5)
-text(x=0+z, y=84, labels="Prostate", pos=4, cex=.78)
-points(0+z, 77, type="p", pch=22, bg="#AB6E9A", col="black", cex=1.5)
-text(x=0+z, y=77, labels="Biopsy", pos=4, cex=.78)
-points(0+z, 74, type="p", pch=22, bg="#7B1E5B", col="black", cex=1.5)
-text(x=0+z, y=74, labels="cfDNA", pos=4, cex=.78)
-screen(mm[3])
-cols = c("#2A4B94", NA, "#CF3A3D")
-plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,nrow(copy)), ylim=c(0,ncol(copy)-1), axes=FALSE, frame.plot=FALSE)
-for (i in 1:(ncol(copy))) {
- 	col = cols[as.numeric(copy[,i])+2]
- 	for (j in 1:length(col)) {
- 		rect(xleft=j-.5, xright=j+.5, ybottom=i-1, ytop=i, col=col[j], border="grey95", lwd=.05)
- 	}
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.2 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Lung")
+
+index = grep("VP", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = g_cn[,index[i]]
+	y = ifelse(i_cn[,index[i]]<=0, 0, 1)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-rect(xleft=0.5, xright=nrow(copy)+.5, ybottom=0, ytop=ncol(copy), border="grey90")
-close.screen(all.screens=TRUE)
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.3 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Prostate")
+
+show.data = rbind(show.0, show.1, show.2, show.3) %>%
+			mutate(sample_type = factor(sample_type, levels = c("Combined", "Breast", "Lung", "Prostate"), ordered=TRUE)) %>%
+			mutate(copy_type = "Copy number amplifications")
+
+plot.0 = ggplot(show.data, aes(x = x, y = y, group = sample_type, color = sample_type)) +
+		 geom_line(size=1) +
+		 scale_color_manual(values = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4", "Combined"="cadetblue")) +
+		 theme_bw(base_size=15) +
+		 facet_wrap(~copy_type) +
+		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
+		 labs(x="\n1 - Specificity", y="Sensitivity\n") +
+         coord_cartesian(xlim=c(0, 1), ylim = c(0, 1)) +
+         theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8))
+         		
+pdf(file="../res/rebuttal/Analytical_performance_copy_amplifications.pdf", width=5, height=5)
+print(plot.0)
 dev.off()
 
 #==================================================
-# Key statistics detection rate
+# ROC curves deletion
 #==================================================
-x = sum(apply(i_cn, 2, function(x) {sum(x!=0)})!=0)
-y = ncol(i_cn)
-
-print(x)
-print(x/y * 100)
-
-## all cancers combined
-index = apply(i_cn, 2, function(x) {sum(x!=0)})!=0
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-index = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	index[i] = (sum((i_cn_[,i]==1 & g_cn_[,i]==1) | (i_cn_[,i]==-1 & g_cn_[,i]==-1)))
+data = foreach (i=1:nrow(tracker)) %dopar% {
+	x = g_cn[,i]
+	y = ifelse(i_cn[,i]<0, -1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.0 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Combined") %>%
+					arrange(x, y)
 
-print(sum(index!=0))
-print(100*sum(index!=0)/length(index))
-
-## breast
-index = grep("VB", colnames(i_cn_))
-breast = list()
-breast[[1]] = i_cn_[,index,drop=FALSE]
-breast[[2]] = g_cn_[,index,drop=FALSE]
-
-index = rep(0, length(index))
-for (i in 1:length(index)) {
-	index[i] = (sum((breast[[1]][,i]==1 & breast[[2]][,i]==1) | (breast[[1]][,i]==-1 & breast[[2]][,i]==-1)))
+index = grep("VB", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = g_cn[,index[i]]
+	y = ifelse(i_cn[,index[i]]<0, -1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-
-print(sum(index!=0))
-print(100*sum(index!=0)/length(index))
-
-## lung
-index = grep("VL", colnames(i_cn_))
-lung = list()
-lung[[1]] = i_cn_[,index,drop=FALSE]
-lung[[2]] = g_cn_[,index,drop=FALSE]
-
-index = rep(0, length(index))
-for (i in 1:length(index)) {
-	index[i] = (sum((lung[[1]][,i]==1 & lung[[2]][,i]==1) | (lung[[1]][,i]==-1 & lung[[2]][,i]==-1)))
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.1 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Breast") %>%
+					arrange(x, y)
+					   
+index = grep("VL", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = g_cn[,index[i]]
+	y = ifelse(i_cn[,index[i]]<0, -1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.2 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Lung") %>%
+					arrange(x, y)
 
-print(sum(index!=0))
-print(100*sum(index!=0)/length(index))
-
-## prostate
-index = grep("VP", colnames(i_cn_))
-prostate = list()
-prostate[[1]] = i_cn_[,index,drop=FALSE]
-prostate[[2]] = g_cn_[,index,drop=FALSE]
-
-index = rep(0, length(index))
-for (i in 1:length(index)) {
-	index[i] = (sum((prostate[[1]][,i]==1 & prostate[[2]][,i]==1) | (prostate[[1]][,i]==-1 & prostate[[2]][,i]==-1)))
+index = grep("VP", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = g_cn[,index[i]]
+	y = ifelse(i_cn[,index[i]]<0, -1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
+data = do.call(rbind, data)
+model.fit = pROC::roc(y ~ x, data=data, smooth=FALSE)
+show.3 = data.frame(x = 1-model.fit$specificities,
+					y = model.fit$sensitivities) %>%
+					mutate(sample_type = "Prostate") %>%
+					arrange(x, y)
 
-print(sum(index!=0))
-print(100*sum(index!=0)/length(index))
+show.data = rbind(show.0, show.1, show.2, show.3) %>%
+			mutate(sample_type = factor(sample_type, levels = c("Combined", "Breast", "Lung", "Prostate"), ordered=TRUE)) %>%
+			mutate(copy_type = "Homozygous deletions")
 
+plot.0 = ggplot(show.data, aes(x = x, y = y, group = sample_type, color = sample_type)) +
+		 geom_line(size=1) +
+		 scale_color_manual(values = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4", "Combined"="cadetblue")) +
+		 theme_bw(base_size=15) +
+		 facet_wrap(~copy_type) +
+		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
+		 labs(x="\n1 - Specificity", y="Sensitivity\n") +
+         coord_cartesian(xlim=c(0, 1), ylim = c(0, 1)) +
+         theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8))
+         		
+pdf(file="../res/rebuttal/Analytical_performance_copy_deletions.pdf", width=5, height=5)
+print(plot.0)
+dev.off()
 
-#i_cn = read.csv(file="~/share/data/common/cbioportal_repos/msk-impact/msk-impact/data_CNA.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE)
-#colnames(i_cn) = gsub(pattern=".", replacement="-", x=colnames(i_cn), fixed=TRUE)
-#rownames(i_cn) = i_cn$Hugo_Symbol
-#i_cn = i_cn[,key_file$DMP_ID,drop=FALSE]
-#colnames(i_cn) = key_file$GRAIL_ID
-#i_cn[i_cn==1.5] = 2
-#i_cn[i_cn==-1.5] = -2
-#i_cn[i_cn>0] = 1
-#i_cn[i_cn<0] = -1
-#featureNames = intersect(rownames(i_cn), rownames(g_cn))
-#i_cn = i_cn[featureNames,,drop=FALSE]
-#g_cn = g_cn[featureNames,,drop=FALSE]
-
-## all cancers combined
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=1
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==1 & g_cn_[,i]==1)
-	indy[i] = sum(i_cn_[,i]==1)
+#==================================================
+# Probit curves
+#==================================================
+i_cn = foreach (i=1:nrow(tracker)) %dopar% {
+ 	cat(tracker$GRAIL_ID[i], "\n")
+  	path = paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", tracker$TUMOR_ID[i], ".RData")
+ 	data = new.env()
+ 	load(path, envir=data)
+  	seg = data$tmp %>%
+  		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+  		  filter(chrom<23)
+  	seg = prune_(x=seg)
+  	a_cn = round(absolute_(rho=tracker$IMPACT_alpha[i], psi=tracker$GRAIL_psi[i], gamma=.85, seg$log2))
+   	
+ 	seg = cbind(seg, a_cn)
+  	
+  	Chromosome = seg[,"chrom"]
+  	Start = seg[,"start"]
+  	End = seg[,"end"]
+  	Calls = seg[,"a_cn"]
+  	res = data.frame(Chromosome, Start, End, Calls)
+  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+  			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
+  			rename(Hugo_Symbol = hgnc_symbol,
+  				   Chromosome = chr,
+  				   Start = start_position,
+  				   End = end_position) %>%
+  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+  			arrange(as.numeric(Chromosome), as.numeric(Start))
+  				   
+  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+  	fo <- findOverlaps(res_by_segment, annot_by_gene)
+  
+  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+  	for (j in 1:length(Hugo_Symbol)) {
+  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+  		df[index,2] = round(max(df[index,2], na.rm=TRUE))
+  	}
+  	df = df %>% filter(!duplicated(Hugo_Symbol))
+  	df[,2] = round(df[,2])
+  	res = rep(0, nrow(annot))
+  	names(res) = annot[,"Hugo_Symbol"]
+  	res[as.character(df$Hugo_Symbol)] = df$Calls
+  	return(invisible(res))
 }
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
-
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=-1
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==-1 & g_cn_[,i]==-1)
-	indy[i] = sum(i_cn_[,i]==-1)
+i_cn = do.call(cbind, i_cn)
+colnames(i_cn) = tracker$GRAIL_ID
+ 
+g_cn = foreach (i=1:nrow(tracker)) %dopar% {
+	cat(tracker$GRAIL_ID[i], "\n")
+ 	path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", tracker$GRAIL_ID[i], "-T.RData")
+ 	data = new.env()
+ 	load(path, envir=data)
+  	seg = data$tmp %>%
+  		  dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+  		  filter(chrom<23)
+  	seg = prune_(x=seg)
+  	a_cn = round(absolute_(rho=tracker$ctdna_frac[i], psi=tracker$GRAIL_psi[i], gamma=.85, seg$log2))
+ 	c_cn = rep(0, length(a_cn))
+  	if (round(tracker$GRAIL_psi[i])==2) {
+  		c_cn[a_cn<0.5] = -1
+  		c_cn[a_cn>6] = 1
+  	} else if (round(tracker$GRAIL_psi[i])==3) {
+  		c_cn[a_cn<1] = -1
+  		c_cn[a_cn>7] = 1
+  	} else if (round(tracker$IMPACT_psi[i])==4) {
+  		c_cn[a_cn<1] = -1
+   		c_cn[a_cn>8] = 1
+  	}
+  	
+  	sample_names = c("MSK-VB-0024", "MSK-VP-0028", "MSK-VB-0032", "MSK-VB-0046", "MSK-VP-0031")
+ 
+  	if (tracker$GRAIL_ID[i] %in% sample_names) {
+  		c_cn = rep(0, length(a_cn))
+  		c_cn[a_cn<0] = -1
+   		c_cn[a_cn>7] = 1
+   	}
+  	
+  	seg = cbind(seg, a_cn, c_cn)
+  	
+  	Chromosome = seg[,"chrom"]
+  	Start = seg[,"start"]
+  	End = seg[,"end"]
+  	Calls = seg[,"c_cn"]
+  	res = data.frame(Chromosome, Start, End, Calls)
+  	annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+  			dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
+  			rename(Hugo_Symbol = hgnc_symbol,
+  				   Chromosome = chr,
+  				   Start = start_position,
+  				   End = end_position) %>%
+  			mutate(Chromosome = ifelse(Chromosome %in% "X", 23, Chromosome)) %>%
+  			arrange(as.numeric(Chromosome), as.numeric(Start))
+  				   
+  	annot_by_gene <- annot %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Hugo_Symbol = Hugo_Symbol)
+  	res_by_segment <- res %$% GRanges(seqnames = Chromosome, ranges = IRanges(Start, End), Calls = Calls)
+  	fo <- findOverlaps(res_by_segment, annot_by_gene)
+  
+  	df <- data.frame(Hugo_Symbol=mcols(annot_by_gene)[subjectHits(fo),], Calls=mcols(res_by_segment)[queryHits(fo),])
+  	Hugo_Symbol = which(duplicated(df$Hugo_Symbol))
+  	for (j in 1:length(Hugo_Symbol)) {
+  		index = which(as.character(df$Hugo_Symbol)==as.character(df$Hugo_Symbol[Hugo_Symbol[j]]))
+  		df[index,2] = round(mean(df[index,2], na.rm=TRUE))
+  	}
+  	df = df %>% filter(!duplicated(Hugo_Symbol))
+  	res = rep(0, nrow(annot))
+  	names(res) = annot[,"Hugo_Symbol"]
+  	res[as.character(df$Hugo_Symbol)] = df$Calls
+  	return(invisible(res))
 }
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
+g_cn = do.call(cbind, g_cn)
+colnames(g_cn) = tracker$GRAIL_ID
+ 
+featureNames = intersect(rownames(i_cn), rownames(g_cn))
+i_cn = i_cn[featureNames,,drop=FALSE]
+g_cn = g_cn[featureNames,,drop=FALSE]
 
-## breast
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=1 & grepl("VB", colnames(i_cn))
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==1 & g_cn_[,i]==1)
-	indy[i] = sum(i_cn_[,i]==1)
+#==================================================
+# Probit curves amplification
+#==================================================
+data = foreach (i=1:nrow(tracker)) %dopar% {
+	x = i_cn[,i]
+	y = ifelse(g_cn[,i]>0, 1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
-
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=-1 & grepl("VB", colnames(i_cn))
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==-1 & g_cn_[,i]==-1)
-	indy[i] = sum(i_cn_[,i]==-1)
+data = do.call(rbind, data)
+model = glm(y ~ x, data=data, family = binomial(link = "probit"))
+new_data = data.frame(x = seq(0, 50, 0.01))
+predicted_data = as.data.frame(predict(model, newdata = new_data, se = TRUE))
+show_data.0 = cbind(new_data, predicted_data) %>%
+			  mutate(ymin = model$family$linkinv(fit - 1.96*se.fit),
+				     ymax = model$family$linkinv(fit + 1.96*se.fit),
+				     yfit = model$family$linkinv(fit),
+				     grp = "Combined")
+				     
+index = grep("VB", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = i_cn[,index[i]]
+	y = ifelse(g_cn[,index[i]]>0, 1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
-
-## lung
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=1 & grepl("VL", colnames(i_cn))
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==1 & g_cn_[,i]==1)
-	indy[i] = sum(i_cn_[,i]==1)
+data = do.call(rbind, data)
+model = glm(y ~ x, data=data, family = binomial(link = "probit"))
+new_data = data.frame(x = seq(0, 50, 0.01))
+predicted_data = as.data.frame(predict(model, newdata = new_data, se = TRUE))
+show_data.1 = cbind(new_data, predicted_data) %>%
+			  mutate(ymin = model$family$linkinv(fit - 1.96*se.fit),
+				     ymax = model$family$linkinv(fit + 1.96*se.fit),
+				     yfit = model$family$linkinv(fit),
+				     grp = "Breast")
+				     
+index = grep("VL", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = i_cn[,index[i]]
+	y = ifelse(g_cn[,index[i]]>0, 1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
-
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=-1 & grepl("VL", colnames(i_cn))
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==-1 & g_cn_[,i]==-1)
-	indy[i] = sum(i_cn_[,i]==-1)
+data = do.call(rbind, data)
+model = glm(y ~ x, data=data, family = binomial(link = "probit"))
+new_data = data.frame(x = seq(0, 50, 0.01))
+predicted_data = as.data.frame(predict(model, newdata = new_data, se = TRUE))
+show_data.2 = cbind(new_data, predicted_data) %>%
+			  mutate(ymin = model$family$linkinv(fit - 1.96*se.fit),
+				     ymax = model$family$linkinv(fit + 1.96*se.fit),
+				     yfit = model$family$linkinv(fit),
+				     grp = "Lung")
+				     
+index = grep("VP", tracker$GRAIL_ID)
+data = foreach (i=1:length(index)) %dopar% {
+	x = i_cn[,index[i]]
+	y = ifelse(g_cn[,index[i]]>0, 1, 0)
+	data = data.frame(x=x, y=y)
+	return(invisible(data))
 }
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
+data = do.call(rbind, data)
+model = glm(y ~ x, data=data, family = binomial(link = "probit"))
+new_data = data.frame(x = seq(0, 50, 0.01))
+predicted_data = as.data.frame(predict(model, newdata = new_data, se = TRUE))
+show_data.3 = cbind(new_data, predicted_data) %>%
+			  mutate(ymin = model$family$linkinv(fit - 1.96*se.fit),
+				     ymax = model$family$linkinv(fit + 1.96*se.fit),
+				     yfit = model$family$linkinv(fit),
+				     grp = "Prostate")
+				     
+show_data = bind_rows(show_data.0, show_data.1, show_data.2, show_data.3) %>%
+			mutate(grp = factor(grp, levels = c("Combined", "Breast", "Lung", "Prostate"), ordered=TRUE))
 
-## prostate
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=0 & grepl("VP", colnames(i_cn))
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
+plot.0 = ggplot(show_data, aes(x = x, y = yfit, group=grp, color=grp)) +
+		 geom_line(size=1) +
+		 geom_line(size=.5, linetype=1, aes(x=x, y=ymin)) +
+		 geom_line(size=.5, linetype=1, aes(x=x, y=ymax)) +
+		 scale_color_manual(values = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4", "Combined"="cadetblue")) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12), legend.position="none") +
+		 facet_wrap(~grp, nrow=2, ncol=2) +
+		 labs(x="\nCopy number", y="Detection probability\n") +
+         coord_cartesian(xlim=c(0, 25), ylim = c(0, 1))
+         		
+pdf(file="../res/rebuttal/Analytical_performance_copy_amplifications_Probit.pdf", width=7, height=5.5)
+print(plot.0)
+dev.off()
 
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==1 & g_cn_[,i]==1)
-	indy[i] = sum(i_cn_[,i]==1)
-}
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
-
-index = apply(i_cn, 2, function(x) {sum(x==1)})!=-1 & grepl("VP", colnames(i_cn))
-i_cn_ = i_cn[,index,drop=FALSE]
-g_cn_ = g_cn[,index,drop=FALSE]
-
-indx = rep(0, sum(index))
-indy = rep(0, sum(index))
-for (i in 1:ncol(i_cn_)) {
-	indx[i] = sum(i_cn_[,i]==-1 & g_cn_[,i]==-1)
-	indy[i] = sum(i_cn_[,i]==-1)
-}
-print(sum(indx))
-print(sum(indy))
-print(100*sum(indx)/sum(indy))
-
+# copy = NULL
+# for (i in 1:ncol(i_cn)) {
+# 	copy = cbind(copy, i_cn[,i], g_cn[,i])
+# }
+# index = apply(copy, 1, function(x) {sum(x==0)})==98
+# copy = copy[!index,,drop=FALSE]
+# assay_type = rep(c("Biopsy", "cfDNA"), times=nrow(key_file))
+# cancer_type = rep("Breast", times=nrow(key_file))
+# cancer_type[grepl("VL", key_file$GRAIL_ID)] = "Lung"
+# cancer_type[grepl("VP", key_file$GRAIL_ID)] = "Prostate"
+# cancer_type = rep(cancer_type, each=2)
+# 
+# pdf(file="../res/rebuttal/Heatmap_CN_Tumor_cfDNA.pdf", width=13, height=7/10*12)
+# mm = split.screen(fig=matrix(c(0.02,.32,0,1,	0,.25,0,.98,	.16,1,0,1), nrow=3, ncol=4, byrow=TRUE))
+# screen(mm[1])
+# plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,5), ylim=c(.5,ncol(copy)-.5), axes=FALSE, frame.plot=FALSE)
+# cols = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4")[cancer_type]
+# z = 3.8
+# for (i in 1:length(cols)) {
+# 	rect(xleft=z, xright=z+.2, ybottom=i-.5, ytop=i+.5, col=cols[i], border="white", lwd=.5)
+# }
+# cols = ifelse(assay_type=="Biopsy", "#AB6E9A", "#7B1E5B")
+# for (i in 1:length(cols)) {
+# 	rect(xleft=z+.23, xright=z+.23+.2, ybottom=i-.5, ytop=i+.5, col=cols[i], border="white", lwd=.5)
+# }
+# screen(mm[2])
+# z = .5
+# plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,5), ylim=c(0,ncol(copy)), axes=FALSE, frame.plot=FALSE)
+# points(0+z, 100, type="p", pch=22, bg="#CF3A3D", col="black", cex=1.5)
+# text(x=0+z, y=100, labels="Amplification", pos=4, cex=.78)
+# points(0+z, 97, type="p", pch=22, bg="#2A4B94", col="black", cex=1.5)
+# text(x=0+z, y=97, labels="Homozygous deletion", pos=4, cex=.78)
+# points(0+z, 90, type="p", pch=22, bg="salmon", col="black", cex=1.5)
+# text(x=0+z, y=90, labels="Breast", pos=4, cex=.78)
+# points(0+z, 87, type="p", pch=22, bg="#FDAE61", col="black", cex=1.5)
+# text(x=0+z, y=87, labels="Lung", pos=4, cex=.78)
+# points(0+z, 84, type="p", pch=22, bg="#ABDDA4", col="black", cex=1.5)
+# text(x=0+z, y=84, labels="Prostate", pos=4, cex=.78)
+# points(0+z, 77, type="p", pch=22, bg="#AB6E9A", col="black", cex=1.5)
+# text(x=0+z, y=77, labels="Biopsy", pos=4, cex=.78)
+# points(0+z, 74, type="p", pch=22, bg="#7B1E5B", col="black", cex=1.5)
+# text(x=0+z, y=74, labels="cfDNA", pos=4, cex=.78)
+# screen(mm[3])
+# cols = c("#2A4B94", NA, "#CF3A3D")
+# plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,nrow(copy)), ylim=c(0,ncol(copy)-1), axes=FALSE, frame.plot=FALSE)
+# for (i in 1:(ncol(copy))) {
+#  	col = cols[as.numeric(copy[,i])+2]
+#  	for (j in 1:length(col)) {
+#  		rect(xleft=j-.5, xright=j+.5, ybottom=i-1, ytop=i, col=col[j], border="grey95", lwd=.05)
+#  	}
+# }
+# rect(xleft=0.5, xright=nrow(copy)+.5, ybottom=0, ytop=ncol(copy), border="grey90")
+# close.screen(all.screens=TRUE)
+# dev.off()
 
 #==================================================
 # Log2 ratio plots grail cfdna tumor samples
