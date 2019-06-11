@@ -958,6 +958,42 @@ dev.off()
 #==================================================
 # Probit curves
 #==================================================
+tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
+		  type_convert() %>%
+ 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
+		   
+ctDNA_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character())) %>%
+		   		 type_convert() %>%
+		   		 rename(GRAIL_ID = ID)
+		   		 
+tracker = left_join(tracker, ctDNA_fraction, by="GRAIL_ID") %>%
+ 		  filter(!is.na(ctdna_frac)) %>%
+		  filter(ctdna_frac>.1)
+ 
+sse = foreach (i=1:nrow(tracker)) %dopar% {
+  	cat(tracker$GRAIL_ID[i], "\n")
+  	if (!is.na(tracker$ctdna_frac[i]) & tracker$ctdna_frac[i]>.1) {
+ 	  	grail_path = paste0("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", tracker$GRAIL_ID[i], "-T.RData")
+ 	 	grail_data = new.env()
+ 	 	load(grail_path, envir=grail_data)
+  	 	grail_seg = grail_data$tmp %>%
+  				    dplyr::select(chrom=Chromosome, start = Start, end = End, log2 = Log2Ratio, n=N) %>%
+  				    filter(chrom<23)
+  		grail_seg = prune_(x=grail_seg)
+  		sse = ploidy_(x=grail_seg$log2, y=tracker$ctdna_frac[i], w=grail_seg$n)
+  	} else {
+  		sse = rep(NA, 100)
+  	}
+  	return(sse)
+}
+min_sse = unlist(lapply(sse, min))
+index = rep(NA, length(sse))
+index[!is.na(min_sse)] = unlist(lapply(sse, which.min))
+ploidy = seq(from=1.5, to=3.5, length=100)[index]
+tracker$GRAIL_psi = ploidy
+tracker = tracker %>%
+	   	  filter(!is.na(GRAIL_psi) & !is.na(ctdna_frac))
+
 i_cn = foreach (i=1:nrow(tracker)) %dopar% {
  	cat(tracker$GRAIL_ID[i], "\n")
   	path = paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", tracker$TUMOR_ID[i], ".RData")
@@ -1465,7 +1501,7 @@ for (j in 1:length(sample_names)) {
 	start = 0
 	data(CytoBand)
 	end = max(as.numeric(CytoBand[CytoBand[,1]==17,4]))
-	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4.75), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 	index = CN[,"Chromosome"]==17
 	z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
 	z1 = winsorize(data=z0, tau=2.5, k=50)
@@ -1480,12 +1516,12 @@ for (j in 1:length(sample_names)) {
 		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
 	}
 	abline(h=0, lwd=1)
-	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	axis(2, at = c(-4,-2,0,2,4), labels=c(-4,-2,0,2,4), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35, col="grey20", col.axis="grey20")
+	axis(2, at = c(-3,-1,1,3), labels=rep("",4), cex.axis = 1.5, las = 1, lwd=0, lwd.ticks=1.15, col="grey20", col.axis="grey20")
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
-	box(lwd=2)
-	screen(zz[2])
-	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
-	plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
+	rect(xleft=1-1e10, xright=max(z1[,"pos"])+1e10, ybottom=4, ytop=6, col="lightgrey", border="grey20", lwd=2.5)
+	box(lwd=2.5, col="grey20")
+	screen(zz[2])	
 	close.screen(all.screens=TRUE)
 	dev.off()
 }
@@ -1517,9 +1553,10 @@ for (j in 1:length(sample_names)) {
 		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
 	}
 	abline(h=0, lwd=1)
-	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	axis(2, at = c(-4,-2,0,2,4), labels=c(-4,-2,0,2,4), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35, col="grey20", col.axis="grey20")
+	axis(2, at = c(-3,-1,1,3), labels=rep("",4), cex.axis = 1.5, las = 1, lwd=0, lwd.ticks=1.15, col="grey20", col.axis="grey20")
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
-	box(lwd=2)
+	box(lwd=2.5, col="grey20")
 	screen(zz[2])
 	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
@@ -1552,7 +1589,7 @@ for (j in 1:length(sample_names)) {
 	start = 0
 	data(CytoBand)
 	end = max(as.numeric(CytoBand[CytoBand[,1]==7,4]))
-	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+	plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4.75), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 	index = CN[,"Chromosome"]==7
 	z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
 	z1 = winsorize(data=z0, tau=2.5, k=50)
@@ -1567,12 +1604,12 @@ for (j in 1:length(sample_names)) {
 		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
 	}
 	abline(h=0, lwd=1)
-	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	axis(2, at = c(-4,-2,0,2,4), labels=c(-4,-2,0,2,4), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35, col="grey20", col.axis="grey20")
+	axis(2, at = c(-3,-1,1,3), labels=rep("",4), cex.axis = 1.5, las = 1, lwd=0, lwd.ticks=1.15, col="grey20", col.axis="grey20")
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
-	box(lwd=2)
+	rect(xleft=1-1e10, xright=max(z1[,"pos"])+1e10, ybottom=4, ytop=6, col="lightgrey", border="grey20", lwd=2.5)
+	box(lwd=2.5, col="grey20")
 	screen(zz[2])
-	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
-	plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 	close.screen(all.screens=TRUE)
 	dev.off()
 }
@@ -1604,9 +1641,10 @@ for (j in 1:length(sample_names)) {
 		points(c(tmp[i,"End"], tmp[i+1,"Start"]), c(tmp[i,"Log2Ratio"],tmp[i+1,"Log2Ratio"]), type="l", col="red", lwd=1)
 	}
 	abline(h=0, lwd=1)
-	axis(2, at = c(-4,-3,-2,-1,0,1,2,3,4), labels=c(-4,-3,-2,-1,0,1,2,3,4), cex.axis = 1.25, las = 1, lwd=1.5, lwd.ticks=1.35)
+	axis(2, at = c(-4,-2,0,2,4), labels=c(-4,-2,0,2,4), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35, col="grey20", col.axis="grey20")
+	axis(2, at = c(-3,-1,1,3), labels=rep("",4), cex.axis = 1.5, las = 1, lwd=0, lwd.ticks=1.15, col="grey20", col.axis="grey20")
 	mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
-	box(lwd=2)
+	box(lwd=2.5, col="grey20")
 	screen(zz[2])
 	assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
