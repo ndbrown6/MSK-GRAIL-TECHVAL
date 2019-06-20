@@ -229,7 +229,7 @@ p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternat
 
 plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) + 
 		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, color="black", fill="white") +
-		 geom_point(alpha=1, size=3.75, shape=21, color="black", fill="#ABDDA4", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
+		 geom_point(alpha=1, size=3.75, shape=24, color="black", fill="#ABDDA4", aes(x = jitter(as.numeric(cat)), y = ctdna_frac), data=tmp.0) +
 		 facet_wrap(~Tissue) +
 		 theme_bw(base_size=15) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
@@ -238,6 +238,67 @@ plot.0 = ggplot(tmp.0, aes(x = cat, y = ctdna_frac)) +
 		 annotate(geom="text", x=2, y=1, label=paste0("p = ", p), size=4.5)
 
 pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Prostate_Box.pdf", width=5.5, height=5)
+print(plot.0)
+dev.off()
+
+#==================================================
+# Box plot for cfDNA fraction by disease
+# volume combined
+#==================================================
+pattern = c("VB", "VL", "VP")
+tissue = c("Breast", "Lung", "Prostate")
+
+tmp.1 = p.1 = NULL
+for (i in 1:length(pattern)) {
+	tmp = volumetric_data %>%
+		  mutate(tot_volu = ifelse(tot_volu==0, 0.1, tot_volu)) %>%
+	 	  mutate(ln_frac = log(ctdna_frac)) %>%
+	 	  mutate(ln_vol = log(tot_volu)) %>%
+		  filter(grepl(pattern[i], GRAIL_ID)) %>%
+		  mutate(Tissue = tissue[i]) %>%
+		  filter(!(is.infinite(ln_frac) | is.na(ln_frac))) %>%
+		  filter(!(is.infinite(ln_vol) | is.na(ln_vol)))
+		
+	if (tissue[i]=="Breast") {
+		tmp = tmp %>%
+			  mutate(shape = ifelse(is.na(Bone_Lesions) & is.na(Pleural_Disease), 21, 24))
+	} else if (tissue[i]=="Lung") {
+		tmp = tmp %>%
+			  mutate(shape = ifelse(is.na(Bone_Lesions) & is.na(Pleural_Disease), 21, 24)) %>%
+	  		  # Large left forearm bone and soft-tissue mass 10 by 7 by 17 cm not included in PET-scan and measurements
+	  		  mutate(shape = ifelse(GRAIL_ID=="MSK-VL-0008", 24, shape))
+	} else if (tissue[i]=="Prostate") {
+		tmp = tmp %>%
+			  mutate(shape = 24)
+	}
+	
+
+	tmp.0 = tmp %>%
+			mutate(cat = case_when(
+				tot_volu >= 0 & tot_volu <= quantile(tot_volu, 1/3) ~ 1,
+				tot_volu > quantile(tot_volu, 1/3) & tot_volu <= quantile(tot_volu, 2/3) ~ 2,
+				tot_volu > quantile(tot_volu, 2/3) ~ 3,
+			)) %>%
+ 			mutate(cat = as.factor(cat))
+ 	p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternative = "increasing")$p.value, 3)
+ 	tmp.1 = rbind(tmp.1, tmp.0)
+ 	p.1 = c(p.1, p)
+}
+
+plot.0 = ggplot(tmp.1, aes(x = Tissue, y = ctdna_frac, color = cat)) + 
+		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, fill="white", width=.8) +
+		 scale_colour_manual(values=c("1"="black", "2"="black", "3"="black")) +
+		 geom_jitter(
+		 	aes(x = Tissue, y = ctdna_frac, color = cat),
+  			position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+  			alpha=1, size=3, shape=tmp.1$shape
+  			) +
+		 theme_classic(base_size=15) +
+ 		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10), legend.position="none") +
+ 		 labs(x="", y="ctDNA fraction\n") +
+ 		 coord_cartesian(ylim = c(0,1))
+
+pdf(file="../res/rebuttal/cfDNA_Fraction_vs_Tv_Combined_Box.pdf", width=8.5, height=5)
 print(plot.0)
 dev.off()
 
@@ -613,7 +674,7 @@ cfdna_frac = cbind(cfdna_frac, number_metastatic_sites) %>%
 			 mutate(GRAIL_ID = ID)
 			 
 tmp = left_join(volumetric_data, cfdna_frac, by="GRAIL_ID") %>%
-	  select(patient_id = GRAIL_ID, tot_volu, tot_mets, tot_mets_2 = number_metastatic_sites, tissue = Tissue, ctdna_frac = ctdna_frac.x)
+	  dplyr::select(patient_id = GRAIL_ID, tot_volu, tot_mets, tot_mets_2 = number_metastatic_sites, tissue = Tissue, ctdna_frac = ctdna_frac.x)
 
 # Breast
 tmp.0 = tmp %>%

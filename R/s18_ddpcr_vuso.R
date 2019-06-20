@@ -26,7 +26,7 @@ bed = read_tsv(file=s3_target, col_names = c("chrom", "start", "end"), col_types
 		       type_convert() %>%
 			   mutate(is_clean = TRUE)
 
-vuso = read_tsv(file="../res/tables/Table_S7_vuso_biorad_ddpcr_annot.tsv", col_types = cols(.default = col_character())) %>%
+vuso = read_tsv(file=paste0(ver_tidy, "Resources/MSK_additional_data/Table_S7_vuso_biorad_ddpcr_annot.tsv"), col_types = cols(.default = col_character())) %>%
 		        type_convert()
 
 leftover = read_tsv(file=url_leftover_samples, col_types = cols(.default = col_character())) %>%
@@ -251,8 +251,8 @@ ddpcr_results_summary %>% arrange(UUID, ddPCR_retest, patient_id) %>%
   						  
 tmp = ddpcr_results_summary %>%
 	  dplyr::select(patient_id, UUID, ddPCR_retest, input_type, af_ddPCR_mean, af_ddPCR_sd, af_cfdna) %>%
-	  mutate(af_ddPCR_mean = ifelse(af_ddPCR_mean < 5e-5, 1e-5, af_ddPCR_mean)) %>%
-	  mutate(af_cfdna = ifelse(af_cfdna == 0, 1e-5, af_cfdna)) %>%
+	  mutate(af_ddPCR_mean = ifelse(af_ddPCR_mean < 5e-5, 2e-4, af_ddPCR_mean)) %>%
+	  mutate(af_cfdna = ifelse(af_cfdna == 0, 2e-4, af_cfdna)) %>%
 	  mutate(af_ddPCR_mean = af_ddPCR_mean*100) %>%
 	  mutate(af_cfdna = af_cfdna*100) %>%
 	  mutate(facet = "VUSo") %>%
@@ -272,15 +272,15 @@ plot.0 = ggplot(tmp, aes(y = af_cfdna, x = af_ddPCR_mean, shape = ddPCR_retest, 
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(y="\nTargeted DNA assay (%)\n", x="\nddPCR (%)\n") +
 		 scale_x_log10(
-		 	breaks = function(x) { c(0.001, 0.01, 0.1, 1, 10) },
- 			labels = function(x) { c("0", ".01", ".1", "1", "10") }
+		 	breaks = function(x) { c(0.02, 0.05, 0.1, 1, 10) },
+ 			labels = function(x) { c("ND", ".05", ".1", "1", "10") }
 		 ) +
 		 scale_y_log10(
-		 	breaks = function(x) { c(0.001, 0.01, 0.1, 1, 10) },
- 			labels = function(x) { c("0", ".01", ".1", "1", "10") }
+		 	breaks = function(x) { c(0.02, 0.05, 0.1, 1, 10) },
+ 			labels = function(x) { c("ND", ".05", ".1", "1", "10") }
 		 ) +
 		 annotation_logticks() +
-		 coord_cartesian(xlim=c(1e-3,10), ylim = c(1e-3, 10)) +
+		 coord_cartesian(xlim=c(2e-2,10), ylim = c(2e-2, 10)) +
 		 facet_wrap(~facet) +
 		 guides(shape=guide_legend(title=c("Called in targeted\ncfDNA assay"), override.aes=list(fill="black"))) +
 		 guides(fill=guide_legend(title=c("Input type")))

@@ -33,7 +33,8 @@ qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_i
 
 qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
-			 	 filter(sample_type=="gDNA")
+			 	 filter(sample_type=="gDNA") %>%
+			 	 mutate(sample_type = "WBC")
 tracker_grail_wbc = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 					dplyr::select(patient_id, gdna_sample_id) %>%
 					rename(msk_id = patient_id, sample_id = gdna_sample_id)
@@ -139,37 +140,57 @@ p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Prostate") %
 p = p.adjust(unlist(p), "bonferroni")
 
 p = list()
-p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
+p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
+p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
+p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
+p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
+p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
+p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
 p = p.adjust(unlist(p), "bonferroni")
 
-plot.0 = ggplot(tmp, aes(x = Tissue, y = Uncollapsed_Mean_Coverage, fill = Tissue)) + 
-		 geom_boxplot(alpha=1, outlier.size=2.5, outlier.shape=21) + 
-		 scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue")) + 
-		 facet_wrap(~Sample_Type) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
-		 labs(x="", y="Uncollapsed mean coverage\n") +
-		 guides(fill=FALSE) +
-		 scale_y_continuous(breaks=c(50000, 75000, 100000, 125000), labels=c("50000", "75000", "100000", "125000")) +
-		 coord_cartesian(ylim = c(30000,150000))
+p = list()
+p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Uncollapsed_Mean_Coverage"]],
+				alternative = "two.sided", correct = FALSE)$p.value
+p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Uncollapsed_Mean_Coverage"]],
+				alternative = "two.sided", correct = FALSE)$p.value
+p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Uncollapsed_Mean_Coverage"]],
+				alternative = "two.sided", correct = FALSE)$p.value
+p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Uncollapsed_Mean_Coverage"]],
+				alternative = "two.sided", correct = FALSE)$p.value
+p = p.adjust(unlist(p), "bonferroni")
 
+plot.0 = ggplot(tmp %>% mutate(Facet="Coverage by cancer & assay type"), aes(x = Tissue, y = Uncollapsed_Mean_Coverage, fill = Sample_Type)) + 
+		 geom_boxplot(alpha=1, outlier.size=2.5, outlier.shape=21) + 
+		 scale_fill_manual(values = c("salmon", "#FDAE61")) + 
+		 facet_wrap(~Facet) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=13),
+		 	   axis.text.x = element_text(size=10),
+		 	   legend.title=element_text(size=10, face="bold"),
+		 	   legend.position = c(0.125, 0.875),
+		 	   legend.background = element_blank(),
+		 	   legend.key.size = unit(1, 'lines')) +
+		 labs(x="", y="Uncollapsed mean coverage\n") +
+		 guides(fill=guide_legend(title=c("Assay type"))) +
+		 scale_y_continuous(breaks=c(50000, 75000, 100000, 125000, 150000), labels=c("50000", "75000", "100000", "125000", "150000")) +
+		 coord_cartesian(ylim = c(30000,150000))
+		 
 pdf(file="../res/rebuttal/UNCOLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
 print(plot.0)
 dev.off()
@@ -200,23 +221,23 @@ p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Prostate") %
 p = p.adjust(unlist(p), "bonferroni")
 
 p = list()
-p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Collapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Collapsed_Mean_Coverage"]],
+p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Collapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Collapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Collapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Collapsed_Mean_Coverage"]],
+p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Collapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Collapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Collapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Collapsed_Mean_Coverage"]],
+p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Collapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Collapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Collapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Collapsed_Mean_Coverage"]],
+p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Collapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Collapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Collapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Collapsed_Mean_Coverage"]],
+p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Collapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Collapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Collapsed_Mean_Coverage"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Collapsed_Mean_Coverage"]],
+p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Collapsed_Mean_Coverage"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Collapsed_Mean_Coverage"]],
 				alternative = "two.sided", correct = FALSE)$p.value
 p = p.adjust(unlist(p), "bonferroni")
 
@@ -300,7 +321,7 @@ p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Prostate") %
 p = p.adjust(unlist(p), "bonferroni")
 
 plot.0 = ggplot(tmp, aes(x = Tissue, y = Library_preparation_input_ng, fill = Tissue)) + 
-		 geom_boxplot(alpha=1, outlier.shape=21, outlier.size=3.5) +
+		 geom_boxplot(alpha=1, outlier.shape=21, outlier.size=3.5, width=.75) +
 		 scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue")) +
 		 facet_wrap(~Sample_Type) +
 		 theme_bw(base_size=15) +
@@ -346,23 +367,23 @@ p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Prostate") %
 p = p.adjust(unlist(p), "bonferroni")
 
 p = list()
-p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Indel_and_Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Indel_and_Substitution_Error_Rate"]],
+p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Indel_and_Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Indel_and_Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Indel_and_Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Indel_and_Substitution_Error_Rate"]],
+p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Indel_and_Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Indel_and_Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Indel_and_Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Indel_and_Substitution_Error_Rate"]],
+p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Indel_and_Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Indel_and_Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Indel_and_Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Indel_and_Substitution_Error_Rate"]],
+p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Indel_and_Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Indel_and_Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Indel_and_Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Indel_and_Substitution_Error_Rate"]],
+p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Indel_and_Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Indel_and_Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Indel_and_Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Indel_and_Substitution_Error_Rate"]],
+p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Indel_and_Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Indel_and_Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
 p = p.adjust(unlist(p), "bonferroni")
 
@@ -411,23 +432,23 @@ p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="cfDNA" & Tissue=="Prostate") %
 p = p.adjust(unlist(p), "bonferroni")
 
 p = list()
-p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Substitution_Error_Rate"]],
+p[[1]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Substitution_Error_Rate"]],
+p[[2]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Breast") %>% .[["Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Substitution_Error_Rate"]],
+p[[3]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Breast") %>% .[["Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Substitution_Error_Rate"]],
+p[[4]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Lung") %>% .[["Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Substitution_Error_Rate"]],
+p[[5]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Lung") %>% .[["Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
-p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Prostate") %>% .[["Substitution_Error_Rate"]],
-				tmp %>% filter(Sample_Type=="gDNA" & Tissue=="Control") %>% .[["Substitution_Error_Rate"]],
+p[[6]] = wilcox.test(tmp %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %>% .[["Substitution_Error_Rate"]],
+				tmp %>% filter(Sample_Type=="WBC" & Tissue=="Control") %>% .[["Substitution_Error_Rate"]],
 				alternative = "two.sided", correct = FALSE)$p.value
 p = p.adjust(unlist(p), "bonferroni")
 
