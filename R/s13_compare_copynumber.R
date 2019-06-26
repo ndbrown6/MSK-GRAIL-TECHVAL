@@ -1538,7 +1538,7 @@ cancer_type[grepl("VL", tracker$GRAIL_ID)] = "Lung"
 cancer_type[grepl("VP", tracker$GRAIL_ID)] = "Prostate"
 cancer_type = rep(cancer_type, each=2)
 
-pdf(file="../res/rebuttal/Heatmap_CN_Tumor_cfDNA_Interleaved.pdf", width=11, height=7)
+pdf(file="../res/rebuttal/Heatmap_CN_Tumor_cfDNA_Interleaved.pdf", width=9, height=10)
 mm = split.screen(fig=matrix(c(0,.32,0,1,  0,1,0,1), nrow=2, ncol=4, byrow=TRUE))
 
 screen(mm[1])
@@ -1560,6 +1560,11 @@ for (i in 1:(ncol(copy))) {
  	col = cols[as.numeric(copy[,i])+2]
  	for (j in 1:length(col)) {
  		rect(xleft=j-.5, xright=j+.5, ybottom=i-1, ytop=i, col=col[j], border="grey70", lwd=.01)
+ 	}
+}
+for (i in 1:(ncol(copy)-1)) {
+	if ((i %% 2)==0) {
+		points(c(.55, length(col)+.45), rep(i, 2), type="l", col="black", lwd=2)
  	}
 }
 rect(xleft=0.5, xright=nrow(copy)+.5, ybottom=0, ytop=ncol(copy), border="grey70", lwd=.01)
@@ -1764,7 +1769,7 @@ if (FALSE) {
 }
 
 #==================================================
-# Histogram of log2 ratios grail cfdna healthy
+# Histogram of Log2 Ratios grail cfdna healthy
 # controls
 #==================================================
 if (FALSE) {

@@ -444,6 +444,14 @@ url_smoking_history <- list(
 )
 
 
+url_guardant_g360 <- str_c(
+	"../",
+	"modified_v11/",
+	"Resources/",
+	"MSK_additional_data/",
+	"Guardant360_gene_list.tsv"
+)
+
 url_sample.tracker <- patient_tracker
 url_msk.snv <- snv_file$scored
 url_msk.indel <- indel_file$scored

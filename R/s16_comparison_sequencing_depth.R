@@ -278,15 +278,15 @@ plot.0 = ggplot(tmp, aes(x = Library_preparation_input_ng, y = Collapsed_Mean_Co
 		 geom_smooth(method = "lm", aes(x = Library_preparation_input_ng, y = Collapsed_Mean_Coverage), inherit.aes=FALSE, se = TRUE, level=1-1e-12, color="goldenrod3") +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.15, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(x="\nAmount of DNA used\nfor library preparation (ng)\n", y="Collapsed mean coverage\n") +
+		 labs(x="\nInput DNA for library preparation (ng)\n", y="Collapsed mean coverage\n") +
 		 coord_cartesian(xlim = c(10, 80)) +
-		 annotate(geom="text", x=30, y=7500, label=expression(R^2~" = ")) +
-		 annotate(geom="text", x=36, y=7450, label=signif(sfit$r.squared, 3)) +
-		 annotate(geom="text", x=30, y=7200, label=expression(P~" = ")) +
-		 annotate(geom="text", x=36, y=7150, label=signif(sfit$coefficients[2,4], 3))
+		 annotate(geom="text", x=15.5, y=5300, label=expression(R^2~" = ")) +
+		 annotate(geom="text", x=23, y=5300, label=signif(sfit$r.squared, 3)) +
+		 annotate(geom="text", x=15, y=4800, label=expression(P~" = ")) +
+		 annotate(geom="text", x=25, y=4800, label=signif(sfit$coefficients[2,4], 3))
 		 
 
-pdf(file="../res/rebuttal/COLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_input_DNA.pdf", width=6, height=6)
+pdf(file="../res/rebuttal/COLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_input_DNA.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
@@ -325,16 +325,16 @@ plot.0 = ggplot(tmp, aes(x = Tissue, y = Library_preparation_input_ng, fill = Ti
 		 scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue")) +
 		 facet_wrap(~Sample_Type) +
 		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
-		 labs(x="", y="Amount of DNA used\nfor library preparation (ng)\n") +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=12)) +
+		 labs(x="", y="Input DNA for library preparation (ng)\n") +
 		 scale_y_continuous(
-		 	breaks=c(0, 20, 40, 60, 80),
-		 	labels=c("0", "20", "40", "60", "80")
+		 	breaks=c(0, 20, 40, 60, 80, 90),
+		 	labels=c("0", "20", "40", "60", "80", "0000")
 		 ) +
 		 coord_cartesian(ylim = c(-10, 130)) +
 		 guides(fill=FALSE)
 
-pdf(file="../res/rebuttal/Input_cfDNA_by_Tissue.pdf", width=6, height=6)
+pdf(file="../res/rebuttal/Input_cfDNA_by_Tissue.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
