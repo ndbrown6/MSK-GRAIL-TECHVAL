@@ -1538,11 +1538,19 @@ cancer_type[grepl("VL", tracker$GRAIL_ID)] = "Lung"
 cancer_type[grepl("VP", tracker$GRAIL_ID)] = "Prostate"
 cancer_type = rep(cancer_type, each=2)
 
+featureNames = list(
+	c("ERBB2", "MYC", "MET", "CCND1", "EGFR", "RB1", "BRCA1", "BRCA2", "CDKN2A", "CDKN2B", "PTEN"),
+	c(1, 1, 1, 1, 1, -1, -1, -1, -1, -1))
+
+index = featureNames[[1]] %in% rownames(copy)
+featureNames[[1]] = featureNames[[1]][index]
+featureNames[[2]] = featureNames[[2]][index]
+
 pdf(file="../res/rebuttal/Heatmap_CN_Tumor_cfDNA_Interleaved.pdf", width=9, height=10)
 mm = split.screen(fig=matrix(c(0,.32,0,1,  0,1,0,1), nrow=2, ncol=4, byrow=TRUE))
 
 screen(mm[1])
-plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,5), ylim=c(.5,ncol(copy)-.5), axes=FALSE, frame.plot=FALSE)
+plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,4), ylim=c(.5,ncol(copy)-.5), axes=FALSE, frame.plot=FALSE)
 cols = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4")[cancer_type]
 z = 0
 for (i in 1:length(cols)) {
@@ -1564,7 +1572,7 @@ for (i in 1:(ncol(copy))) {
 }
 for (i in 1:(ncol(copy)-1)) {
 	if ((i %% 2)==0) {
-		points(c(.55, length(col)+.45), rep(i, 2), type="l", col="black", lwd=2)
+		points(c(.55, length(col)+.45), rep(i, 2), type="l", col="grey60", lwd=2.5)
  	}
 }
 rect(xleft=0.5, xright=nrow(copy)+.5, ybottom=0, ytop=ncol(copy), border="grey70", lwd=.01)
@@ -1575,77 +1583,11 @@ for (i in unique(annot$Chromosome)) {
 }
 axis(side=1, at=c(start, end[length(end)]+1)-.5, labels=rep(" ", length(start)+1), tcl=.5)
 axis(side=1, at=.5*(start+end), labels=unique(annot$Chromosome), cex.axis=1)
-close.screen(all.screens=TRUE)
-dev.off()
 
-annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-				dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%
-				rename(Hugo_Symbol = hgnc_symbol,
-					   Chromosome = chr,
-					   Start = start_position,
-					   End = end_position) %>%
-				mutate(Chromosome = as.numeric(ifelse(Chromosome %in% "X", 23, Chromosome))) %>%
-				filter(Chromosome<23) %>%
-				arrange(as.numeric(Chromosome), as.numeric(Start))
-rownames(annot) = annot$Hugo_Symbol
-featureNames = intersect(rownames(i_cn), rownames(annot))
-annot = annot[featureNames,,drop=FALSE]
-i_cn = i_cn[featureNames,,drop=FALSE]
-g_cn = g_cn[featureNames,,drop=FALSE]
+axisNames = rownames(copy)
+axisNames[!(axisNames %in% featureNames[[1]])] = ""
+axis(side=3, at=(1:nrow(copy))[axisNames!=""], labels=axisNames[axisNames!=""], line=-1, las=2)
 
-copy = matrix(0, nrow=nrow(i_cn), ncol=ncol(i_cn), dimnames=dimnames(i_cn))
-for (i in 1:nrow(i_cn)) {
-	for (j in 1:ncol(i_cn)) {
-		if (i_cn[i,j]==1 & g_cn[i,j]==1) {
-			copy[i,j] = 3
-		} else if (i_cn[i,j]==1 & g_cn[i,j]==0) {
-			copy[i,j] = 2
-		} else if (i_cn[i,j]==0 & g_cn[i,j]==1) {
-			copy[i,j] = 1
-		} else if (i_cn[i,j]==-1 & g_cn[i,j]==-1) {
-			copy[i,j] = -3
-		} else if (i_cn[i,j]==0 & g_cn[i,j]==-1) {
-			copy[i,j] = -2
-		} else if (i_cn[i,j]==-1 & g_cn[i,j]==0) {
-			copy[i,j] = -1
-		} else if ((i_cn[i,j]==-1 & g_cn[i,j]==1) | (i_cn[i,j]==1 & g_cn[i,j]==-1)) {
-			copy[i,j] = 4
-		}
-	}
-}
-index = apply(copy, 1, function(x) {sum(x==0)})==49
-copy = copy[!index,,drop=FALSE]
-annot = annot[!index,,drop=FALSE]
-cancer_type = rep("Breast", times=nrow(tracker))
-cancer_type[grepl("VL", tracker$GRAIL_ID)] = "Lung"
-cancer_type[grepl("VP", tracker$GRAIL_ID)] = "Prostate"
-
-pdf(file="../res/rebuttal/Heatmap_CN_Tumor_cfDNA_Nointerleaved.pdf", width=11, height=7)
-mm = split.screen(fig=matrix(c(0,.32,0,1,  0,1,0,1), nrow=2, ncol=4, byrow=TRUE))
-screen(mm[1])
-plot(0, 0, type="n", xlab="", ylab="", xlim=c(0,5), ylim=c(.5,ncol(copy)-.5), axes=FALSE, frame.plot=FALSE)
-cols = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4")[cancer_type]
-z = .2
-for (i in 1:length(cols)) {
-	rect(xleft=z, xright=z+.2, ybottom=i-.5, ytop=i+.5, col=cols[i], border="white", lwd=.1)
-}
-screen(mm[2])
-cols = c("#2A4B94", "#6988B0", "#6988B0", NA, "#C26558", "#C26558", "#CF3A3D", "#000000FF")
-plot(0, 0, type="n", xlab="", ylab="", xlim=c(2,nrow(copy)), ylim=c(0,ncol(copy)-1), axes=FALSE, frame.plot=FALSE)
-for (i in 1:(ncol(copy))) {
- 	col = cols[as.numeric(copy[,i])+4]
- 	for (j in 1:length(col)) {
- 		rect(xleft=j-.5, xright=j+.5, ybottom=i-1, ytop=i, col=col[j], border="grey70", lwd=.01)
- 	}
-}
-rect(xleft=0.5, xright=nrow(copy)+.5, ybottom=0, ytop=ncol(copy), border="grey70", lwd=.01)
-start = end = NULL
-for (i in unique(annot$Chromosome)) {
-	start = c(start, min(which(annot$Chromosome==i)))
-	end = c(end, max(which(annot$Chromosome==i)))
-}
-axis(side=1, at=c(start, end[length(end)]+1)-.5, labels=rep(" ", length(start)+1), tcl=.5)
-axis(side=1, at=.5*(start+end), labels=unique(annot$Chromosome), cex.axis=1)
 close.screen(all.screens=TRUE)
 dev.off()
 
