@@ -612,18 +612,26 @@ if (FALSE) {
 
 	p = jonckheere.test(x=tmp.0$correlation_coefficient, g=tmp.0$ctdna_fraction_cat, alternative = "increasing", nperm=10000)
 
-	plot.0 = ggplot(tmp.0 %>% mutate(facet="All samples (n = 124)"), aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
-			 geom_boxplot(alpha=1, outlier.size=2.5, outlier.shape=21, fill="salmon") + 
-			 facet_wrap(~facet) +
-			 theme_bw(base_size=15) +
+	plot.0 = ggplot(tmp.0, aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
+			 geom_boxplot(outlier.shape=NA, width=.5, color="black", fill="white") +
+			 geom_jitter(
+			 	aes(x = ctdna_fraction_cat, y = correlation_coefficient, fill = tissue),
+  			 	position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+  			 	alpha=1, size=3, shape=21,
+  			 ) +
+			 theme_classic(base_size=15) +
+			 coord_cartesian(ylim = c(-.5,1)) +
 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
-			 labs(x="\nctDNA fraction (%)", y="Correlation coefficient\n")
+			 labs(x="\nctDNA fraction (%)", y="Correlation coefficient\n") +
+			 guides
 		 
 	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=7, height=5)
 	print(plot.0)
 	dev.off()
 }
 
+
+		 
 #==================================================
 # ROC curves
 #==================================================
@@ -1323,6 +1331,7 @@ i_cn = foreach (i=1:nrow(tracker)) %dopar% {
 i_cn = do.call(cbind, i_cn)
 colnames(i_cn) = tracker$GRAIL_ID
 i_cn["ERBB2","MSK-VB-0044"] = 1
+i_cn["BRCA2","MSK-VP-0004"] = -1
 
 SWITCH = FALSE
 if (SWITCH) {
@@ -1417,6 +1426,7 @@ if (SWITCH) {
 	g_cn = do.call(cbind, g_cn)
 	colnames(g_cn) = tracker$GRAIL_ID
 }
+g_cn["BRCA2","MSK-VP-0004"] = -1
  
 featureNames = intersect(rownames(i_cn), rownames(g_cn))
 i_cn = i_cn[featureNames,,drop=FALSE]
@@ -1509,6 +1519,7 @@ if (SWITCH) {
 	g_cn = do.call(cbind, data)
 	dimnames(g_cn) = dimnames(i_cn)
 }
+g_cn["BRCA2","MSK-VP-0004"] = -1
 
 annot = read.csv(file="~/share/reference/IMPACT410_genes_for_copynumber.txt", header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 				dplyr::select(hgnc_symbol, chr, start_position, end_position) %>%

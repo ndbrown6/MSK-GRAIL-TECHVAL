@@ -140,7 +140,6 @@ burden_cancer = variants %>%
  		  		filter(subj_type!="Control") %>%
  		  		filter(!patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id))
 
-
 valid_patient_ids = tracker_grail %>%
   				    filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
   				    filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
@@ -150,23 +149,16 @@ valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
 burden = bind_rows(burden_cancer, burden_healthy)
 burden_cfdna = data.frame(burden[,c("patient_id", "age", "num_called", "subj_type", "bio_source"),drop=FALSE]) %>%
 			   filter(bio_source=="WBC_matched") %>%
-	 		   filter(patient_id %in% valid_patient_ids)
+	 		   filter(patient_id %in% valid_patient_ids) %>%
+	 		   dplyr::select(patient_id, age, num_called, subj_type)
 
 indx = which(!(valid_patient_ids %in% burden_cfdna$patient_id))
 
 if (length(indx)!=0) {
-	tmp = matrix(NA, nrow=length(indx), ncol=5)
-	tmp[,1] = valid_patient_ids[indx]
-	tmp[,3] = 0
-	tmp[,5] = "WBC_matched"
 	zzz = data.frame(clinical[clinical$patient_id %in% valid_patient_ids[indx],c("patient_id","age","subj_type")])
-	rownames(zzz) = zzz[,"patient_id"]
-	tmp[,2] = zzz[,"age"]
-	tmp[,4] = zzz[,"subj_type"]
-	colnames(tmp) = colnames(burden_cfdna)
-	tmp = data.frame(tmp)
-	burden_cfdna = rbind(burden_cfdna, tmp) %>%
-				   type_convert()
+	zzz = cbind(zzz, num_called = rep(0, length(indx)))
+	zzz = zzz[,colnames(burden_cfdna)]
+	burden_cfdna = bind_rows(burden_cfdna, zzz)
 }
 		   
 #==================================================
@@ -265,26 +257,55 @@ cfdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_c
  
 data = left_join(data, cfdna_fraction, by="patient_id") %>%
  	   mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
- 	   mutate(bio_source = "Somatic CH-derived mutations")
- 	   
-fit.woctDNA = lm(num_called_cfdna ~ num_called_wbc, data=data)
-fit.wctDNA = lm(num_called_cfdna ~ num_called_wbc + ctdna_frac, data=data)
+ 	   mutate(bio_source = "Somatic CH-derived mutations / Mb")
+ 
+fit.woctDNA = lm(num_called_cfdna ~ num_called_wbc, data=data %>% filter(subj_type=="Cancer"))
+fit.wctDNA = lm(num_called_cfdna ~ num_called_wbc + ctdna_frac, data=data %>% filter(subj_type=="Cancer"))
 lrt = lrtest(fit.wctDNA, fit.woctDNA)
 
-plot.0 = ggplot(data %>% filter(subj_type=="Healthy"), aes(x = num_called_wbc, y = num_called_cfdna, fill = subj_type)) +
-		 geom_point(alpha=1, shape = 21, size=3.5, color = "#231F20") +
-		 geom_point(alpha=1, shape = 21, color = "#231F20", aes(x = num_called_wbc, y = num_called_cfdna, fill = subj_type, size=ctdna_frac), data = data %>% filter(subj_type=="Cancer"), inherit.aes=FALSE) +
- 		 scale_fill_manual(values = c("Healthy"="#FDAE61", "Cancer"="salmon")) +
+plot.0 = ggplot(data %>% filter(subj_type=="Healthy"), aes(x = num_called_wbc, y = num_called_cfdna)) +
+		 geom_point(alpha=.85, shape = 24, size=2.5, color = "#231F20", fill = "#FDAE61") +
+		 geom_point(alpha=.85, shape = 21, color = "#231F20", fill = "salmon", aes(x = num_called_wbc, y = num_called_cfdna, fill = subj_type, size=ctdna_frac), data = data %>% filter(subj_type=="Cancer"), inherit.aes=FALSE) +
 		 geom_abline(slope = 1, intercept = 0, color = "goldenrod3", size = .75) +
-		 geom_smooth(formula = y ~ x +0, method="lm", aes(x = num_called_wbc, y = num_called_cfdna), data = data, inherit.aes=FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
+		 geom_smooth(formula = y ~ x +0, method="lm", aes(x = num_called_wbc, y = num_called_cfdna), data = data %>% filter(subj_type=="Cancer") , inherit.aes=FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\nWBC\n", y="cfDNA\n") +
 		 coord_cartesian(xlim = c(0, 40), ylim = c(0, 40)) +
-		 guides(fill=guide_legend(title=c("Cancer status")), size=guide_legend(title=c("ctDNA fraction")))
-	  	
+		 guides(size=guide_legend(title=c("ctDNA fraction")))
+		 
 pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Combined.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(data %>% filter(subj_type=="Cancer"), aes(x = num_called_wbc, y = num_called_cfdna, size=ctdna_frac)) +
+		 geom_point(alpha=.85, shape = 21, color = "#231F20", fill="salmon") +
+		 geom_abline(slope = 1, intercept = 0, color = "goldenrod3", size = .75) +
+		 geom_smooth(formula = y ~ x +0, method="lm", aes(x = num_called_wbc, y = num_called_cfdna), data = data %>% filter(subj_type=="Cancer"), inherit.aes=FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
+		 facet_wrap(~bio_source) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\nWBC\n", y="cfDNA\n") +
+		 coord_cartesian(xlim = c(0, 40), ylim = c(0, 40)) +
+		 guides(size=guide_legend(title=c("ctDNA fraction")))
+	  	
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Cancer.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
+plot.0 = ggplot(data %>% filter(subj_type=="Healthy"), aes(x = num_called_wbc, y = num_called_cfdna)) +
+		 geom_point(alpha=.85, shape = 21, color = "#231F20", fill="#FDAE61", size=2.5) +
+		 geom_abline(slope = 1, intercept = 0, color = "goldenrod3", size = .75) +
+		 geom_smooth(formula = y ~ x +0, method="lm", aes(x = num_called_wbc, y = num_called_cfdna), data = data %>% filter(subj_type=="Healthy") %>% filter(num_called_wbc<20), inherit.aes=FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
+		 facet_wrap(~bio_source) +
+		 theme_bw(base_size=15) +
+		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.75), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
+		 labs(x="\nWBC\n", y="cfDNA\n") +
+		 coord_cartesian(xlim = c(0, 40), ylim = c(0, 40)) +
+		 guides(size=guide_legend(title=c("ctDNA fraction")))
+	  	
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Healthy.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
