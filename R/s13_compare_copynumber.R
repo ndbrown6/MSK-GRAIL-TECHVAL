@@ -613,19 +613,13 @@ if (FALSE) {
 	p = jonckheere.test(x=tmp.0$correlation_coefficient, g=tmp.0$ctdna_fraction_cat, alternative = "increasing", nperm=10000)
 
 	plot.0 = ggplot(tmp.0, aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
-			 geom_boxplot(outlier.shape=NA, width=.5, color="black", fill="white") +
-			 geom_jitter(
-			 	aes(x = ctdna_fraction_cat, y = correlation_coefficient, fill = tissue),
-  			 	position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-  			 	alpha=1, size=3, shape=21,
-  			 ) +
+			 geom_boxplot(outlier.shape=NA, width=.5, color="black", fill="salmon") +
 			 theme_classic(base_size=15) +
-			 coord_cartesian(ylim = c(-.5,1)) +
+			 coord_cartesian(ylim = c(-.25,1)) +
 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
-			 labs(x="\nctDNA fraction (%)", y="Correlation coefficient\n") +
-			 guides
+			 labs(x="\nctDNA fraction (%)", y="\n\nCorrelation coefficient\n")
 		 
-	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=7, height=5)
+	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=9, height=5)
 	print(plot.0)
 	dev.off()
 }
