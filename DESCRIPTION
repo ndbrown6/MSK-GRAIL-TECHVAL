@@ -1,0 +1,13 @@
+Type: Package
+Package: GAP
+Version: 0.0-2
+Date: 2014-11-14
+Title: Genome Alteration Print (GAP)
+Author: Tatiana Popova <tatiana.popova@curie.fr>
+Description: Detection of absolute segmental copy numbers and genotype status from DNA copy numbers and B Allele Frequencies
+Maintainer: David Brown <brownd7@mskcc.org>
+URL:
+Depends: R (>= 3.0.1), boot, colorspace, MASS, diptest, DNAcopy, copynumber
+License: GPL (>= 2)
+biocViews:
+LazyLoad: yes
