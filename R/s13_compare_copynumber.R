@@ -612,9 +612,10 @@ if (FALSE) {
 
 	p = jonckheere.test(x=tmp.0$correlation_coefficient, g=tmp.0$ctdna_fraction_cat, alternative = "increasing", nperm=10000)
 
-	plot.0 = ggplot(tmp.0, aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
+	plot.0 = ggplot(tmp.0 %>% mutate(facet=""), aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
 			 geom_boxplot(outlier.shape=NA, width=.5, color="black", fill="salmon") +
-			 theme_classic(base_size=15) +
+			 theme_bw(base_size=15) +
+			 facet_wrap()
 			 coord_cartesian(ylim = c(-.25,1)) +
 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
 			 labs(x="\nctDNA fraction (%)", y="\n\nCorrelation coefficient\n")
