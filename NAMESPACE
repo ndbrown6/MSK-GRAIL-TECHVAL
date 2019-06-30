@@ -1,2 +1,2 @@
 exportPattern("^[^\\.]")
-export(.GapEnv)
+export(.environmentname)
