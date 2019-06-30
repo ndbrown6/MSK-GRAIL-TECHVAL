@@ -27,8 +27,8 @@ all_vars = all_vars %>%
  		   filter(!is_hypermutator) %>%
  		   filter(!is_lowdepth) %>%
  		   filter(!is_lowqual) %>%
- 		   filter(!is_tumor_matched) %>%
- 		   filter(!is_cfdna_matched)
+# 		   filter(!is_tumor_matched) %>%
+# 		   filter(!is_cfdna_matched)
  
 #==================================================
 # < 5% recurrence | is_hotspot | frame-shifting
@@ -327,5 +327,41 @@ tx = read.csv(file=url_prior_tx, header=TRUE, sep="\t", stringsAsFactors=FALSE) 
 data = left_join(data, tx %>% dplyr::select(patient_id, prior_rt_ct)) %>%
 	   mutate(prior_rt_ct = ifelse(is.na(prior_rt_ct) & subj_type==0, 0, prior_rt_ct))
 
-fisher.test(data$PPM1D[data$smoking_history=="Yes"], data$prior_rt_ct[data$smoking_history=="Yes"])
+fit.0.woage = list()
+for (i in 1:7) {
+	fit.0.woage[[i]] = summary(glm(data[,8] ~ data[,i], family = "binomial"))
+}
+p.0.woage = 1-unlist(lapply(fit.0.woage, function(x) {x$coefficients[2,4]}))
+names(p.0.woage) = colnames(data)[1:7]
+
+fit.0.wage = list()
+for (i in 1:7) {
+	fit.0.wage[[i]] = summary(glm(data[,8] ~ data[,i] + data[,11], family = "binomial"))
+}
+p.0.wage = 1-unlist(lapply(fit.0.wage, function(x) {x$coefficients[2,4]}))
+names(p.0.wage) = colnames(data)[1:7]
+
+fit.1.wo = list()
+for (i in 1:7) {
+	fit.1.wo[[i]] = summary(glm(data[,12] ~ data[,i], family = "binomial"))
+}
+p.1.wo = unlist(lapply(fit.1.wo, function(x) {x$coefficients[2,4]}))
+names(p.1.wo) = colnames(data)[1:7]
+
+fit.1.w = list()
+for (i in 1:7) {
+	fit.1.w[[i]] = summary(glm(data[,12] ~ data[,i] + data[,11], family = "binomial"))
+}
+p.1.w = unlist(lapply(fit.1.w, function(x) {x$coefficients[2,4]}))
+names(p.1.w) = colnames(data)[1:7]
+
+fit.2.w = list()
+for (i in 1:7) {
+	fit.2.w[[i]] = summary(glm(data[,12] ~ data[,i] + data[,11] + data[,10], family = "binomial"))
+}
+p.2.w = unlist(lapply(fit.2.w, function(x) {x$coefficients[2,4]}))
+names(p.2.w) = colnames(data)[1:7]
+
+
+
 
