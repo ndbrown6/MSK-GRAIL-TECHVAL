@@ -612,15 +612,19 @@ if (FALSE) {
 
 	p = jonckheere.test(x=tmp.0$correlation_coefficient, g=tmp.0$ctdna_fraction_cat, alternative = "increasing", nperm=10000)
 
-	plot.0 = ggplot(tmp.0 %>% mutate(facet=""), aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
+	plot.0 = ggplot(tmp.0 %>% mutate(facet="Pearson correlation vs ctDNA fraction"), aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
 			 geom_boxplot(outlier.shape=NA, width=.5, color="black", fill="salmon") +
 			 theme_bw(base_size=15) +
-			 facet_wrap()
+			 facet_wrap(~facet) +
 			 coord_cartesian(ylim = c(-.25,1)) +
+			 scale_y_continuous(
+		 		breaks = function(x) { c(-.2, 0, .2, .4, .6, .8, 1) },
+ 				labels = function(x) { c(-.2, 0, .2, .4, .6, .8, 1) }
+		 	 ) +
 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
 			 labs(x="\nctDNA fraction (%)", y="\n\nCorrelation coefficient\n")
 		 
-	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=9, height=5)
+	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=9.1, height=6)
 	print(plot.0)
 	dev.off()
 }
