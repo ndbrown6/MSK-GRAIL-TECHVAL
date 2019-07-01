@@ -254,14 +254,44 @@ cfdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_c
  		   		 type_convert() %>%
  		   		 mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
  		   		 dplyr::rename(patient_id = ID)
+ 		   		 
+tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
+ 				type_convert()
+tracker_impact = read_csv(impact_tracker, col_types = cols(.default = col_character()))  %>%
+				 type_convert()
+valid_patient_ids = tracker_grail %>%
+ 	  				filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
+ 	  				filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
+ 	  				.[["patient_id"]]
+clinical = read_tsv(clinical_file, col_types = cols(.default = col_character())) %>%
+ 		   type_convert() %>%
+ 		   rename(localisation = tissue)
+ 			   
+valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
+
+qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	   filter(sample_type=="cfDNA")
  
 data = left_join(data, cfdna_fraction, by="patient_id") %>%
+	   left_join(qc_metrics_cfdna %>% dplyr::select(patient_id, uncollapsed_cfdna_coverage=raw.MEAN_BAIT_COVERAGE, collapsed_cfdna_coverage=collapsed.MEAN_BAIT_COVERAGE), by="patient_id") %>%
  	   mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
  	   mutate(bio_source = "Somatic CH-derived mutations / Mb")
  
-fit.woctDNA = lm(num_called_cfdna ~ num_called_wbc, data=data %>% filter(subj_type=="Cancer"))
-fit.wctDNA = lm(num_called_cfdna ~ num_called_wbc + ctdna_frac, data=data %>% filter(subj_type=="Cancer"))
-lrt = lrtest(fit.wctDNA, fit.woctDNA)
+fit.null = lm(num_called_cfdna ~ num_called_wbc, data=data %>% filter(subj_type=="Cancer"))
+fit.wage = lm(num_called_cfdna ~ num_called_wbc + age, data=data %>% filter(subj_type=="Cancer"))
+lrt = lrtest(fit.wage, fit.null)
+
+fit.wucov = lm(num_called_cfdna ~ num_called_wbc + uncollapsed_cfdna_coverage, data=data %>% filter(subj_type=="Cancer"))
+lrt = lrtest(fit.wucov, fit.null)
+
+fit.wccov = lm(num_called_cfdna ~ num_called_wbc + collapsed_cfdna_coverage, data=data %>% filter(subj_type=="Cancer"))
+lrt = lrtest(fit.wccov, fit.null)
+
+fit.wctdna = lm(num_called_cfdna ~ num_called_wbc + ctdna_frac, data=data %>% filter(subj_type=="Cancer"))
+lrt = lrtest(fit.wctdna, fit.null)
+
+fit.alt = lm(num_called_cfdna ~ num_called_wbc + age + uncollapsed_cfdna_coverage + collapsed_cfdna_coverage + ctdna_frac, data=data %>% filter(subj_type=="Cancer"))
 
 plot.0 = ggplot(data %>% filter(subj_type=="Healthy"), aes(x = num_called_wbc, y = num_called_cfdna)) +
 		 geom_point(alpha=.85, shape = 24, size=2.5, color = "#231F20", fill = "#FDAE61") +
@@ -309,6 +339,18 @@ pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Healthy.pdf", width=5.5, height=6
 print(plot.0)
 dev.off()
 
-fit.age.woctDNA = glm(num_called_cfdna ~ age, family = "poisson", data=data)
-fit.age.wctDNA = glm(num_called_cfdna ~ age + ctdna_frac, family = "poisson", data=data)
-lrt = lrtest(fit.age.wctDNA, fit.age.woctDNA)
+'gatherpairs' <- function (data, ..., xkey = '.xkey', xvalue = '.xvalue', ykey = '.ykey', yvalue = '.yvalue', na.rm = FALSE, convert = FALSE, factor_key = FALSE)
+{
+  vars <- quos(...)
+  xkey <- enquo(xkey)
+  xvalue <- enquo(xvalue)
+  ykey <- enquo(ykey)
+  yvalue <- enquo(yvalue)
+
+  data %>% {
+    cbind(gather(., key = !!xkey, value = !!xvalue, !!!vars,
+                 na.rm = na.rm, convert = convert, factor_key = factor_key),
+          dplyr::select(., !!!vars)) 
+  } %>% gather(., key = !!ykey, value = !!yvalue, !!!vars,
+               na.rm = na.rm, convert = convert, factor_key = factor_key)
+}

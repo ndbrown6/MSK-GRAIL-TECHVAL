@@ -10,7 +10,7 @@ if (!dir.exists("../res/rebuttal")) {
 }
 
 #==================================================
-# Permutation based p-value
+# Adjust for age and smoking 
 #==================================================
 all_vars = read_tsv(file=wbc_scored_annotated_and_clinical$scored, col_types = cols(.default = col_character())) %>%
 		   type_convert()
