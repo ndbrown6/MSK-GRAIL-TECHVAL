@@ -322,6 +322,8 @@ pdf(file="../res/rebuttal/WBC_matched_vs_Age.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
+p0 = zeroinfl(num_called_cfdna ~ age, dist = "poisson", data = data)
+
 plot.0 = data %>%
 		 mutate(num_called_wbc = ifelse(num_called_wbc==0, .5, num_called_wbc)) %>%
 		 ggplot(aes(x = age, y = num_called_wbc, fill = subj_type)) +
@@ -344,6 +346,8 @@ pdf(file="../res/rebuttal/CH_derived_vs_Age.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
+p0 = zeroinfl(num_called_wbc ~ age, dist = "poisson", data = data)
+
 plot.0 = data %>%
 		 filter(subj_type=="Healthy") %>%
 		 mutate(bio_source = "Control") %>%
@@ -361,6 +365,8 @@ pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control.pdf", width=5.5, height=6
 print(plot.0)
 dev.off()
 
+p1 = lm(num_called_cfdna ~ num_called_wbc, data = data %>% filter(subj_type=="Healthy") %>% filter(num_called_wbc<20))
+
 plot.0 = data %>%
 		 filter(subj_type=="Cancer") %>%
 		 mutate(bio_source = "Cancer") %>%
@@ -377,6 +383,8 @@ plot.0 = data %>%
 pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Cancer.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
+
+p1 = lm(num_called_cfdna ~ num_called_wbc, data = data %>% filter(subj_type=="Cancer"))
 
 plot.0 = data %>%
 		 filter(subj_type=="Cancer") %>%
@@ -414,20 +422,20 @@ sum.fit = as.data.frame(summary(fit.alt)$coefficients) %>%
 		  	var_names == "age" ~ "Age",
 		  	var_names == "uncollapsed_cfdna_coverage" ~ "Uncollapsed\ncfDNA coverage",
 		  	var_names == "collapsed_cfdna_coverage" ~ "Collapsed\ncfDNA coverage",
-		  	var_names == "uncollapsed_wbc_coverage" ~ "Collapsed\nWBC coverage",
+		  	var_names == "uncollapsed_wbc_coverage" ~ "Uncollapsed\nWBC coverage",
 		  	var_names == "collapsed_wbc_coverage" ~ "Collapsed\nWBC coverage",
 		  	var_names == "ctdna_frac" ~ "ctDNA fraction")) %>%
-		mutate(`Pr(>|t|)` = ifelse(`Pr(>|t|)`<1e-10, 1e-10, `Pr(>|t|)`))
+		 arrange(Estimate) %>%
+		 mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names)))
 		  
-plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max, size = -log10(`Pr(>|t|)`))) +
-		 geom_pointrange(ymin=0, ymax=0, color="grey20") +
-		 geom_linerange(color="grey20", size=1) +
+plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max)) +
+		 geom_pointrange(ymin=0, ymax=0, color="salmon", size=1) +
+		 geom_linerange(color="salmon", size=1) +
 		 coord_flip() +
 		 geom_hline(yintercept = 0, col="goldenrod3", linetype=2) +
-		 labs(x="\n", y="Coefficient\n") +
-		 guides(size=guide_legend(title=expression(-Log[10]~"p")))
+		 labs(x="\n", y="Coefficient\n")
 
-pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Cancer_All_variables.pdf", width=7.5, height=6)
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Cancer_All_variables.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
@@ -444,19 +452,19 @@ sum.fit = as.data.frame(summary(fit.alt)$coefficients) %>%
 		  	var_names == "age" ~ "Age",
 		  	var_names == "uncollapsed_cfdna_coverage" ~ "Uncollapsed\ncfDNA coverage",
 		  	var_names == "collapsed_cfdna_coverage" ~ "Collapsed\ncfDNA coverage",
-		  	var_names == "uncollapsed_wbc_coverage" ~ "Collapsed\nWBC coverage",
+		  	var_names == "uncollapsed_wbc_coverage" ~ "Uncollapsed\nWBC coverage",
 		  	var_names == "collapsed_wbc_coverage" ~ "Collapsed\nWBC coverage")) %>%
-		mutate(`Pr(>|t|)` = ifelse(`Pr(>|t|)`<1e-10, 1e-10, `Pr(>|t|)`))
+		arrange(Estimate) %>%
+		mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names)))
 		  
-plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max, size = -log10(`Pr(>|t|)`))) +
-		 geom_pointrange(ymin=0, ymax=0, color="grey20") +
-		 geom_linerange(color="grey20", size=1) +
+plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max)) +
+		 geom_pointrange(ymin=0, ymax=0, color="#FDAE61", size=1) +
+		 geom_linerange(color="#FDAE61", size=1) +
 		 coord_flip() +
 		 geom_hline(yintercept = 0, col="goldenrod3", linetype=2) +
-		 labs(x="\n", y="Coefficient\n") +
-		 guides(size=guide_legend(title=expression(-Log[10]~"p")))
+		 labs(x="\n", y="Coefficient\n")
 
-pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control_All_variables.pdf", width=7.5, height=6)
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control_All_variables.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
@@ -469,7 +477,7 @@ dev.off()
 # fit.wccov = lm(num_called_cfdna ~ num_called_wbc + collapsed_cfdna_coverage, data=data %>% filter(subj_type=="Cancer"))
 # lrt = lrtest(fit.wccov, fit.null)
 
-# 
+
 # plot.0 = ggplot(data %>% filter(subj_type=="Healthy"), aes(x = num_called_wbc, y = num_called_cfdna)) +
 # 		 geom_point(alpha=.85, shape = 24, size=2.5, color = "#231F20", fill = "#FDAE61") +
 # 		 geom_point(alpha=.85, shape = 21, color = "#231F20", fill = "salmon", aes(x = num_called_wbc, y = num_called_cfdna, fill = subj_type, size=ctdna_frac), data = data %>% filter(subj_type=="Cancer"), inherit.aes=FALSE) +
