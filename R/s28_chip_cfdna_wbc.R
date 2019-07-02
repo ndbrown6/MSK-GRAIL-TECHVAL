@@ -468,6 +468,37 @@ pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control_All_variables.pdf", width
 print(plot.0)
 dev.off()
 
+fit.alt = lm(num_called_cfdna ~ num_called_wbc + age + uncollapsed_cfdna_coverage + collapsed_cfdna_coverage +
+								uncollapsed_wbc_coverage + collapsed_wbc_coverage + ctdna_frac + subj_type, data=data)
+		
+sum.fit = as.data.frame(summary(fit.alt)$coefficients) %>%
+		  mutate(var_names = rownames(summary(fit.alt)$coefficients)) %>%
+		  mutate(y_min = Estimate - 1.96*`Std. Error`) %>%
+		  mutate(y_max = Estimate + 1.96*`Std. Error`) %>%
+		  mutate(var_names = case_when(
+		  	var_names == "(Intercept)" ~ "Intercept",
+		  	var_names == "num_called_wbc" ~ "CH burden WBC",
+		  	var_names == "age" ~ "Age",
+		  	var_names == "uncollapsed_cfdna_coverage" ~ "Uncollapsed\ncfDNA coverage",
+		  	var_names == "collapsed_cfdna_coverage" ~ "Collapsed\ncfDNA coverage",
+		  	var_names == "uncollapsed_wbc_coverage" ~ "Uncollapsed\nWBC coverage",
+		  	var_names == "collapsed_wbc_coverage" ~ "Collapsed\nWBC coverage",
+		  	var_names == "ctdna_frac" ~ "ctDNA fraction",
+		  	var_names == "subj_typeHealthy" ~ "Subject type")) %>%
+		arrange(Estimate) %>%
+		mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names)))
+		  
+plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max)) +
+		 geom_pointrange(ymin=0, ymax=0, color="cadetblue", size=1) +
+		 geom_linerange(color="cadetblue", size=1) +
+		 coord_flip() +
+		 geom_hline(yintercept = 0, col="goldenrod3", linetype=2) +
+		 labs(x="\n", y="Coefficient\n")
+
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Combined_All_variables.pdf", width=5.5, height=6)
+print(plot.0)
+dev.off()
+
 # fit.wage = lm(num_called_cfdna ~ num_called_wbc + age, data=data %>% filter(subj_type=="Cancer"))
 # lrt = lrtest(fit.wage, fit.null)
 # 
