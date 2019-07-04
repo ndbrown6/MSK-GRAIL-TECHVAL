@@ -6,8 +6,8 @@ Title: ... (...)
 Author: David Brown <brownd7@mskcc.org>
 Description: ...
 Maintainer: David Brown <brownd7@mskcc.org>
-URL: https://www.nature.com/articles/
-Depends: R (>= 3.5.1), 
+URL: https://www.nature.com/articles/...
+Depends: R (>= 3.5.1), ...
 License: GPL (>= 2)
 biocViews:
 LazyLoad: yes
