@@ -428,16 +428,20 @@ sum.fit = as.data.frame(summary(fit.alt)$coefficients) %>%
 		  	var_names == "collapsed_wbc_coverage" ~ "Collapsed\nWBC coverage",
 		  	var_names == "ctdna_frac" ~ "ctDNA fraction")) %>%
 		 arrange(Estimate) %>%
-		 mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names)))
+		 mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names))) %>%
+		 mutate(facet = "Caner")
 		  
 plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max)) +
 		 geom_pointrange(ymin=0, ymax=0, color="salmon", size=1) +
 		 geom_linerange(color="salmon", size=1) +
 		 coord_flip() +
 		 geom_hline(yintercept = 0, col="goldenrod3", linetype=2) +
-		 labs(x="\n", y="Coefficient\n")
+		 labs(x="\n", y="\nCoefficient\n") +
+		 theme_bw(base_size=15) +
+		 facet_wrap(~facet) +
+		 ylim(c(-10, 15))
 
-pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Cancer_All_variables.pdf", width=5.5, height=6)
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Cancer_All_variables.pdf", width=6.5, height=6)
 print(plot.0)
 dev.off()
 
@@ -457,16 +461,20 @@ sum.fit = as.data.frame(summary(fit.alt)$coefficients) %>%
 		  	var_names == "uncollapsed_wbc_coverage" ~ "Uncollapsed\nWBC coverage",
 		  	var_names == "collapsed_wbc_coverage" ~ "Collapsed\nWBC coverage")) %>%
 		arrange(Estimate) %>%
-		mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names)))
+		mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names))) %>%
+		mutate(facet = "Control")
 		  
 plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max)) +
 		 geom_pointrange(ymin=0, ymax=0, color="#FDAE61", size=1) +
 		 geom_linerange(color="#FDAE61", size=1) +
 		 coord_flip() +
 		 geom_hline(yintercept = 0, col="goldenrod3", linetype=2) +
-		 labs(x="\n", y="Coefficient\n")
+		 labs(x="\n", y="\nCoefficient\n") +
+		 theme_bw(base_size=15) +
+		 facet_wrap(~facet) +
+		 ylim(c(-10, 15))
 
-pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control_All_variables.pdf", width=5.5, height=6)
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control_All_variables.pdf", width=6.5, height=6)
 print(plot.0)
 dev.off()
 
@@ -488,16 +496,20 @@ sum.fit = as.data.frame(summary(fit.alt)$coefficients) %>%
 		  	var_names == "ctdna_frac" ~ "ctDNA fraction",
 		  	var_names == "subj_typeHealthy" ~ "Subject type")) %>%
 		arrange(Estimate) %>%
-		mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names)))
+		mutate(var_names = factor(var_names, ordered=TRUE, levels= unique(var_names))) %>%
+		mutate(facet = "Combined")
 		  
 plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y_max)) +
 		 geom_pointrange(ymin=0, ymax=0, color="cadetblue", size=1) +
 		 geom_linerange(color="cadetblue", size=1) +
 		 coord_flip() +
 		 geom_hline(yintercept = 0, col="goldenrod3", linetype=2) +
-		 labs(x="\n", y="Coefficient\n")
+		 labs(x="\n", y="\nCoefficient\n") +
+		 theme_bw(base_size=15) +
+		 facet_wrap(~facet) +
+		 ylim(c(-10, 15))
 
-pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Combined_All_variables.pdf", width=5.5, height=6)
+pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Combined_All_variables.pdf", width=6.5, height=6)
 print(plot.0)
 dev.off()
 
