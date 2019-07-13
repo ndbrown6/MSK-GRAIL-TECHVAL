@@ -52,6 +52,7 @@ suppressPackageStartupMessages(library("maftools"))
 suppressPackageStartupMessages(library("GAP"))
 suppressPackageStartupMessages(library("pROC"))
 suppressPackageStartupMessages(library("lmtest"))
+suppressPackageStartupMessages(library("glmperm"))
 
 registerDoMC(32)
 

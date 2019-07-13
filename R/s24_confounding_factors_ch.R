@@ -27,8 +27,8 @@ all_vars = all_vars %>%
  		   filter(!is_hypermutator) %>%
  		   filter(!is_lowdepth) %>%
  		   filter(!is_lowqual) %>%
-# 		   filter(!is_tumor_matched) %>%
-# 		   filter(!is_cfdna_matched)
+ 		   filter(!is_tumor_matched) %>%
+ 		   filter(!is_cfdna_matched)
  
 #==================================================
 # < 5% recurrence | is_hotspot | frame-shifting
@@ -334,12 +334,34 @@ for (i in 1:7) {
 p.0.woage = 1-unlist(lapply(fit.0.woage, function(x) {x$coefficients[2,4]}))
 names(p.0.woage) = colnames(data)[1:7]
 
+m0 = list()
+m0[[1]] = prr.test(subj_type ~ DNMT3A, var = "DNMT3A", family=binomial, data=data, nrep=10000, seed=0)
+m0[[2]] = prr.test(subj_type ~ TP53, var = "TP53", family=binomial, data=data, nrep=10000, seed=0)
+m0[[3]] = prr.test(subj_type ~ TET2, var = "TET2", family=binomial, data=data, nrep=10000, seed=0)
+m0[[4]] = prr.test(subj_type ~ ASXL1, var = "ASXL1", family=binomial, data=data, nrep=10000, seed=0)
+m0[[5]] = prr.test(subj_type ~ PPM1D, var = "PPM1D", family=binomial, data=data, nrep=10000, seed=0)
+m0[[6]] = prr.test(subj_type ~ OTHER_CH, var = "OTHER_CH", family=binomial, data=data, nrep=10000, seed=0)
+m0[[7]] = prr.test(subj_type ~ NO_CH, var = "NO_CH", family=binomial, data=data, nrep=10000, seed=0)
+p.0.woage.perm = unlist(lapply(m0, function(x) { x$p.value.perm$p0 }))
+names(p.0.woage.perm) = colnames(data)[1:7]
+
 fit.0.wage = list()
 for (i in 1:7) {
 	fit.0.wage[[i]] = summary(glm(data[,8] ~ data[,i] + data[,11], family = "binomial"))
 }
 p.0.wage = 1-unlist(lapply(fit.0.wage, function(x) {x$coefficients[2,4]}))
 names(p.0.wage) = colnames(data)[1:7]
+
+m0 = list()
+m0[[1]] = prr.test(subj_type ~ DNMT3A + age, var = "DNMT3A", family=binomial, data=data, nrep=10000, seed=0)
+m0[[2]] = prr.test(subj_type ~ TP53 + age, var = "TP53", family=binomial, data=data, nrep=10000, seed=0)
+m0[[3]] = prr.test(subj_type ~ TET2 + age, var = "TET2", family=binomial, data=data, nrep=10000, seed=0)
+m0[[4]] = prr.test(subj_type ~ ASXL1 + age, var = "ASXL1", family=binomial, data=data, nrep=10000, seed=0)
+m0[[5]] = prr.test(subj_type ~ PPM1D + age, var = "PPM1D", family=binomial, data=data, nrep=10000, seed=0)
+m0[[6]] = prr.test(subj_type ~ OTHER_CH + age, var = "OTHER_CH", family=binomial, data=data, nrep=10000, seed=0)
+m0[[7]] = prr.test(subj_type ~ NO_CH + age, var = "NO_CH", family=binomial, data=data, nrep=10000, seed=0)
+p.0.wage.perm = unlist(lapply(m0, function(x) { x$p.value.perm$p0 }))
+names(p.0.wage.perm) = colnames(data)[1:7]
 
 fit.1.wo = list()
 for (i in 1:7) {
@@ -348,12 +370,34 @@ for (i in 1:7) {
 p.1.wo = unlist(lapply(fit.1.wo, function(x) {x$coefficients[2,4]}))
 names(p.1.wo) = colnames(data)[1:7]
 
+m0 = list()
+m0[[1]] = prr.test(prior_rt_ct ~ DNMT3A, var = "DNMT3A", family=binomial, data=data, nrep=10000, seed=0)
+m0[[2]] = prr.test(prior_rt_ct ~ TP53, var = "TP53", family=binomial, data=data, nrep=10000, seed=0)
+m0[[3]] = prr.test(prior_rt_ct ~ TET2, var = "TET2", family=binomial, data=data, nrep=10000, seed=0)
+m0[[4]] = prr.test(prior_rt_ct ~ ASXL1, var = "ASXL1", family=binomial, data=data, nrep=10000, seed=0)
+m0[[5]] = prr.test(prior_rt_ct ~ PPM1D, var = "PPM1D", family=binomial, data=data, nrep=10000, seed=0)
+m0[[6]] = prr.test(prior_rt_ct ~ OTHER_CH, var = "OTHER_CH", family=binomial, data=data, nrep=10000, seed=0)
+m0[[7]] = prr.test(prior_rt_ct ~ NO_CH, var = "NO_CH", family=binomial, data=data, nrep=10000, seed=0)
+p.1.wo.perm = unlist(lapply(m0, function(x) { x$p.value.perm$p0 }))
+names(p.1.wo.perm) = colnames(data)[1:7]
+
 fit.1.w = list()
 for (i in 1:7) {
 	fit.1.w[[i]] = summary(glm(data[,12] ~ data[,i] + data[,11], family = "binomial"))
 }
 p.1.w = unlist(lapply(fit.1.w, function(x) {x$coefficients[2,4]}))
 names(p.1.w) = colnames(data)[1:7]
+
+m0 = list()
+m0[[1]] = prr.test(prior_rt_ct ~ DNMT3A + age, var = "DNMT3A", family=binomial, data=data, nrep=10000, seed=0)
+m0[[2]] = prr.test(prior_rt_ct ~ TP53 + age, var = "TP53", family=binomial, data=data, nrep=10000, seed=0)
+m0[[3]] = prr.test(prior_rt_ct ~ TET2 + age, var = "TET2", family=binomial, data=data, nrep=10000, seed=0)
+m0[[4]] = prr.test(prior_rt_ct ~ ASXL1 + age, var = "ASXL1", family=binomial, data=data, nrep=10000, seed=0)
+m0[[5]] = prr.test(prior_rt_ct ~ PPM1D + age, var = "PPM1D", family=binomial, data=data, nrep=10000, seed=0)
+m0[[6]] = prr.test(prior_rt_ct ~ OTHER_CH + age, var = "OTHER_CH", family=binomial, data=data, nrep=10000, seed=0)
+m0[[7]] = prr.test(prior_rt_ct ~ NO_CH + age, var = "NO_CH", family=binomial, data=data, nrep=10000, seed=0)
+p.1.w.perm = unlist(lapply(m0, function(x) { x$p.value.perm$p0 }))
+names(p.1.w.perm) = colnames(data)[1:7]
 
 fit.2.w = list()
 for (i in 1:7) {
@@ -362,6 +406,13 @@ for (i in 1:7) {
 p.2.w = unlist(lapply(fit.2.w, function(x) {x$coefficients[2,4]}))
 names(p.2.w) = colnames(data)[1:7]
 
-
-
-
+m0 = list()
+m0[[1]] = prr.test(prior_rt_ct ~ DNMT3A + age + smoking_history, var = "DNMT3A", family=binomial, data=data, nrep=10000, seed=0)
+m0[[2]] = prr.test(prior_rt_ct ~ TP53 + age + smoking_history, var = "TP53", family=binomial, data=data, nrep=10000, seed=0)
+m0[[3]] = prr.test(prior_rt_ct ~ TET2 + age + smoking_history, var = "TET2", family=binomial, data=data, nrep=10000, seed=0)
+m0[[4]] = prr.test(prior_rt_ct ~ ASXL1 + age + smoking_history, var = "ASXL1", family=binomial, data=data, nrep=10000, seed=0)
+m0[[5]] = prr.test(prior_rt_ct ~ PPM1D + age + smoking_history, var = "PPM1D", family=binomial, data=data, nrep=10000, seed=0)
+m0[[6]] = prr.test(prior_rt_ct ~ OTHER_CH + age + smoking_history, var = "OTHER_CH", family=binomial, data=data, nrep=10000, seed=0)
+m0[[7]] = prr.test(prior_rt_ct ~ NO_CH + age + smoking_history, var = "NO_CH", family=binomial, data=data, nrep=10000, seed=0)
+p.2.w.perm = unlist(lapply(m0, function(x) { x$p.value.perm$p0 }))
+names(p.2.w.perm) = colnames(data)[1:7]
