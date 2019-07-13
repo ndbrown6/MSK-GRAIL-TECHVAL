@@ -301,20 +301,24 @@ data = left_join(data, cfdna_fraction, by="patient_id") %>%
  	   mutate(bio_source_y = "CH-derived in WBC")
  	   
 plot.0 = data %>%
-		 mutate(num_called_cfdna = ifelse(num_called_cfdna==0, .5, num_called_cfdna)) %>%
+		 filter(num_called_cfdna !=0) %>%
 		 ggplot(aes(x = age, y = num_called_cfdna, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Healthy"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called_cfdna), data = data %>% filter(num_called_cfdna!=0), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
+		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called_cfdna), data = data %>% filter(num_called_cfdna !=0), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
 		 facet_wrap(~bio_source_x) +
 		 theme_bw(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
+ 		 scale_x_continuous(
+ 		 	breaks = function(x) { c(30, 50, 70, 90) },
+ 		 	labels = function(x) { c("30", "50", "70", "90") }
+ 		 ) +
+		 coord_cartesian(xlim = c(30, 90), ylim = c(1, 50)) +
 		 annotation_logticks(side="l") +
 		 guides(fill=guide_legend(title=c("Cancer status")))
 
@@ -325,7 +329,7 @@ print(plot.0)
 dev.off()
 
 plot.0 = data %>%
-		 mutate(num_called_wbc = ifelse(num_called_wbc==0, .5, num_called_wbc)) %>%
+		 filter(num_called_wbc!=0) %>%
 		 ggplot(aes(x = age, y = num_called_wbc, fill = subj_type)) +
 		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
 		 scale_fill_manual(values = c("Healthy"="#FDAE61", "Cancer"="salmon")) +
@@ -335,10 +339,14 @@ plot.0 = data %>%
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
 		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
  		 scale_y_log10(
- 		 	breaks = function(x) { c(.5, 1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("0", "1", "2", "5", "10", "20", "30", "50") }
+ 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
+ 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
  		 ) +
-		 coord_cartesian(xlim = c(20, 90), ylim = c(.5, 50)) +
+ 		 scale_x_continuous(
+ 		 	breaks = function(x) { c(30, 50, 70, 90) },
+ 		 	labels = function(x) { c("30", "50", "70", "90") }
+ 		 ) +
+		 coord_cartesian(xlim = c(20, 90), ylim = c(1, 50)) +
 		 annotation_logticks(side="l") +
 		 guides(fill=guide_legend(title=c("Cancer status")))
 

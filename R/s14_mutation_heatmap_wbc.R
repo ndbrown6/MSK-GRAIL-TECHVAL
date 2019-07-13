@@ -29,3 +29,7 @@ oncoplot(maf = wbc, genes = chip_genes,
 		 						Healthy = "cadetblue")),
 		 fontSize = 10)
 dev.off()
+
+pdf("../res/rebuttal/Somatic_Interations.pdf", width=12, height=10)
+somaticInteractions(maf = wbc, top = 10, pvalue = c(0.05, 0.1))
+dev.off()
