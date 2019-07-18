@@ -265,7 +265,7 @@ plot.0 = ggplot(calibration,  aes(x = Nominal, y = Observed)) +
 		 	   legend.background = element_blank(),
 		 	   legend.text=element_text(size=8))
 
-pdf(file="../res/rebuttal/Nominal_vs_Observed_Pr.pdf", width=5, height=6)
+pdf(file="../res/rebuttal/Nominal_vs_Observed_Pr.pdf", width=5.15, height=6)
 print(plot.0)
 dev.off()
 
@@ -380,9 +380,14 @@ plot.0 = ggplot(recall_FP_qual %>% mutate(facet = "Recall rate"), aes(x = sample
          geom_label(data = highlight_recall_FP_q60,
              aes(label = "QUALNOBAQ >= 60"),
              nudge_x = 0.1, nudge_y = -0.1, size = 3) +
-         guides(color=guide_legend(title=c("Cancer\ntype")))
+         guides(color=guide_legend(title=c("Cancer\ntype"))) +
+         theme(legend.justification = c(1, 0),
+		 	   legend.position = c(1, 0),
+		 	   legend.title = element_blank(),
+		 	   legend.background = element_blank(),
+		 	   legend.text=element_text(size=8))
              
-pdf(file="../res/rebuttal/Number_SNVs_Recall.pdf", width=7, height=6)
+pdf(file="../res/rebuttal/Number_SNVs_Recall.pdf", width=5.15, height=6)
 print(plot.0)
 dev.off()
 

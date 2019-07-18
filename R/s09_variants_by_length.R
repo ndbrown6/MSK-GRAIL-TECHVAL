@@ -146,16 +146,24 @@ target_lengths = target_lengths - intron_sizes
 index = order(target_lengths, decreasing=TRUE)
 variants_by_gene = variants_by_gene[index]
 target_lengths = target_lengths[index]
+all_genes = all_genes[index]
 
-pdf(file="../res/figureS9/target_lengths_number_variants.pdf", width=8, height=8)
-par(mar = c(6.1, 6, 4.1, 1))
-plot(target_lengths, variants_by_gene, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, ylim=c(1,30), xlim=c(0,20000))
-points(target_lengths, variants_by_gene, pch=21, col="black", bg="salmon", cex=1.35)
-axis(1, at = NULL, labels = NULL, cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
-axis(2, at = c(1,seq(5,30,by=5)), labels=c(1,seq(5,30,by=5)), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
-mtext(side = 1, text = "Coding target lengths", line = 4, cex = 1.85)
-mtext(side = 2, text = "Number of variants", line = 4, cex = 1.85)
-index = variants_by_gene>10
-text(target_lengths[index], variants_by_gene[index], labels=names(variants_by_gene[index]), pos=3, cex=.95, font=3)
-text(2000, 28.5, labels="p = 4.44e-16", pos=3, cex=1.25)
+tmp.0 = data_frame(x = target_lengths,
+				   y = variants_by_gene,
+				   z0 = all_genes) %>%
+	    mutate(z1 = "VUSo in hypermutated samples")
+
+plot.0 = ggplot(tmp.0, aes(x=x/10e3, y=y, label=z0)) +
+		 geom_point(alpha=.75, size=2.5, shape=21, fill="#fdae61") +
+		 geom_smooth(method="lm", se=TRUE, fullrange=TRUE, level=0.995, color = "goldenrod3", fill="goldenrod3") +
+		 geom_text_repel(
+		 	data = subset(tmp.0, x>2000 & y>10)
+		 ) +
+		 labs(x="\nCoding target length (Kb)\n", y="Number of variants\n") +
+		 theme_bw(base_size=15) +
+		 facet_wrap(~z1) +
+		 annotate("text", x = .75, y = 25, label = "p = 4.44e-16")
+		 
+pdf(file="../res/figureS9/target_lengths_number_variants.pdf", width=5.5, height=6)
+print(plot.0)
 dev.off()

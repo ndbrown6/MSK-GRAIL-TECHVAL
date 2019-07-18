@@ -207,7 +207,7 @@ rect(xleft=0.475, ybottom=0, xright=1.0, ytop=0.475, col=transparent_rgb("white"
 mtext(side=3, text="Variant category", line=-.85, at=.13, font=2)
 legend(x=-.01, y=1.01, pch=21, col="black", pt.bg=cols[1], pt.cex=1.35, legend="Not detected in one replicate", box.lwd=-1, cex=.85)
 legend(x=-.01, y=.97, pch=21, col="black", pt.bg=cols[2], pt.cex=1.35, legend="Not called in one replicate\ndue to low quality", box.lwd=-1, cex=.85)
-legend(x=-.01, y=.89, pch=21, col="black", pt.bg=cols[3], pt.cex=1.35, legend="Incorrect assignment\nbetween replicates", box.lwd=-1, cex=.85)
+legend(x=-.01, y=.89, pch=21, col="black", pt.bg=cols[3], pt.cex=1.35, legend="Misassignment\nbetween replicates", box.lwd=-1, cex=.85)
 legend(x=-.01, y=.80, pch=21, col="black", pt.bg=cols[4], pt.cex=1.35, legend="Called in both replicates", box.lwd=-1, cex=.85)
 mtext(side=3, text="Biopsy concordance", line=-8.5, at=.165, font=2)
 legend(x=-.01, y=.67, pch=21, col="black", pt.bg="black", pt.cex=1.25, legend="Biopsy unmatched", box.lwd=-1, cex=.85)

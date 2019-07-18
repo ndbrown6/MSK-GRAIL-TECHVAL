@@ -19,42 +19,53 @@ useful_msi_df = all_msi_df %>%
 				mutate(id=alias) %>%
 				dplyr::select(patient_id,original_msi,fixed_msi,subject_type,sample)
 				
+cols = c("cfDNA"="#d7191c",
+		 "Tumor"="#fdae61")
+		 
+msi_tumor = useful_msi_df %>%
+		    filter(sample=="tumor") %>%
+		    arrange(patient_id)
+msi_cfdna = useful_msi_df %>%
+		    filter(sample=="cfdna") %>%
+		    arrange(patient_id)
+
+index = order(msi_tumor$original_msi)
+msi_tumor = msi_tumor[index,,drop=FALSE]
+msi_cfdna = msi_cfdna[index,,drop=FALSE]
+msi_tumor = bind_cols(msi_tumor, "level" = factor(msi_tumor$patient_id, levels=msi_tumor$patient_id, ordered=TRUE))
+msi_cfdna = bind_cols(msi_cfdna, "level" = factor(msi_cfdna$patient_id, levels=msi_cfdna$patient_id, ordered=TRUE))
+msi_df = bind_rows(msi_tumor, msi_cfdna)
+		 
+plot.0 = msi_df %>%
+		 mutate(sample = ifelse(sample=="cfdna", "cfDNA", "Tumor")) %>%
+		 ggplot(aes(x=level, y=original_msi+.001, group=sample, fill=sample)) +
+		 geom_bar(stat="identity", position=position_dodge()) +
+		 facet_wrap(~subject_type, scales = "free_y") +
+		 theme_bw(base_size=15) +
+		 coord_flip() +
+		 labs(y="\nMSI score\n", x="\n") +
+		 scale_fill_manual(values = cols) +
+		 guides(fill=guide_legend(title=c("Sample type"))) +
+		 theme(legend.title=element_text(size=14))
+
+
 pdf(file="../res/figureS10/all_msi_score_original.pdf", height=10, width=18)
-par(mar = c(6.1, 6, 4.1, 1), mfcol=c(1,3))
-subject_types = c("Breast", "Lung", "Prostate")
-for (i in 1:length(subject_types)) {
-	msi_df_tumor = useful_msi_df %>%
-			 	   filter(subject_type == subject_types[i]) %>%
-			 	   filter(sample == "tumor") %>%
-			 	   .[["original_msi"]]
-	msi_df_cfdna = useful_msi_df %>%
-			 	   filter(subject_type == subject_types[i]) %>%
-			 	   filter(sample == "cfdna") %>%
-			 	   .[["original_msi"]]
-	msi_df = cbind(msi_df_cfdna, msi_df_tumor)
-	barplot(t(msi_df)+.001, beside=TRUE, horiz=TRUE, col=c("forestgreen","#612B5C"), border=NA, axes=FALSE, xlim=c(0,.31), ylim=c(1,nrow(msi_df)*2), space=rep(.1, nrow(msi_df)*2))
-	axis(1, at = NULL, cex.axis = 1.75, padj = 0.25, lwd=1.55, lwd.ticks=1.55)
-	mtext(side = 1, text = "MSI score", line = 4, cex = 1.35)
-	legend("bottomright", pch=15, col=c("forestgreen","#612B5C"), legend=c(" cfDNA"," Tumor"), box.lwd=-1, cex=1.75, pt.cex=2.5)
-}
+print(plot.0)
 dev.off()
 
+plot.0 = msi_df %>%
+		 mutate(sample = ifelse(sample=="cfdna", "cfDNA", "Tumor")) %>%
+		 ggplot(aes(x=level, y=fixed_msi+.001, group=sample, fill=sample)) +
+		 geom_bar(stat="identity", position=position_dodge()) +
+		 facet_wrap(~subject_type, scales = "free_y") +
+		 theme_bw(base_size=15) +
+		 coord_flip() +
+		 labs(y="\nMSI score\n", x="\n") +
+		 scale_fill_manual(values = cols) +
+		 guides(fill=guide_legend(title=c("Sample type"))) +
+		 theme(legend.title=element_text(size=14))
+
+
 pdf(file="../res/figureS10/all_msi_score_fixed.pdf", height=10, width=18)
-par(mar = c(6.1, 6, 4.1, 1), mfcol=c(1,3))
-subject_types = c("Breast", "Lung", "Prostate")
-for (i in 1:length(subject_types)) {
-	msi_df_tumor = useful_msi_df %>%
-			 	   filter(subject_type == subject_types[i]) %>%
-			 	   filter(sample == "tumor") %>%
-			 	   .[["fixed_msi"]]
-	msi_df_cfdna = useful_msi_df %>%
-			 	   filter(subject_type == subject_types[i]) %>%
-			 	   filter(sample == "cfdna") %>%
-			 	   .[["fixed_msi"]]
-	msi_df = cbind(msi_df_cfdna, msi_df_tumor)
-	barplot(t(msi_df)+.001, beside=TRUE, horiz=TRUE, col=c("forestgreen","#612B5C"), border=NA, axes=FALSE, xlim=c(0,.31), ylim=c(1,nrow(msi_df)*2), space=rep(.1, nrow(msi_df)*2))
-	axis(1, at = NULL, cex.axis = 1.75, padj = 0.25, lwd=1.55, lwd.ticks=1.55)
-	mtext(side = 1, text = "MSI score", line = 4, cex = 1.35)
-	legend(x="bottomright", pch=15, col=c("forestgreen","#612B5C"), legend=c(" cfDNA"," Tumor"), box.lwd=-1, cex=1.75, pt.cex=2.5)
-}
+print(plot.0)
 dev.off()
