@@ -1891,7 +1891,7 @@ if (FALSE) {
 	polygon(x = X, y = Y, col = col, border = "black", density = density, angle = angle, lwd = lwd)
 }
 
-if (FALSE) {
+if (TRUE) {
 	tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 	 		  type_convert() %>%
 	 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
@@ -1933,7 +1933,9 @@ if (FALSE) {
 		mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
 		rect(xleft=1-1e10, xright=max(z1[,"pos"])+1e10, ybottom=4, ytop=6, col="lightgrey", border="grey20", lwd=2.5)
 		box(lwd=2.5, col="grey20")
-		screen(zz[2])	
+		screen(zz[2])
+		assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
+		plotIdeogram(chrom=17, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 		close.screen(all.screens=TRUE)
 		dev.off()
 	}
@@ -1951,7 +1953,7 @@ if (FALSE) {
 		start = 0
 		data(CytoBand)
 		end = max(as.numeric(CytoBand[CytoBand[,1]==17,4]))
-		plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+		plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4.75), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 		index = CN[,"Chromosome"]==17
 		z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
 		z1 = winsorize(data=z0, tau=4.5)
@@ -1969,6 +1971,7 @@ if (FALSE) {
 		axis(2, at = c(-4,-2,0,2,4), labels=c(-4,-2,0,2,4), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35, col="grey20", col.axis="grey20")
 		axis(2, at = c(-3,-1,1,3), labels=rep("",4), cex.axis = 1.5, las = 1, lwd=0, lwd.ticks=1.15, col="grey20", col.axis="grey20")
 		mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
+		rect(xleft=1-1e10, xright=max(z1[,"pos"])+1e10, ybottom=4, ytop=6, col="lightgrey", border="grey20", lwd=2.5)
 		box(lwd=2.5, col="grey20")
 		screen(zz[2])
 		assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
@@ -1982,7 +1985,7 @@ if (FALSE) {
 #==================================================
 # Lung MET amplified cases
 #==================================================
-if (FALSE) {
+if (TRUE) {
 	tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 	 		  type_convert() %>%
 	 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
@@ -2025,6 +2028,8 @@ if (FALSE) {
 		rect(xleft=1-1e10, xright=max(z1[,"pos"])+1e10, ybottom=4, ytop=6, col="lightgrey", border="grey20", lwd=2.5)
 		box(lwd=2.5, col="grey20")
 		screen(zz[2])
+		assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)
+		plotIdeogram(chrom=7, TRUE, cyto.data = assembly, cex = .75, unit = "bp")
 		close.screen(all.screens=TRUE)
 		dev.off()
 	}
@@ -2041,7 +2046,7 @@ if (FALSE) {
 		start = 0
 		data(CytoBand)
 		end = max(as.numeric(CytoBand[CytoBand[,1]==7,4]))
-		plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
+		plot(1, 1, type="n", xlim=c(start,end), ylim=c(-4,4.75), xlab="", ylab="", main="", frame.plot=FALSE, axes=FALSE)
 		index = CN[,"Chromosome"]==7
 		z0 = CN[index,c("Chromosome", "Position", "Log2Ratio"),drop=FALSE]
 		z1 = winsorize(data=z0, tau=6.5, k=100)
@@ -2059,6 +2064,7 @@ if (FALSE) {
 		axis(2, at = c(-4,-2,0,2,4), labels=c(-4,-2,0,2,4), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35, col="grey20", col.axis="grey20")
 		axis(2, at = c(-3,-1,1,3), labels=rep("",4), cex.axis = 1.5, las = 1, lwd=0, lwd.ticks=1.15, col="grey20", col.axis="grey20")
 		mtext(side = 2, text = expression("Log"[2]~"Ratio"), line = 4, cex = 1.5)
+		rect(xleft=1-1e10, xright=max(z1[,"pos"])+1e10, ybottom=4, ytop=6, col="lightgrey", border="grey20", lwd=2.5)
 		box(lwd=2.5, col="grey20")
 		screen(zz[2])
 		assembly = read.csv(file=url_cytogenetic_data, header=FALSE, sep="\t", stringsAsFactors=FALSE)

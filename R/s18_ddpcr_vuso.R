@@ -290,3 +290,24 @@ print(plot.0)
 dev.off()
 
 
+fill = c("cfDNA"="#D7191C", "Library"="#2B83BA")
+shape = c("Positive"=24, "Negative"=21)
+
+pdf(file="../res/rebuttal/ddPCR_VUSo.pdf", width=8, height=8)
+par(mar = c(6.1, 6, 4.1, 1))
+plot(1,1, type="n", xlim=c(2e-2,10), ylim=c(2e-2,10), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
+points(x=c(0.02, 9), y=c(0.02,9), type="l", lty=1, lwd=2, col="goldenrod3")
+x = tmp$af_ddPCR_mean
+y = tmp$af_cfdna
+points(x, y, type="p", col="black", bg=fill[tmp$input_type], pch=shape[tmp$ddPCR_retest], lwd=.5, cex=1.55)
+axis(1, at = c(.02, .05, .10, .25, 1.0, 2.5, 5.0, 10.0), labels = c("ND", ".05", ".1", ".25", "1", "2.5", "5", "10"), cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
+axis(2, at = c(.02, .05, .10, .25, 1.0, 2.5, 5.0, 10.0), labels = c("ND", ".05", ".1", ".25", "1", "2.5", "5", "10"), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
+mtext(side = 1, text = "ddPCR (%)", line = 4, cex = 1.85)
+mtext(side = 2, text = "Targeted DNA assay (%)", line = 4, cex = 1.85)
+text(x=0.03, y=10.5, labels="Called in targeted\ncfDNA assay")
+legend(x=0.02, y=10, pch=shape, col="black", pt.bg="black", pt.cex=1.55, pt.lwd=.5, legend=paste0(" ", names(shape)), box.lwd=-1, cex=1.15)
+text(x=0.03, y=4.5, labels="Input type")
+legend(x=0.02, y=3.5, pch=21, col="black", pt.bg=fill, pt.cex=1.55, pt.lwd=.5, legend=paste0(" ", names(fill)), box.lwd=-1, cex=1.15)
+dev.off()
+
+

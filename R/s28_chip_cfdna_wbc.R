@@ -356,191 +356,6 @@ pdf(file="../res/rebuttal/CH_derived_vs_Age.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
-
-## here
-tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
-				type_convert()
-tracker_impact = read_csv(impact_tracker, col_types = cols(.default = col_character()))  %>%
-				 type_convert()
-valid_patient_ids = tracker_grail %>%
-  				    filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
-  				    filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
-  				    .[["patient_id"]]
-clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
-		   type_convert() %>%
-		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
-burden_healthy = variants %>%
-				 filter(gene %in% chip_genes) %>%
- 		  		 filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched"), is_nonsyn) %>%
- 		  		 group_by(subj_type, patient_id, bio_source) %>%
- 		  		 summarize(num_called = n()) %>%
- 		  		 ungroup() %>%
- 		  		 left_join(clinical) %>%
- 		  		 mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
- 		  		 filter(subj_type=="Control")
-burden_cancer = variants %>%
-			 	filter(gene %in% chip_genes) %>%
-				filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched", "IMPACT-BAM_matched"), is_nonsyn) %>%
- 		  		group_by(subj_type, patient_id, bio_source) %>%
- 		  		summarize(num_called = n()) %>%
- 		  		ungroup() %>%
- 		  		left_join(clinical) %>%
- 		  		mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
- 		  		filter(subj_type!="Control") %>%
- 		  		filter(!patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id))
-
-valid_patient_ids = tracker_grail %>%
-  				    filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
-  				    filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
-  				    .[["patient_id"]]
-valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)		   
-
-burden = bind_rows(burden_cancer, burden_healthy)
-burden_cfdna = data.frame(burden[,c("patient_id", "age", "num_called", "subj_type", "bio_source"),drop=FALSE]) %>%
-			   filter(bio_source=="WBC_matched") %>%
-	 		   filter(patient_id %in% valid_patient_ids) %>%
-	 		   dplyr::select(patient_id, age, num_called, subj_type)
-
-indx = which(!(valid_patient_ids %in% burden_cfdna$patient_id))
-
-if (length(indx)!=0) {
-	zzz = data.frame(clinical[clinical$patient_id %in% valid_patient_ids[indx],c("patient_id","age","subj_type")])
-	zzz = cbind(zzz, num_called = rep(0, length(indx)))
-	zzz = zzz[,colnames(burden_cfdna)]
-	burden_cfdna = bind_rows(burden_cfdna, zzz)
-}
-
-burden_healthy = all_vars %>%
-				 filter(Hugo_Symbol %in% chip_genes) %>%
-  		   		 filter(subj_type=="Control") %>%
-  		   		 group_by(patient_id) %>%
-   		   		 summarize(num_called = n()) %>%
-  		   		 ungroup()
-  		   		 
-burden_cancer = all_vars %>%
-			    filter(Hugo_Symbol %in% chip_genes) %>%
-  		   		filter(subj_type!="Control") %>%
- 		   		group_by(patient_id) %>%
-   	 	   		summarize(num_called = n()) %>%
-   	 	   		ungroup()
-   	 	   		
-burden_wbc = bind_rows(burden_healthy, burden_cancer)
-
-data_ch = left_join(burden_cfdna, burden_wbc, by="patient_id") %>%
- 	   	  dplyr::rename(num_called_cfdna = num_called.x, num_called_wbc = num_called.y) %>%
- 	   	  mutate(subj_type = ifelse(subj_type=="Control", "Healthy", "Cancer")) %>%
- 	   	  mutate(subj_type = ifelse(grepl("W", patient_id), "Healthy", "Cancer")) %>%
- 	   	  mutate(num_called_cfdna = ifelse(is.na(num_called_cfdna), 0, num_called_cfdna)) %>%
- 	   	  mutate(num_called_wbc = ifelse(is.na(num_called_wbc), 0, num_called_wbc))
-
-cfdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character())) %>%
- 		   		 type_convert() %>%
- 		   		 mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
- 		   		 dplyr::rename(patient_id = ID)
- 		   		 
-tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
- 				type_convert()
-tracker_impact = read_csv(impact_tracker, col_types = cols(.default = col_character()))  %>%
-				 type_convert()
-valid_patient_ids = tracker_grail %>%
- 	  				filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
- 	  				filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
- 	  				.[["patient_id"]]
-clinical = read_tsv(clinical_file, col_types = cols(.default = col_character())) %>%
- 		   type_convert() %>%
- 		   rename(localisation = tissue)
- 			   
-valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
-
-qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
-			 	   filter(sample_type=="cfDNA")
-			 	   
-tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					  dplyr::select(patient_id, cfdna_sample_id) %>%
-					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
-qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
-
-qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
-			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
-			 	 filter(sample_type=="gDNA") %>%
-			 	 mutate(sample_type = "WBC")
-tracker_grail_wbc = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
-					dplyr::select(patient_id, gdna_sample_id) %>%
-					rename(msk_id = patient_id, sample_id = gdna_sample_id)
-qc_metrics_wbc = left_join(qc_metrics_wbc, tracker_grail_wbc, by="sample_id")
- 
-data_ch = left_join(data_ch, cfdna_fraction, by="patient_id") %>%
-	      left_join(qc_metrics_cfdna %>%
-	   		dplyr::select(patient_id,
-	   					  uncollapsed_cfdna_coverage=raw.MEAN_BAIT_COVERAGE,
-	   					  collapsed_cfdna_coverage=collapsed.MEAN_BAIT_COVERAGE), by="patient_id") %>%
-	      left_join(qc_metrics_wbc %>%
-	   		dplyr::select(patient_id,
-	   					  uncollapsed_wbc_coverage=raw.MEAN_BAIT_COVERAGE,
-	   					  collapsed_wbc_coverage=collapsed.MEAN_BAIT_COVERAGE), by="patient_id") %>%
-	      mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
- 	      mutate(bio_source_x = "WBC-matched in cfDNA") %>%
- 	      mutate(bio_source_y = "CH-derived in WBC")
- 	      
-plot.0 = data_ch %>%
-		 filter(num_called_cfdna !=0) %>%
-		 ggplot(aes(x = age, y = num_called_cfdna, fill = subj_type)) +
-		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
-		 scale_fill_manual(values = c("Healthy"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called_cfdna), data = data_ch %>% filter(num_called_cfdna !=0), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
-		 facet_wrap(~bio_source_x) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
- 		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
- 		 ) +
- 		 scale_x_continuous(
- 		 	breaks = function(x) { c(30, 50, 70, 90) },
- 		 	labels = function(x) { c("30", "50", "70", "90") }
- 		 ) +
-		 coord_cartesian(xlim = c(30, 90), ylim = c(1, 50)) +
-		 annotation_logticks(side="l") +
-		 guides(fill=guide_legend(title=c("Cancer status")))
-
-p0 = zeroinfl(num_called_cfdna ~ age, dist = "poisson", data = data_ch)
-	  	
-pdf(file="../res/rebuttal/WBC_matched_vs_Age_CH.pdf", width=5.5, height=6)
-print(plot.0)
-dev.off()
-
-plot.0 = data_ch %>%
-		 filter(num_called_wbc!=0) %>%
-		 ggplot(aes(x = age, y = num_called_wbc, fill = subj_type)) +
-		 geom_point(alpha=1, size=3.5, shape = 21, color = "#231F20") +
-		 scale_fill_manual(values = c("Healthy"="#FDAE61", "Cancer"="salmon")) +
-		 geom_smooth(formula = y ~ x, method="glm", aes(x = age, y = num_called_wbc), data = data_ch %>% filter(num_called_wbc!=0), inherit.aes = FALSE, color="grey50", fill="grey50", fullrange=TRUE) +
-		 facet_wrap(~bio_source_y) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.2, 0.85), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(x="\n Age (years)\n", y="Somatic cfDNA variants / Mb\n") +
- 		 scale_y_log10(
- 		 	breaks = function(x) { c(1, 2, 5, 10, 20, 30, 50) },
- 		 	labels = function(x) { c("1", "2", "5", "10", "20", "30", "50") }
- 		 ) +
- 		 scale_x_continuous(
- 		 	breaks = function(x) { c(30, 50, 70, 90) },
- 		 	labels = function(x) { c("30", "50", "70", "90") }
- 		 ) +
-		 coord_cartesian(xlim = c(30, 90), ylim = c(1, 50)) +
-		 annotation_logticks(side="l") +
-		 guides(fill=guide_legend(title=c("Cancer status")))
-
-p0 = zeroinfl(num_called_wbc ~ age, dist = "poisson", data = data_ch)
-	  	
-pdf(file="../res/rebuttal/CH_derived_vs_Age_CH.pdf", width=5.5, height=6)
-print(plot.0)
-dev.off()
-
-## here
-
 plot.0 = data %>%
 		 filter(subj_type=="Healthy") %>%
 		 mutate(bio_source = "Control") %>%
@@ -671,6 +486,9 @@ pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Control_All_variables.pdf", width
 print(plot.0)
 dev.off()
 
+
+
+
 fit.alt = lm(num_called_cfdna ~ num_called_wbc + age + uncollapsed_cfdna_coverage + collapsed_cfdna_coverage +
 								uncollapsed_wbc_coverage + collapsed_wbc_coverage + ctdna_frac + subj_type, data=data %>% filter(!(subj_type=="Healthy" & num_called_wbc>10)))
 		
@@ -705,3 +523,37 @@ plot.0 = ggplot(sum.fit, aes(x = var_names, y = Estimate, ymin = y_min, ymax = y
 pdf(file="../res/rebuttal/cfDNA_matched_vs_WBC_Combined_All_variables.pdf", width=6.5, height=6)
 print(plot.0)
 dev.off()
+
+
+x = data %>%
+	filter(num_called_wbc!=0) %>%
+	.[["age"]]
+y = data %>%
+	filter(num_called_wbc!=0) %>%
+	.[["num_called_wbc"]]
+z = data %>%
+	filter(num_called_wbc!=0) %>%
+	.[["subj_type"]]
+	
+pdf(file="../res/rebuttal/CH_derived_vs_Age.pdf", width=7, height=7)
+par(mar = c(6.1, 6.5, 4.1, 1.1))
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, ylim=c(1,50), xlim=c(20,90), log="y")
+p0 = zeroinfl(as.numeric(num_called_wbc) ~ as.numeric(age), dist = "poisson", data = data)
+text(45, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coefficients$count[2,4], 3)), ")", sep = ""), pos = 4)
+#y0 = fun_zerob(x=as.numeric(data$age), y=as.numeric(data$num_called_wbc), n=1000, seed=0)
+x1 = seq(20, 90, l=100)
+y1 = t(apply(y0, 1, quantile, probs=c(.005, .5, .995), na.rm=TRUE))
+polygon(c(x1, rev(x1)), c(y1[,"99.5%"], rev(y1[,"0.5%"])), col=transparent_rgb("grey10", 55), border=NA)
+points(x1, y1[,"50%"], type="l", col="grey50", lwd=3)
+points(x, y, bg="#1F6784", col="#231F20", pch=21, cex=1.35, lwd=.5)
+points(x[z=="Healthy"], y[z=="Healthy"], bg="#1F6784", col="#231F20", pch=21, cex=1.35, lwd=.5)
+points(x[z=="Cancer"], y[z=="Cancer"], bg="#EAA411", col="#231F20", pch=21, cex=1.35, lwd=.5)
+axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
+axis(1, at = seq(30, 90, by=20), labels=rep("", 4), padj = 0.25, lwd=-1, lwd.ticks=.85, tcl=-.35)
+axis(2, at = c(1,2,5,10,20,30,50), labels=c(1,2,5,10,20,30,50), cex.axis = 1.85, las = 1, lwd=1.5, lwd.ticks=1.35)
+mtext(side = 2, text = expression("Somatic variants / Mb"), line = 5, cex = 1.85)
+mtext(side = 1, text = "Age (years)", line = 4, cex = 1.5)
+title(main="CH derived mutations in WBC", cex.main=1.5)
+legend("topleft", legend=c("Cancer", "Control"), pch=21, col="#231F20", pt.bg=c("#EAA411", "#1F6784"), box.lwd=-1, pt.lwd=0, pt.cex=1.35, cex=1.15)
+dev.off()
+

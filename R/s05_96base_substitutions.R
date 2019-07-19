@@ -120,11 +120,10 @@ vcf = preprocessInput_snv(input_data = mutation_summary,
                           ensgene = ensgene,
                           reference_genome = ref_genome)
 patient_ids = unique(vcf$Sample)
-ymax = c(40, 30, 30, 30, 30, 10, 10, 20, 20, 30)
 res = foreach (i=1:length(patient_ids)) %dopar% {
  	cat(i, "of", length(patient_ids), "\n")
  	vcf = vcf %>%
 		  filter(Sample == patient_ids[i])
-	plot96_mutation_spectrum(vcf, ymax=ymax[i], sample.col = "Sample",  plot.file = paste0("../res/figureS5/", patient_ids[i], ".pdf"))
+	plot96_mutation_spectrum(vcf, sample.col = "Sample",  plot.file = paste0("../res/figureS5/", patient_ids[i], ".pdf"))
 	return(1)
 }
