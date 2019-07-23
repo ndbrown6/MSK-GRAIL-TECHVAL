@@ -646,7 +646,7 @@ tracker = left_join(tracker, ctDNA_fraction, by="GRAIL_ID") %>%
  		  filter(!is.na(ctdna_frac)) %>%
 		  filter(ctdna_frac>.1)
 
-if (FALSE) {
+if (TRUE) {
 	sse = foreach (i=1:nrow(tracker)) %dopar% {
 		cat(tracker$GRAIL_ID[i], "\n")
 		if (!is.na(tracker$ctdna_frac[i]) & tracker$ctdna_frac[i]>.1) {
@@ -868,7 +868,7 @@ if (FALSE) {
 				mutate(copy_type = "Copy number amplifications")
 
 	plot.0 = ggplot(show.data, aes(x = x, y = y, group = sample_type, color = sample_type)) +
-			 geom_line(size=1) +
+			 geom_step(size=1) +
 			 scale_color_manual(values = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4", "Combined"="cadetblue")) +
 			 theme_bw(base_size=15) +
 			 facet_wrap(~copy_type) +
@@ -948,7 +948,7 @@ if (FALSE) {
 				mutate(copy_type = "Homozygous deletions")
 
 	plot.0 = ggplot(show.data, aes(x = x, y = y, group = sample_type, color = sample_type)) +
-			 geom_line(size=1) +
+			 geom_step(size=1) +
 			 scale_color_manual(values = c("Breast"="salmon", "Lung"="#FDAE61", "Prostate"="#ABDDA4", "Combined"="cadetblue")) +
 			 theme_bw(base_size=15) +
 			 facet_wrap(~copy_type) +
@@ -1891,7 +1891,7 @@ if (FALSE) {
 	polygon(x = X, y = Y, col = col, border = "black", density = density, angle = angle, lwd = lwd)
 }
 
-if (TRUE) {
+if (FALSE) {
 	tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 	 		  type_convert() %>%
 	 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
@@ -1985,7 +1985,7 @@ if (TRUE) {
 #==================================================
 # Lung MET amplified cases
 #==================================================
-if (TRUE) {
+if (FALSE) {
 	tracker = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
 	 		  type_convert() %>%
 	 		  dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi)
