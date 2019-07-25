@@ -884,6 +884,31 @@ if (TRUE) {
 	pdf(file="../res/rebuttal/Analytical_performance_copy_amplifications.pdf", width=5, height=5)
 	print(plot.0)
 	dev.off()
+	
+	pdf(file="../res/rebuttal/Analytical_performance_copy_amplifications.pdf", width=6, height=7)
+	par(mar = c(6.1, 6, 4.1, 1))
+	plot(0, 0, type="n", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, xlim=c(0,1), ylim=c(0,1))
+	axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.75, lwd.ticks=1.55)
+	axis(2, at = NULL, cex.axis = 1.5, las = 1, lwd=1.75, lwd.ticks=1.55)
+	mtext(side = 1, text = "1 - Specificity", line = 4, cex = 1.5)
+	mtext(side = 2, text = "Sensitivity", line = 4, cex = 1.5)
+	title(main = "Amplifications", cex.main=1.5)
+	points(c(0,1), c(0,1), type="l", lty=3, lwd=2.5, col="red")
+	x = show.data$x[show.data$sample_type=="Combined"]
+	y = show.data$y[show.data$sample_type=="Combined"]
+	points(x, y, type="s", col="grey50", lwd=2.65)
+	x = show.data$x[show.data$sample_type=="Breast"]
+	y = show.data$y[show.data$sample_type=="Breast"]
+	points(x, y, type="s", col="#EF145D", lwd=2.65)
+	x = show.data$x[show.data$sample_type=="Lung"]
+	y = show.data$y[show.data$sample_type=="Lung"]
+	points(x, y, type="s", col="#F98450", lwd=2.65)
+	x = show.data$x[show.data$sample_type=="Prostate"]
+	y = show.data$y[show.data$sample_type=="Prostate"]
+	points(x, y, type="s", col="#009700", lwd=2.65)
+	legend(x=.75, y=.2, lwd=2.65, col=c("grey50", "#EF145D", "#F98450", "#009700"), legend=c("All", "Breast", "Lung", "Prostate"), box.lwd=-1)
+	dev.off()
+	
 
 	#==================================================
 	# ROC curves deletion
@@ -964,6 +989,31 @@ if (TRUE) {
 	pdf(file="../res/rebuttal/Analytical_performance_copy_deletions.pdf", width=5, height=5)
 	print(plot.0)
 	dev.off()
+	
+	pdf(file="../res/rebuttal/Analytical_performance_copy_deletions.pdf", width=6, height=7)
+	par(mar = c(6.1, 6, 4.1, 1))
+	plot(0, 0, type="n", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, xlim=c(0,1), ylim=c(0,1))
+	axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.75, lwd.ticks=1.55)
+	axis(2, at = NULL, cex.axis = 1.5, las = 1, lwd=1.75, lwd.ticks=1.55)
+	mtext(side = 1, text = "1 - Specificity", line = 4, cex = 1.5)
+	mtext(side = 2, text = "Sensitivity", line = 4, cex = 1.5)
+	title(main = "Homozygous deletions", cex.main=1.5)
+	points(c(0,1), c(0,1), type="l", lty=3, lwd=2.5, col="red")
+	x = show.data$x[show.data$sample_type=="Combined"]
+	y = show.data$y[show.data$sample_type=="Combined"]
+	points(x, y, type="s", col="grey50", lwd=2.65)
+	x = show.data$x[show.data$sample_type=="Breast"]
+	y = show.data$y[show.data$sample_type=="Breast"]
+	points(x, y, type="s", col="#EF145D", lwd=2.65)
+	x = show.data$x[show.data$sample_type=="Lung"]
+	y = show.data$y[show.data$sample_type=="Lung"]
+	points(x, y, type="s", col="#F98450", lwd=2.65)
+	x = show.data$x[show.data$sample_type=="Prostate"]
+	y = show.data$y[show.data$sample_type=="Prostate"]
+	points(x, y, type="s", col="#009700", lwd=2.65)
+	legend(x=.75, y=.2, lwd=2.65, col=c("grey50", "#EF145D", "#F98450", "#009700"), legend=c("All", "Breast", "Lung", "Prostate"), box.lwd=-1)
+	dev.off()
+
 }
 
 #==================================================
