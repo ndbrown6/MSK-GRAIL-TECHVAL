@@ -156,22 +156,44 @@ top_cancer_genes_table = top_cancer_genes_table %>%
   
 bar_fill_cols = c("biopsy_matched" = "#297AA3", "IMPACT-BAM_matched" = "#F4AC33", "VUSo" = "#3FBC45")
 
-plot.0 = top_cancer_genes_table %>%
-		 mutate(bio_source = factor(bio_source, levels=c("VUSo", "IMPACT-BAM_matched", "biopsy_matched"), ordered=TRUE)) %>%
-		 ggplot(aes(x=gene, y=percent_patient+1, group=bio_source, fill=bio_source)) +
-		 geom_bar(stat="identity", color="black") +
-		 scale_fill_manual(values = bar_fill_cols) +
-		 theme_bw(base_size=15) +
- 		 facet_wrap(~subj_type, nrow=4, ncol=1) +
-		 labs(x="\n", y="\n% of patients\n") +
-		 coord_cartesian(ylim=c(0,60)) +
-		 scale_y_continuous(
-		 	breaks = function(x) { c(0, 20, 40, 60) },
-		 	labels = function(x) { c(0, 20, 40, 60) }
-		 ) +
-		 theme(legend.position="none",
-		 	   axis.text.x = element_text(angle = 90, hjust = 1, size = 10))
-
 pdf(file="../res/figureS4/recurrent_genes_combined_no_hyper.pdf", width=10, height=8.7)
-print(plot.0)
+par(mar = c(6.1, 6, 4.1, 1))
+zz = split.screen(figs=matrix(c(0,1, 3/4-.1, 1,
+								0,1, 1/2-.05, 3/4+.05,
+								0,1, 1/4-.05, 1/2+.05,
+								0,1, 0,   1/4+.1,
+								0,1,0,1),
+				  nrow=5, ncol=4, byrow=TRUE))
+cancer_types = c("Control", "Breast", "Lung", "Prostate")
+for (i in 1:length(cancer_types)) {
+	screen(zz[i])
+	x.1 = top_cancer_genes_table %>%
+		  filter(subj_type==cancer_types[i], bio_source=="biopsy_matched")
+	x.2 = top_cancer_genes_table %>%
+		  filter(subj_type==cancer_types[i], bio_source=="IMPACT-BAM_matched")
+	x.3 = top_cancer_genes_table %>%
+		  filter(subj_type==cancer_types[i], bio_source=="VUSo")
+	x = matrix(0, nrow=length(top_cancer_genes_ordered), ncol=3)
+ 	rownames(x) = top_cancer_genes_ordered
+ 	colnames(x) = c("biopsy_matched","IMPACT-BAM_matched","VUSo")
+ 	if (nrow(x.1)!=0) {
+ 		x[as.character(x.1$gene),"biopsy_matched"] = as.numeric(x.1$percent_patient)
+ 	}
+ 	if (nrow(x.2)!=0) {
+ 		x[as.character(x.2$gene),"IMPACT-BAM_matched"] = as.numeric(x.2$percent_patient)
+ 	}
+ 	if (nrow(x.3)!=0) {
+ 		x[as.character(x.3$gene),"VUSo"] = as.numeric(x.3$percent_patient)
+ 	}
+ 	zzz = barplot(t(x), beside=FALSE, names.arg=rep("",nrow(x)), col=bar_fill_cols, axes=FALSE, ylim=c(0,50))
+ 	axis(2, at = seq(0,50,l=6), labels = seq(0,50,l=6), cex.axis = 1.05, las = 1, line = 0, lwd=1)
+ 	if (i==4) {
+ 		axis(side=1, at=zzz, labels=top_cancer_genes_ordered, las=2, font=3, cex=.75, lwd=-1)
+ 	}
+ 	title(main=paste0("\n\n",cancer_types[i]), cex.main=1.25)
+}
+screen(zz[5])
+plot(0, 0, type="n", xlim=c(0,10), ylim=c(0,10), xlab="", ylab="", axes=FALSE, frame.plot=FALSE)
+mtext(side = 2, text = "% of patients", line = 3, cex = 1.15)
+close.screen(all.screens=TRUE)
 dev.off()
