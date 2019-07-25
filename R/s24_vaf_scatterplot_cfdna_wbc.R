@@ -144,11 +144,11 @@ cfdna_vs_gdna_vaf_plot = variants_nohyper %>%
 						 	bio_source == "WBC_matched" ~ "WBC-matched",
 						 ))
 
-cols = c("Biopsy-matched" = "#297AA3",
-         "Biopsy-subthreshold" = "#F4AC33",
-         "VUSo" = "#3FBC45",
-         "WBC-matched"="#D68EAF")
-
+cols = c("Biopsy-matched" = "#2C80C3",
+         "Biopsy-subthreshold" = "#F9CA03",
+         "VUSo" = "#4E9B3C",
+         "WBC-matched"="#EA7180")
+         
 plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afmeancfdna, y = afmeangdna, fill = bio_source)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
 			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
@@ -198,6 +198,29 @@ pdf(file="../res/rebuttal/VAF_VAF_pseudo_no_BAQ.pdf", width=5, height=6)
 print(plot.0)
 dev.off()
 
+pdf(file="../res/rebuttal/VAF_VAF_pseudo_no_BAQ.pdf", width=8, height=8)
+par(mar = c(6.1, 6, 4.1, 1))
+plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
+points(x=c(0.01, 15), y=c(0.01,15), type="l", lty=1, lwd=2, col="goldenrod3")
+x = cfdna_vs_gdna_vaf_plot$afcfdna_nobaq
+y = cfdna_vs_gdna_vaf_plot$afgdna_nobaq
+x[x>15] = NA
+y[y>15] = NA
+for (i in c("VUSo", "WBC-matched", "Biopsy-matched", "Biopsy-subthreshold")) {
+	index = cfdna_vs_gdna_vaf_plot$bio_source==i
+	points(x[index], y[index], type="p", col="black", bg=transparent_rgb(cols[i], 225), pch=21, lwd=.5)
+}
+axis(1, at = c(.01, .05, .10, .50, 1.0, 5.0, 10.0, 15.0), labels = c(".01", ".05", ".1", ".5", "1", "5", "10", ""), cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
+axis(1, at = .01, labels = ".01", cex.axis = 1.5, padj = 0.25, lwd=-1, las=1)
+axis(1, at = 15, labels = "15", cex.axis = 1.5, padj = 0.25, lwd=-1, las=1)
+axis(2, at = c(.01, .05, .10, .50, 1.0, 5.0, 10.0, 15.0), labels = c(".01", ".05", ".1", ".5", "1", "5", "10", ""), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
+axis(2, at = 15, labels = "15", cex.axis = 1.5, padj = 0.25, lwd=-1, las=1)
+mtext(side = 1, text = "VAF in cfDNA (%)", line = 4, cex = 1.85)
+mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
+legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
+dev.off()
+
+
 plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq_nos, y = afgdna_nobaq_nos, fill = bio_source)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
 			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
@@ -220,4 +243,26 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq_nos, y = afgdna_no
 		 
 pdf(file="../res/rebuttal/VAF_VAF_nopsedo__noBAQ.pdf", width=5, height=6)
 print(plot.0)
+dev.off()
+
+pdf(file="../res/rebuttal/VAF_VAF_nopsedo__noBAQ.pdf", width=8, height=8)
+par(mar = c(6.1, 6, 4.1, 1))
+plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
+points(x=c(0.01, 15), y=c(0.01,15), type="l", lty=1, lwd=2, col="goldenrod3")
+x = cfdna_vs_gdna_vaf_plot$afcfdna_nobaq_nos
+y = cfdna_vs_gdna_vaf_plot$afgdna_nobaq_nos
+x[x>15] = NA
+y[y>15] = NA
+for (i in c("VUSo", "WBC-matched", "Biopsy-matched", "Biopsy-subthreshold")) {
+	index = cfdna_vs_gdna_vaf_plot$bio_source==i
+	points(x[index], y[index], type="p", col="black", bg=transparent_rgb(cols[i], 225), pch=21, lwd=.5)
+}
+axis(1, at = c(.01, .05, .10, .50, 1.0, 5.0, 10.0, 15.0), labels = c(".01", ".05", ".1", ".5", "1", "5", "10", ""), cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
+axis(1, at = .01, labels = ".01", cex.axis = 1.5, padj = 0.25, lwd=-1, las=1)
+axis(1, at = 15, labels = "15", cex.axis = 1.5, padj = 0.25, lwd=-1, las=1)
+axis(2, at = c(.01, .05, .10, .50, 1.0, 5.0, 10.0, 15.0), labels = c(".01", ".05", ".1", ".5", "1", "5", "10", ""), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
+axis(2, at = 15, labels = "15", cex.axis = 1.5, padj = 0.25, lwd=-1, las=1)
+mtext(side = 1, text = "VAF in cfDNA (%)", line = 4, cex = 1.85)
+mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
+legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
 dev.off()

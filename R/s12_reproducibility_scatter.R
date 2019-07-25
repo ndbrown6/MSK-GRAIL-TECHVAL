@@ -641,6 +641,28 @@ for (i in 1:length(patient_ids)) {
 	print(plot.0)
 	dev.off()
 	
+	pdf(file=paste0("../res/rebuttal/", patient_ids[i], "_R1_R2.pdf"), width=7, height=7)
+	par(mar = c(6.1, 6, 4.1, 1))
+	epsilon = 0
+	shapes = c("Biopsy matched"=24,
+			   "Biopsy unmatched"=21)
+	cols = c("Not detected in one replicate"="#D7191C",
+			 "Not called in one replicate due\nto low quality"="#FDAE61",
+			 "Incorrect assignment between replicates"="#ABDDA4",
+			 "Called in both replicates"="#2B83BA")
+	plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0.01, 100), ylim=c(0.01, 100), log="xy")
+	axis(1, at=c(0.01, 0.1, 1, 10, 100), labels=c("0", "0.1", "1", "10", "100"), cex.axis = 1.5, padj = 0.25, lwd=1.75, lwd.ticks=1.75)
+	axis(2, at=c(0.01, 0.1, 1, 10, 100), labels=c("0", "0.1", "1", "10", "100"), cex.axis = 1.5, las = 1, lwd=1.75, lwd.ticks=1.75)
+	mtext(side = 1, text = "Replicate 1 (%)", line = 4, cex = 1.35)
+	mtext(side = 2, text = "Replicate 2 (%)", line = 4, cex = 1.35)
+	points(c(.01,100), c(.01,100), type="l", lty=1, lwd=2, col="goldenrod3")
+	x = tmp_vars$afnobaq.x
+	y = tmp_vars$afnobaq.y
+	z1 = as.character(tmp_vars$shape)
+	z2 = as.character(tmp_vars$fill)
+	points(x, y, pch=shapes[z1], col="black", bg=cols[z2], cex=1.25)
+	dev.off()
+	
 }
 
 patient_ids = c("MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023")			
@@ -710,6 +732,28 @@ for (i in 1:length(patient_ids)) {
 		 
 	pdf(file=paste0("../res/rebuttal/", patient_ids[i], "_R1_R3.pdf"), width=5.5, height=6.5)
 	print(plot.0)
+	dev.off()
+	
+	pdf(file=paste0("../res/rebuttal/", patient_ids[i], "_R1_R3.pdf"), width=7, height=7)
+	par(mar = c(6.1, 6, 4.1, 1))
+	epsilon = 0
+	shapes = c("Biopsy matched"=24,
+			   "Biopsy unmatched"=21)
+	cols = c("Not detected in one replicate"="#D7191C",
+			 "Not called in one replicate due\nto low quality"="#FDAE61",
+			 "Incorrect assignment between replicates"="#ABDDA4",
+			 "Called in both replicates"="#2B83BA")
+	plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0.01, 100), ylim=c(0.01, 100), log="xy")
+	axis(1, at=c(0.01, 0.1, 1, 10, 100), labels=c("0", "0.1", "1", "10", "100"), cex.axis = 1.5, padj = 0.25, lwd=1.75, lwd.ticks=1.75)
+	axis(2, at=c(0.01, 0.1, 1, 10, 100), labels=c("0", "0.1", "1", "10", "100"), cex.axis = 1.5, las = 1, lwd=1.75, lwd.ticks=1.75)
+	mtext(side = 1, text = "Replicate 1 (%)", line = 4, cex = 1.35)
+	mtext(side = 2, text = "Replicate 3 (%)", line = 4, cex = 1.35)
+	points(c(.01,100), c(.01,100), type="l", lty=1, lwd=2, col="goldenrod3")
+	x = tmp_vars$afnobaq.x
+	y = tmp_vars$afnobaq.y
+	z1 = as.character(tmp_vars$shape)
+	z2 = as.character(tmp_vars$fill)
+	points(x, y, pch=shapes[z1], col="black", bg=cols[z2], cex=1.25)
 	dev.off()
 	
 }
@@ -782,6 +826,28 @@ for (i in 1:length(patient_ids)) {
 		 
 	pdf(file=paste0("../res/rebuttal/", patient_ids[i], "_R2_R3.pdf"), width=5.5, height=6.5)
 	print(plot.0)
+	dev.off()
+	
+	pdf(file=paste0("../res/rebuttal/", patient_ids[i], "_R2_R3.pdf"), width=7, height=7)
+	par(mar = c(6.1, 6, 4.1, 1))
+	epsilon = 0
+	shapes = c("Biopsy matched"=24,
+			   "Biopsy unmatched"=21)
+	cols = c("Not detected in one replicate"="#D7191C",
+			 "Not called in one replicate due\nto low quality"="#FDAE61",
+			 "Incorrect assignment between replicates"="#ABDDA4",
+			 "Called in both replicates"="#2B83BA")
+	plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0.01, 100), ylim=c(0.01, 100), log="xy")
+	axis(1, at=c(0.01, 0.1, 1, 10, 100), labels=c("0", "0.1", "1", "10", "100"), cex.axis = 1.5, padj = 0.25, lwd=1.75, lwd.ticks=1.75)
+	axis(2, at=c(0.01, 0.1, 1, 10, 100), labels=c("0", "0.1", "1", "10", "100"), cex.axis = 1.5, las = 1, lwd=1.75, lwd.ticks=1.75)
+	mtext(side = 1, text = "Replicate 1 (%)", line = 4, cex = 1.35)
+	mtext(side = 2, text = "Replicate 2 (%)", line = 4, cex = 1.35)
+	points(c(.01,100), c(.01,100), type="l", lty=1, lwd=2, col="goldenrod3")
+	x = tmp_vars$afnobaq.x
+	y = tmp_vars$afnobaq.y
+	z1 = as.character(tmp_vars$shape)
+	z2 = as.character(tmp_vars$fill)
+	points(x, y, pch=shapes[z1], col="black", bg=cols[z2], cex=1.25)
 	dev.off()
 	
 }
