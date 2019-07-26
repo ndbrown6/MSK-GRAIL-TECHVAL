@@ -445,7 +445,6 @@ url_smoking_history <- list(
 	)
 )
 
-
 url_guardant_g360 <- str_c(
 	"../",
 	"modified_v11/",
@@ -464,6 +463,20 @@ ref_genome <- BSgenome.Hsapiens.UCSC.hg19
 url_original <- url_msk.snv
 url_target.bed <- common_bed
 
+cohort_cols <- c(
+	"Control"	=	"#0063AA",
+	"Breast"	=	"#EF145D",
+	"Lung"		=	"#F98450",
+	"Prostate"	=	"#009700"
+)
+
+variant_cols <- c(
+	"VUSo"					=	"#4E9B3C",
+	"biopsy_matched"		=	"#2C80C3",
+	"IMPACT-BAM_matched"	=	"#F9CA03",
+	"WBC_matched"			=	"#EA7180",
+	"biopsy_only"			=	"#2C80C3"
+)
 
 'in_common_bed' <- function (chromosome, position)
 {
@@ -655,7 +668,7 @@ url_target.bed <- common_bed
 }
 
 'delta_germ' <- function(zz) {
-  mean(pmin((zz - 0)^2, (zz - 0.5)^2, (zz - 1.0)^2), na.rm = T)
+  return(mean(pmin((zz - 0)^2, (zz - 0.5)^2, (zz - 1.0)^2), na.rm = T))
 }
 
 'update_filter' <- function (filter, qualnobaq, pgtkxgdna, is_edge, min_p,
@@ -687,55 +700,89 @@ url_target.bed <- common_bed
 	filters$filter[filters$i]
 }
 
-'plot96_mutation_spectrum' <- function (vcf, sample.col = "sample", mutcat3.col = "mutcat3",
-										averageProp = FALSE, plot.file = NULL)
+'fun_lodmdl' <- function(df, mdl, grp, ...)
 {
-    bases <- c("A", "C", "G", "T")
-    ctxt16 <- paste(rep(bases, each = 4), rep(bases, 4), sep = ".")
-    mt <- c("CA", "CG", "CT", "TA", "TC", "TG")
-    types96 <- paste(rep(mt, each = 16), rep(ctxt16, 6), sep = "_")
-    types96 <- sapply(types96, function(z) {
-        sub("\\.", substr(z, 1, 1), z)
-    })
-    context <- substr(types96, 4, 6)
-    nsamp <- length(unique(vcf[, sample.col]))
+	model <- glm(call ~ expected_af, data=df, family = binomial(link = mdl))
+	temp.data <- data.frame(expected_af = seq(0.01, max(df$expected_af), 0.01))
+	predicted.data <- as.data.frame(predict(model, newdata = temp.data, se = TRUE))
+	show.data <- cbind(temp.data, predicted.data) %>%
+				 mutate(ymin = model$family$linkinv(fit - 1.96*se.fit),
+				        ymax = model$family$linkinv(fit + 1.96*se.fit),
+				        yfit = model$family$linkinv(fit),
+				        group = grp)
+  	return(show.data)
+}
+
+'fun_zerob' <- function(x, y, n=100, seed=0)
+{
+	set.seed(seed)
+	init = data.frame(y, x)
+	y0 = NULL
+	for (i in 1:n) {
+		index = sample(x=(1:nrow(init)), size=nrow(init), replace=TRUE)
+		data = init[index,,drop=FALSE]
+		z = try(zeroinfl(y ~ x, dist = "poisson", data = data), silent=TRUE)
+		if ("try-error" %in% is(z)) {
+			y0[[i]] = rep(NA, times=100)
+		} else {
+			x0 = data.frame(x=seq(20, 90, l=100))
+			y0[[i]] = predict(object=z, newdata=x0, type = "count")
+		}
+	}
+	y0 = do.call(cbind, y0)
+	return(invisible(y0))
+}
+
+'log10_axis' <- function(side, at, ...)
+{
+    minor = NULL
+    for (j in 2:length(at)) {
+    	minor = c(minor, seq(from=at[j-1], to=at[j], length=10))
+	}
+	axis(side=side, at=minor, labels=NA, tcl=par("tcl")*0.65, ...)
+}
+
+'plot96_mutation_spectrum' <- function (vcf, sample.col = "sample", mutcat3.col = "mutcat3",
+										ymax = NULL, averageProp = FALSE, plot.file = NULL)
+{
+    bases = c("A", "C", "G", "T")
+    ctxt16 = paste(rep(bases, each = 4), rep(bases, 4), sep = ".")
+    mt = c("CA", "CG", "CT", "TA", "TC", "TG")
+    types96 = paste(rep(mt, each = 16), rep(ctxt16, 6), sep = "_")
+    types96 = sapply(types96, function(z) { sub("\\.", substr(z, 1, 1), z) })
+    context = substr(types96, 4, 6)
+    nsamp = length(unique(vcf[, sample.col]))
     if (averageProp & nsamp > 1) {
-        tmp <- makeMutypeMatFromVcf(vcf, sample.col = "CHCID", 
-            mutcat.col = "mutcat3", mutypes = types96)
-        freq <- apply(tmp, 1, mean)
+        tmp = makeMutypeMatFromVcf(vcf, sample.col = "CHCID", mutcat.col = "mutcat3", mutypes = types96)
+        freq = apply(tmp, 1, mean)
     } else {
-        freq <- sapply(types96, function(z) {
-            mean(vcf[, mutcat3.col] == z, na.rm = T)
-        })
-    }
+        freq = sapply(types96, function(z) { mean(vcf[, mutcat3.col] == z, na.rm = T) })
+	}
     if (!is.null(plot.file)) {
         pdf(plot.file, width = 24, height = 5)
     }
-    col96 <- c("C>A"="skyblue3", "C>G"="black", "C>T"="red", "T>A"="grey", "T>C"="green", "T>G"="pink")
-    labs <- c(rep("C>A", 16), rep("C>G", 16), rep("C>T", 16), rep("T>A", 16), rep("T>C", 16), rep("T>G", 16))
-    x = .1+as.vector(freq)*100
-    x = ifelse(x>30, 30, x)
-    y = labs
-    z = context
-    df = data_frame(x*100, y, z)
-    plot.0 = ggplot(df, aes(x=z, y=x, group=y, fill=y, color=y)) +
-    		 geom_bar(stat="identity", width=0.8) +
-    		 scale_fill_manual(values = col96) +
-    		 scale_color_manual(values = col96) +
-		 	 theme_bw(base_size=18) +
-		 	 coord_cartesian(ylim=c(0,30)) +
-		 	 scale_y_continuous(
-		 		breaks = function(x) { c(0, 10, 20, 30) },
-		 		labels = function(x) { c(0, 10, 20, 30) }
-		 	 ) +
- 		 	 facet_wrap(~y, nrow=1, ncol=6, scales="free_x") +
-		 	 labs(x="\n", y="\n% of mutations\n") +
-		 	 theme(legend.position="none",
-		 	 	   axis.text.x = element_text(angle = 90, hjust = 1, size = 18),
-		 	 	   axis.text.y = element_text(size = 18),
-		 	 	   axis.title.y = element_text(size = 22))
-	print(plot.0)
-		 	   
+    col96 = c(rep("skyblue3", 16), rep("black", 16), rep("red", 16), rep("grey", 16), rep("green", 16), rep("pink", 16))
+    labs = c(rep("C>A", 16), rep("C>G", 16), rep("C>T", 16), rep("T>A", 16), rep("T>C", 16), rep("T>G", 16))
+    if (is.null(ymax)) {
+        ymax = 100*ceiling(max(freq) * 100)/100
+        ymax = ifelse(ymax>10, 30, 10)
+    }
+    bp = barplot(freq*100, col = col96, border = col96, las = 2, width = 1, space = .35, yaxt = "n", xaxt = "n", ylim = c(0, ymax * 1.2))
+    title(ylab = "Fraction of mutations (%)", mgp = c(1, 1, 0), cex.lab = 1.6)
+    axis(1, at = bp, labels = context, pos = 0, las = 2, cex.axis = 1.5, tick = F, cex.axis = 1, lwd=-1)
+    if (ymax == 40) {
+	    axis(2, at = c(0,10,20,30,40), labels=c(0,10,20,30,40), pos = 0, las = 1, cex.axis = 1.5)
+	} else if (ymax == 30) {
+	    axis(2, at = c(0,5,10,15,20,25,30), labels=c(0,5,10,15,20,25,30), pos = 0, las = 1, cex.axis = 1.5)
+	} else if (ymax == 20) {
+		axis(2, at = c(0,5,10,15,20), labels=c(0,5,10,15,20), pos = 0, las = 1, cex.axis = 1.5)
+	} else if (ymax == 10) {
+		axis(2, at = c(0,2,4,6,8,10), labels=c(0,2,4,6,8,10), pos = 0, las = 1, cex.axis = 1.5)
+	}
+    for (i in seq(1, 81, by = 16)) {
+        rect(bp[i], par()$usr[4], bp[i + 15], par()$usr[4] - 0.05 * diff(par()$usr[3:4]), col = col96[i], border = col96[i])
+        text((bp[i] + bp[i + 15])/2, par()$usr[4] + 0.09 * diff(par()$usr[3:4]), labels = labs[i], xpd = TRUE, cex = 2)
+    }
     if (!is.null(plot.file)) {
         dev.off()
     }
@@ -1309,92 +1356,4 @@ url_target.bed <- common_bed
 	index = grep("VP", x, fixed=TRUE)
 	res[index] = 3
 	return(res)
-}
-
-'fun_lodmdl' <- function(df, mdl, grp, ...)
-{
-	model <- glm(call ~ expected_af, data=df, family = binomial(link = mdl))
-	temp.data <- data.frame(expected_af = seq(0.01, max(df$expected_af), 0.01))
-	predicted.data <- as.data.frame(predict(model, newdata = temp.data, se = TRUE))
-	show.data <- cbind(temp.data, predicted.data) %>%
-				 mutate(ymin = model$family$linkinv(fit - 1.96*se.fit),
-				        ymax = model$family$linkinv(fit + 1.96*se.fit),
-				        yfit = model$family$linkinv(fit),
-				        group = grp)
-  	return(show.data)
-}
-
-'fun_zerob' <- function(x, y, n=100, seed=0)
-{
-	set.seed(seed)
-	init = data.frame(y, x)
-	y0 = NULL
-	for (i in 1:n) {
-		index = sample(x=(1:nrow(init)), size=nrow(init), replace=TRUE)
-		data = init[index,,drop=FALSE]
-		z = try(zeroinfl(y ~ x, dist = "poisson", data = data), silent=TRUE)
-		if ("try-error" %in% is(z)) {
-			y0[[i]] = rep(NA, times=100)
-		} else {
-			x0 = data.frame(x=seq(20, 90, l=100))
-			y0[[i]] = predict(object=z, newdata=x0, type = "count")
-		}
-	}
-	y0 = do.call(cbind, y0)
-	return(invisible(y0))
-}
-
-'box_plot' <- function (x, main = "", sub  = "", xlab = "", ylab = "", col, lwd  = 2, ...)
-{
-	if ("list" %in% is(x)) {
-		nboxes = length(x)
-		if (nboxes>10) {
-			stop("no more than 10 boxes allowed")
-		}
-	} else if ("matrix" %in% is(x)) {
-		nboxes = ncol(x)
-		if (nboxes>10) {
-			stop("no more than 10 boxes allowed")
-		}
-	}
-	if (missing(col)) {
-		col = vector(mode="character", length=nboxes)
-		ucol = rainbow_hcl(nboxes, start=30, end=300)
-		for (i in 1:nboxes) {
-			col[i] = transparent_rgb(col=ucol[i], alpha=126)
-		}
-	}
-    boxplot(x, outline=FALSE, main="", xlab="", ylab="", axes=FALSE, frame=FALSE, lwd=1, ...)
-    if (any(xlab=="")) {
-    	axis(1, at=1:nboxes, labels=rep(xlab, nboxes), cex.axis=1.5, padj=0.25)
-    } else {
-    	axis(1, at=1:nboxes, labels=xlab, cex.axis=1.5, padj=0.25)
-	}
-    axis(2, at=NULL, cex.axis=1.5, las=1)
-    mtext(side=2, text=ylab, line=3.5, cex=1.5)
-    if (sub=="") {
-    	title(main=main, cex.main=1.5)
-    } else {
-    	title(main=paste(main, "\n", sep=""), cex.main=2.0)
-    	title(main=paste("\n", sub, sep=""), cex.main=1.5)
-    }
-    if ("list" %in% is(x)) {
-		for (i in 1:nboxes) {
-			points(jitter(rep(i, length(x[[i]])), amount=.25), x[[i]], pch=21, col = "black", bg=col[[i]], cex=2.0)
-		}
-    } else if ("matrix" %in% is(x)) {
-		for (i in 1:nboxes) {
-	    	points(jitter(rep(i, nrow(x)), amount=.25), x[,i], pch=21, col = "black", bg=col[[i]], cex=2.0)
-	    }
-	}
-    box(lwd=lwd)
-}
-
-'log10_axis' <- function(side, at, ...)
-{
-    minor = NULL
-    for (j in 2:length(at)) {
-    	minor = c(minor, seq(from=at[j-1], to=at[j], length=10))
-	}
-	axis(side=side, at=minor, labels=NA, tcl=par("tcl")*0.65, ...)
 }
