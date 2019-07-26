@@ -10,6 +10,158 @@ if (!dir.exists("../res/figure5")) {
 }
 
 #==================================================
+# CH-derived mutations in cfDNA
+#==================================================
+clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+		   
+snv_vars = read_tsv(snv_file$scored, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(level_2a = as.character(level_2a)) %>%
+		   mutate(level_r1 = as.character(level_r1))
+		   
+indel_vars = read_tsv(indel_file$scored, col_types = cols(.default = col_character())) %>%
+			 type_convert() %>%
+		     mutate(level_2a = as.character(level_2a)) %>%
+		     mutate(level_r1 = as.character(level_r1))
+
+wbc_stack = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character())) %>%
+			type_convert()
+			
+msk_anno = read_tsv(msk_anno_joined, col_types = cols(.default = col_character())) %>%
+  		   type_convert()
+			
+tracker_grail = read_csv(file=patient_tracker)
+
+tracker_impact = read_csv(file=impact_tracker)
+
+bed_file = rtracklayer::import.bed(con=common_bed)
+bed_ranges = GenomicRanges::ranges(bed_file)
+total_bed_Mb = sum(GenomicRanges::width(bed_ranges)) / 1e6
+
+valid_patient_ids = tracker_grail %>%
+					filter(patient_id %in% tracker_impact$patient_id) %>%
+					.[["patient_id"]]
+  
+indel_vars = indel_vars %>%
+			 mutate(filter = replace(filter,
+             		patient_id == "MSK-VB-0001" &
+             		gene == "GATA3" &
+             		filter == "PASS",
+             		"CSR_MATCH_ELIMINATED"),
+         	 		ccd = replace(ccd,
+             			   		  patient_id == "MSK-VB-0001" &
+                           		  gene == "GATA3" &
+                           		  filter == "CSR_MATCH_ELIMINATED",
+                           		  0))
+
+snv_plasma = snv_vars %>%
+  			 filter(ccd == 1,
+         			(c_panel == 1 | panel == 1),
+         			study == "TechVal",
+         			grail == 1 | MSK == 1,
+         			patient_id %in% valid_patient_ids) %>%
+			 mutate(vtype = "SNV")
+
+indel_plasma = indel_vars %>%
+			   filter(ccd == 1,
+         			  (c_panel == 1 | panel == 1),
+         			  study == "TechVal",
+         			  grail == 1 | MSK == 1,
+         			  patient_id %in% valid_patient_ids) %>%
+  			   mutate(vtype = "INDEL",
+         			  altenddistmedian = as.integer(altenddistmedian))
+         			  
+healthy_snv = snv_vars %>%
+  			  filter((c_panel == 1 | panel == 1),
+         			  subj_type == "Healthy",
+         			  grail == 1) %>%
+  			  mutate(vtype = "SNV")
+
+healthy_indel = indel_vars %>%
+  				filter((c_panel == 1 | panel == 1),
+         			    subj_type == "Healthy",
+         				grail == 1) %>%
+  				mutate(vtype = "INDEL",
+         			   altenddistmedian = as.integer(altenddistmedian))
+
+small_vars_plasma = full_join(snv_plasma, indel_plasma) %>%
+					full_join(healthy_snv) %>%
+					full_join(healthy_indel)
+small_vars_plasma = small_vars_plasma %>%
+  					mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+  					
+small_vars_plasma = small_vars_plasma %>%
+					mutate(loc = str_c(chrom, ":", position_orig, "_", ref_orig, ">", alt_orig))  					
+
+variants = label_bio_source(small_vars_plasma)
+variants = left_join(variants, msk_anno %>% dplyr::select(patient_id, chrom, position, ref, alt, CASE:complex_indel_duplicate))
+variants = variants %>%
+		   mutate(bio_source = case_when(
+		   MSK == 1 & grail == 1 ~ "biopsy_matched",
+		   MSK == 1 & grail == 0 ~ "biopsy_only",
+		   category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+		   category %in% c("germline", "germlineish") ~ "germline",
+		   category %in% c("blood", "bloodier") ~ "WBC_matched",
+		   category == "somatic" & `IM-T.alt_count` > bam_read_count_cutoff ~ "IMPACT-BAM_matched",
+ 		   category == "somatic" ~ "VUSo",
+ 		   TRUE ~ "other"),
+ 		   af = ifelse(is.na(af), 0, af),
+ 		   af_nobaq = round(adnobaq / dpnobaq * 100, 2),
+ 		   af_nobaq = ifelse(is.na(af_nobaq), 0, af_nobaq))
+ 		   
+tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
+				type_convert()
+tracker_impact = read_csv(impact_tracker, col_types = cols(.default = col_character()))  %>%
+				 type_convert()
+valid_patient_ids = tracker_grail %>%
+  				    filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
+  				    filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
+  				    .[["patient_id"]]
+clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+burden_healthy = variants %>%
+ 		  		 filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched"), is_nonsyn) %>%
+ 		  		 group_by(subj_type, patient_id, bio_source) %>%
+ 		  		 summarize(num_called = n()) %>%
+ 		  		 ungroup() %>%
+ 		  		 left_join(clinical) %>%
+ 		  		 mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
+ 		  		 filter(subj_type=="Control")
+burden_cancer = variants %>%
+ 		  		filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched", "IMPACT-BAM_matched"), is_nonsyn) %>%
+ 		  		group_by(subj_type, patient_id, bio_source) %>%
+ 		  		summarize(num_called = n()) %>%
+ 		  		ungroup() %>%
+ 		  		left_join(clinical) %>%
+ 		  		mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
+ 		  		filter(subj_type!="Control") %>%
+ 		  		filter(!patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id))
+
+valid_patient_ids = tracker_grail %>%
+  				    filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
+  				    filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
+  				    .[["patient_id"]]
+valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)		   
+
+burden = bind_rows(burden_cancer, burden_healthy)
+burden_cfdna = data.frame(burden[,c("patient_id", "age", "num_called", "subj_type", "bio_source"),drop=FALSE]) %>%
+			   filter(bio_source=="WBC_matched") %>%
+	 		   filter(patient_id %in% valid_patient_ids) %>%
+	 		   dplyr::select(patient_id, age, num_called, subj_type)
+
+indx = which(!(valid_patient_ids %in% burden_cfdna$patient_id))
+
+if (length(indx)!=0) {
+	zzz = data.frame(clinical[clinical$patient_id %in% valid_patient_ids[indx],c("patient_id","age","subj_type")])
+	zzz = cbind(zzz, num_called = rep(0, length(indx)))
+	zzz = zzz[,colnames(burden_cfdna)]
+	burden_cfdna = bind_rows(burden_cfdna, zzz)
+}
+
+#==================================================
 # Extract mutation calls from wbc in all genes
 #==================================================
 if (FLAG) {
@@ -272,129 +424,105 @@ all_vars = all_vars %>%
 burden_healthy = all_vars %>%
   		   		 filter(subj_type=="Control") %>%
   		   		 group_by(patient_id) %>%
-  		   		 summarize(num_called = n()) %>%
-  		   		 ungroup() %>%
-  		   		 left_join(clinical)
-patient_ids = save_vars %>%
-			  filter(is_patient_valid) %>%
-			  filter(subj_type=="Control") %>%
-			  dplyr::select(patient_id) %>%
-			  distinct() %>%
-			  .[["patient_id"]]
-index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_healthy$patient_id)
-tmp = clinical[index,,drop=FALSE]
-tmp = cbind(tmp, num_called=rep(0, sum(index)))
-burden_healthy = rbind(burden_healthy, tmp[,colnames(burden_healthy)])
-burden_cancer = all_vars %>%
-  		   		filter(subj_type!="Control") %>%
-  		   		group_by(patient_id) %>%
-  	 	   		summarize(num_called = n()) %>%
-  	 	   		ungroup() %>%
-  	 	   		left_join(clinical)
-patient_ids = save_vars %>%
-			  filter(is_patient_valid) %>%
-			  filter(subj_type!="Control") %>%
-			  dplyr::select(patient_id) %>%
-			  distinct() %>%
-			  .[["patient_id"]]			  
-index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_cancer$patient_id)
-tmp = clinical[index,,drop=FALSE]
-tmp = cbind(tmp, num_called=rep(0, sum(index)))
-burden_cancer = rbind(burden_cancer, tmp[,colnames(burden_cancer)])
- 
-pdf(file="../res/figure5/mutational_burden_all_genes.pdf")
-par(mar = c(6.1, 6.5, 4.1, 1.1))
-plot(0, 0, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, ylim=c(.5,50), xlim=c(20,100), log="y")
-data = data.frame(burden_cancer[,c("age", "num_called", "study"),drop=FALSE])
-p1 = glm(num_called ~ age, family="poisson", data=data)
-#text(20, 50, cex = .95, labels = bquote(AIC == .(summary(p1)$aic, 3)), pos = 4)
-#text(20, 40, cex = .95, labels = paste("(P = ", toupper(signif(summary(p1)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
-#text(20, 30, cex = .95, labels = paste("N = ", sum(burden_cancer$num_called),sep = ""), pos = 4)
-p1 = ggplot_build(qplot(age, num_called, data=burden_cancer) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_cancer$age, ifelse(burden_cancer$num_called==0, 0.5, burden_cancer$num_called), bg=transparent_rgb("#EAA411", 255), pch=21, cex=1.05, lwd=0)
-data = data.frame(burden_healthy[,c("age", "num_called", "study"),drop=FALSE])
-p2 = glm(num_called ~ age, family="poisson", data=data)
-#text(20, 20, cex = .95, labels = bquote(AIC == .(summary(p2)$aic, 3)), pos = 4)
-#text(20, 15, cex = .95, labels = paste("(P = ", toupper(signif(summary(p2)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
-#text(20, 10, cex = .95, labels = paste("N = ", sum(burden_healthy$num_called),sep = ""), pos = 4)
-p2 = ggplot_build(qplot(age, num_called, data=burden_healthy) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_healthy$age, ifelse(burden_healthy$num_called==0, 0.5, burden_healthy$num_called), bg=transparent_rgb("#1F6784", 255), pch=21, cex=1.05, lwd=0)
-points(p1[,"x"], p1[,"y"], type="l", col="#EAA411", lwd=2)
-points(p2[,"x"], p2[,"y"], type="l", col="#1F6784", lwd=2)
-axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
-axis(1, at = seq(30, 90, by=20), labels=rep("", 4), padj = 0.25, lwd=-1, lwd.ticks=.85, tcl=-.35)
-axis(2, at = c(.5, 1, 2, 5, 10, 20, 50), labels = c("0", "1", "2", "5", "10", "20", "50"), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
-mtext(side = 1, text = "Age (years)", line = 4, cex = 1.5)
-mtext(side = 2, text = "Number of variants", line = 4.5, cex = 1.5)
-legend(x=20, y=55, pch=21, legend=c("Cancer","Control"), box.lwd=-1, pt.cex=1.05, cex=.95, pt.bg=unlist(lapply(c("#EAA411", "#1F6784"), transparent_rgb, 255)), pt.lwd=0)
-dev.off()
- 
-#==================================================
-# Scatter plot mutation burden versus age for
-# all individuals and CH genes only
-#==================================================
-burden_healthy = all_vars %>%
-				 filter(SYMBOL %in% chip_genes) %>%
-  		   		 filter(subj_type=="Control") %>%
-  		   		 group_by(patient_id) %>%
    		   		 summarize(num_called = n()) %>%
-  		   		 ungroup() %>%
-  		   		 left_join(clinical)
-patient_ids = save_vars %>%
-			  filter(is_patient_valid) %>%
-			  filter(subj_type=="Control") %>%
-			  dplyr::select(patient_id) %>%
-			  distinct() %>%
-			  .[["patient_id"]]
-index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_healthy$patient_id)
-tmp = clinical[index,,drop=FALSE]
-tmp = cbind(tmp, num_called=rep(0, sum(index)))
-burden_healthy = rbind(burden_healthy, tmp[,colnames(burden_healthy)])
+  		   		 ungroup()
+  		   		 
 burden_cancer = all_vars %>%
-				filter(SYMBOL %in% chip_genes) %>%
   		   		filter(subj_type!="Control") %>%
-  		   		group_by(patient_id) %>%
-  	 	   		summarize(num_called = n()) %>%
-  	 	   		ungroup() %>%
-  	 	   		left_join(clinical)
-patient_ids = save_vars %>%
-			  filter(is_patient_valid) %>%
-			  filter(subj_type!="Control") %>%
-			  dplyr::select(patient_id) %>%
-			  distinct() %>%
-			  .[["patient_id"]]			  
-index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_cancer$patient_id)
-tmp = clinical[index,,drop=FALSE]
-tmp = cbind(tmp, num_called=rep(0, sum(index)))
-burden_cancer = rbind(burden_cancer, tmp[,colnames(burden_cancer)])
+ 		   		group_by(patient_id) %>%
+   	 	   		summarize(num_called = n()) %>%
+   	 	   		ungroup()
+   	 	   		
+burden_wbc = bind_rows(burden_healthy, burden_cancer)
+
+data = left_join(burden_cfdna, burden_wbc, by="patient_id") %>%
+ 	   dplyr::rename(num_called_cfdna = num_called.x, num_called_wbc = num_called.y) %>%
+ 	   mutate(subj_type = ifelse(subj_type=="Control", "Healthy", "Cancer")) %>%
+ 	   mutate(subj_type = ifelse(grepl("W", patient_id), "Healthy", "Cancer")) %>%
+ 	   mutate(num_called_cfdna = ifelse(is.na(num_called_cfdna), 0, num_called_cfdna)) %>%
+ 	   mutate(num_called_wbc = ifelse(is.na(num_called_wbc), 0, num_called_wbc))
+
+cfdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character())) %>%
+ 		   		 type_convert() %>%
+ 		   		 mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
+ 		   		 dplyr::rename(patient_id = ID)
+ 		   		 
+tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
+ 				type_convert()
+tracker_impact = read_csv(impact_tracker, col_types = cols(.default = col_character()))  %>%
+				 type_convert()
+valid_patient_ids = tracker_grail %>%
+ 	  				filter(patient_id %in% tracker_impact$patient_id | tissue == "Healthy") %>%
+ 	  				filter(!(tissue %in% c("Breast", "Lung", "Prostate") & study=="Merlin")) %>%
+ 	  				.[["patient_id"]]
+clinical = read_tsv(clinical_file, col_types = cols(.default = col_character())) %>%
+ 		   type_convert() %>%
+ 		   rename(localisation = tissue)
+ 			   
+valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
+
+qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	   filter(sample_type=="cfDNA")
+			 	   
+tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+					  dplyr::select(patient_id, cfdna_sample_id) %>%
+					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
+qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
+
+qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
+			 	 filter(sample_type=="gDNA") %>%
+			 	 mutate(sample_type = "WBC")
+tracker_grail_wbc = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+					dplyr::select(patient_id, gdna_sample_id) %>%
+					rename(msk_id = patient_id, sample_id = gdna_sample_id)
+qc_metrics_wbc = left_join(qc_metrics_wbc, tracker_grail_wbc, by="sample_id")
  
-pdf(file="../res/figure5/mutational_burden_ch_genes.pdf")
+data = left_join(data, cfdna_fraction, by="patient_id") %>%
+	   left_join(qc_metrics_cfdna %>%
+	   		dplyr::select(patient_id,
+	   					  uncollapsed_cfdna_coverage=raw.MEAN_BAIT_COVERAGE,
+	   					  collapsed_cfdna_coverage=collapsed.MEAN_BAIT_COVERAGE), by="patient_id") %>%
+	   left_join(qc_metrics_wbc %>%
+	   		dplyr::select(patient_id,
+	   					  uncollapsed_wbc_coverage=raw.MEAN_BAIT_COVERAGE,
+	   					  collapsed_wbc_coverage=collapsed.MEAN_BAIT_COVERAGE), by="patient_id") %>%
+	   mutate(ctdna_frac = ifelse(is.na(ctdna_frac), 0, ctdna_frac)) %>%
+ 	   mutate(bio_source_x = "WBC-matched in cfDNA") %>%
+ 	   mutate(bio_source_y = "CH-derived in WBC")
+ 	   
+x = data %>%
+	filter(num_called_wbc!=0) %>%
+	.[["age"]]
+y = data %>%
+	filter(num_called_wbc!=0) %>%
+	.[["num_called_wbc"]]
+z = data %>%
+	filter(num_called_wbc!=0) %>%
+	.[["subj_type"]]
+	
+pdf(file="../res/figure5/CH_derived_vs_Age.pdf", width=7, height=7)
 par(mar = c(6.1, 6.5, 4.1, 1.1))
-plot(0, 0, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, ylim=c(.5,50), xlim=c(20,100), log="y")
-data = data.frame(burden_cancer[,c("age", "num_called", "study"),drop=FALSE])
-p1 = glm(num_called ~ age, family="poisson", data=data)
-#text(20, 50, cex = .95, labels = bquote(AIC == .(summary(p1)$aic, 3)), pos = 4)
-#text(20, 40, cex = .95, labels = paste("(P = ", toupper(signif(summary(p1)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
-#text(20, 30, cex = .95, labels = paste("N = ", sum(burden_cancer$num_called),sep = ""), pos = 4)
-p1 = ggplot_build(qplot(age, num_called, data=burden_cancer) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_cancer$age, ifelse(burden_cancer$num_called==0, 0.5, burden_cancer$num_called), bg=transparent_rgb("#EAA411", 255), pch=21, cex=1.05, lwd=0)
-data = data.frame(burden_healthy[,c("age", "num_called", "study"),drop=FALSE])
-p2 = glm(num_called ~ age, family="poisson", data=data)
-#text(20, 20, cex = .95, labels = bquote(AIC == .(summary(p2)$aic, 3)), pos = 4)
-#text(20, 15, cex = .95, labels = paste("(P = ", toupper(signif(summary(p2)$coefficients[2,4], 3)), ")", sep = ""), pos = 4)
-#text(20, 10, cex = .95, labels = paste("N = ", sum(burden_healthy$num_called),sep = ""), pos = 4)
-p2 = ggplot_build(qplot(age, num_called, data=burden_healthy) + stat_smooth(method = "glm", method.args = list(family = "poisson"), level = .99))$data[[2]]
-points(burden_healthy$age, ifelse(burden_healthy$num_called==0, 0.5, burden_healthy$num_called), bg=transparent_rgb("#1F6784", 255), pch=21, cex=1.05, lwd=0)
-points(p1[,"x"], p1[,"y"], type="l", col="#EAA411", lwd=2)
-points(p2[,"x"], p2[,"y"], type="l", col="#1F6784", lwd=2)
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, ylim=c(1,50), xlim=c(20,90), log="y")
+p0 = zeroinfl(as.numeric(num_called_wbc) ~ as.numeric(age), dist = "poisson", data = data)
+text(45, 50, cex = 1, labels = paste("(p = ", toupper(signif(summary(p0)$coefficients$count[2,4], 3)), ")", sep = ""), pos = 4)
+y0 = fun_zerob(x=as.numeric(data$age), y=as.numeric(data$num_called_wbc), n=1000, seed=0)
+x1 = seq(20, 90, l=100)
+y1 = t(apply(y0, 1, quantile, probs=c(.005, .5, .995), na.rm=TRUE))
+polygon(c(x1, rev(x1)), c(y1[,"99.5%"], rev(y1[,"0.5%"])), col=transparent_rgb("grey10", 55), border=NA)
+points(x1, y1[,"50%"], type="l", col="grey50", lwd=3)
+points(x, y, bg="#1F6784", col="#231F20", pch=21, cex=1.35, lwd=.5)
+points(x[z=="Healthy"], y[z=="Healthy"], bg="#1F6784", col="#231F20", pch=21, cex=1.35, lwd=.5)
+points(x[z=="Cancer"], y[z=="Cancer"], bg="#EAA411", col="#231F20", pch=21, cex=1.35, lwd=.5)
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
 axis(1, at = seq(30, 90, by=20), labels=rep("", 4), padj = 0.25, lwd=-1, lwd.ticks=.85, tcl=-.35)
-axis(2, at = c(.5, 1, 2, 5, 10, 20, 50), labels = c("0", "1", "2", "5", "10", "20", "50"), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
+axis(2, at = c(1,2,5,10,20,30,50), labels=c(1,2,5,10,20,30,50), cex.axis = 1.85, las = 1, lwd=1.5, lwd.ticks=1.35)
+mtext(side = 2, text = expression("Somatic variants / Mb"), line = 5, cex = 1.85)
 mtext(side = 1, text = "Age (years)", line = 4, cex = 1.5)
-mtext(side = 2, text = "Number of variants", line = 4.5, cex = 1.5)
-legend(x=20, y=55, pch=21, legend=c("Cancer","Control"), box.lwd=-1, pt.cex=1.05, cex=.95, pt.bg=unlist(lapply(c("#EAA411", "#1F6784"), transparent_rgb, 255)), pt.lwd=0)
+legend("topleft", legend=c("Cancer", "Control"), pch=21, col="#231F20", pt.bg=c("#EAA411", "#1F6784"), box.lwd=-1, pt.lwd=0, pt.cex=1.35, cex=1.15)
 dev.off()
-  
+ 
 #==================================================
 # Barplot of mutation burden for all individuals
 #==================================================
