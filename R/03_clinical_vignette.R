@@ -23,8 +23,6 @@ useful_msi_df = all_msi_df %>%
 #==================================================
 # Scatter plot of MSI scores
 #==================================================
-cols = c("Breast"="#AD916E", "Lung"="#612B5C", "Prostate"="forestgreen")
-shapes = c("Breast"=21, "Lung"=21, "Prostate"=21)
 pdf(file="../res/figure3/msi_scatter.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 zz = split.screen(figs=matrix(c(0,1,0,1, 0,1,0,1, 0,1,0,1), nrow=3, ncol=4, byrow=TRUE))
@@ -34,11 +32,11 @@ x = (100*x$fixed_msi)
 y = useful_msi_df %>%
 	filter(sample=="cfdna")
 y = (100*y$fixed_msi)
-z = cols[as.vector(useful_msi_df$subject_type)]
-z2 = shapes[as.vector(useful_msi_df$subject_type)]
+z = cohort_cols[as.vector(useful_msi_df$subject_type)]
+z2 = rep(21, length(useful_msi_df$subject_type))
 
 screen(zz[1])
-plot(x[x<5], y[x<5], xlim=c(0,4.15), ylim=c(0,4), pch=z2[x<5], bg=unlist(lapply(z[x<5], transparent_rgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
+plot(x[x<5], y[x<5], xlim=c(0,4.15), ylim=c(0,4), pch=z2[x<5], bg=unlist(lapply(z[x<5], transparent_rgb, 255)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=1)
 axis(1, at = c(0,1,2), labels=c(0,1,2), cex.axis = 1.5, padj = 0.25)
 axis(2, at = c(0,1,2), labels=c(0,1,2), cex.axis = 1.5, las = 1)
 axis(1, at = c(2,2.9), labels=c("",""), lwd.ticks=-1)
@@ -47,12 +45,12 @@ axis.break(axis=1, breakpos=2.13,pos=NA,bgcol="white",breakcol="black",style="sl
 axis.break(axis=2, breakpos=2.3,pos=NA,bgcol="white",breakcol="black",style="slash",brw=0.02)
 mtext(side = 1, text = "Tumor MSI score", line = 4, cex = 1.5)
 mtext(side = 2, text = "cfDNA MSI score", line = 4, cex = 1.5)
-legend(x=.03, y=4.1, legend=c("Breast", "Lung", "Prostate"), pt.bg=cols, col="#231F20", pch=shapes, pt.cex=1.55, box.lwd=-1, pt.lwd=1)
+legend(x=.03, y=4.1, legend=c("Breast", "Lung", "Prostate"), pt.bg=cohort_cols[c("Breast", "Lung", "Prostate")], col="#231F20", pch=21, pt.cex=1.55, box.lwd=-1, pt.lwd=1)
 screen(zz[2])
-plot(x[x>2 & x<10], y[x>2 & x<10], xlim=c(-10,25), ylim=c(0,20), pch=z2[x>5 & x<10], bg=unlist(lapply(z[x>5 & x<10], transparent_rgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
+plot(x[x>2 & x<10], y[x>2 & x<10], xlim=c(-10,25), ylim=c(0,20), pch=z2[x>5 & x<10], bg=unlist(lapply(z[x>5 & x<10], transparent_rgb, 255)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=1)
 axis(1, at = c(9,15,20,25), labels=c(9,15,20,25), cex.axis = 1.5, padj = 0.25)
 screen(zz[3])
-plot(x[x>10], y[x>10], xlim=c(-10,25), ylim=c(-10,20), pch=z2[x>10], bg=unlist(lapply(z[x>10], transparent_rgb, 205)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=.55)
+plot(x[x>10], y[x>10], xlim=c(-10,25), ylim=c(-10,20), pch=z2[x>10], bg=unlist(lapply(z[x>10], transparent_rgb, 255)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=1)
 axis(2, at = c(9,15,20), labels=c(9,15,20), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
@@ -176,8 +174,6 @@ summ_per_patient_impact = variants %>%
  				   mutate(TMB = num_called/total_bed_Mb) %>%
  				   ungroup()
  				   
-cols = c("Breast"="#AD916E", "Lung"="#612B5C", "Prostate"="forestgreen")
-shapes = c("Breast"=21, "Lung"=21, "Prostate"=21)
 pdf(file="../res/figure3/tmb_scatter.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 zz = split.screen(figs=matrix(c(0,1,0,1, 0,1,0,1, 0,1,0,1), nrow=3, ncol=4, byrow=TRUE))
@@ -193,11 +189,11 @@ y[summ_per_patient_cfdna[,1,drop=TRUE]] = summ_per_patient_cfdna[,3,drop=TRUE]
 subj_type = rep("Breast", length(valid_patient_ids))
 subj_type[grepl("VL", valid_patient_ids)] = "Lung"
 subj_type[grepl("VP", valid_patient_ids)] = "Prostate"
-z1 = cols[subj_type]
-z2 = shapes[subj_type]
+z1 = cohort_cols[subj_type]
+z2 = rep(21, length(subj_type))
 z2[y>30] = 24
 screen(zz[1])
-plot(x[y<150], y[y<150], xlim=c(0,40), ylim=c(0,150), pch=z2[y<150], bg=unlist(lapply(z1[y<150], transparent_rgb, 155)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.45, lwd=.55)
+plot(x[y<150], y[y<150], xlim=c(0,40), ylim=c(0,150), pch=z2[y<150], bg=unlist(lapply(z1[y<150], transparent_rgb, 255)), col="#231F20", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=1)
 points(x=c(-10,40), y=rep(22.6996,2), type="l", lty=3, col="goldenrod3", lwd=1.5)
 points(x=rep(13.8,2), y=c(-10,150), type="l", lty=3, col="goldenrod3", lwd=1.5)
 axis(1, at = c(0,10,20,30,40), labels=c(0,10,20,30,40), cex.axis = 1.5, padj = 0.25)
@@ -206,11 +202,11 @@ axis(2, at = c(100,150), labels=c("",""), lwd.ticks=-1)
 axis.break(axis=2, breakpos=120, pos=NA, bgcol="white",breakcol="black",style="slash",brw=0.02)
 mtext(side = 1, text = "Tumor mutation burden", line = 4, cex = 1.5)
 mtext(side = 2, text = "cfDNA mutation burden", line = 4, cex = 1.5)
-legend(x=30, y=155, legend=c("Breast", "Lung", "Prostate"), col="#231F20", pt.bg=cols, pch=shapes, pt.cex=1.55, box.lwd=-1, pt.lwd=.55)
-legend(x=30, y=120, legend="Non-hyper-\nmutated", pch=21, col="#231F20", pt.bg="#231F20", pt.cex=1.55, box.lwd=-1, pt.lwd=.55)
-legend(x=30, y=105, legend="Hyper-\nmutated", pch=24, col="#231F20", pt.bg="#231F20", pt.cex=1.55, box.lwd=-1, pt.lwd=.55)
+legend(x=30, y=155, legend=c("Breast", "Lung", "Prostate"), col="#231F20", pt.bg=cohort_cols[c("Breast", "Lung", "Prostate")], pch=21, pt.cex=1.55, box.lwd=-1, pt.lwd=1)
+legend(x=30, y=120, legend="Non-hyper-\nmutated", pch=21, col="#231F20", pt.bg="#231F20", pt.cex=1.55, box.lwd=-1, pt.lwd=1)
+legend(x=30, y=105, legend="Hyper-\nmutated", pch=24, col="#231F20", pt.bg="#231F20", pt.cex=1.55, box.lwd=-1, pt.lwd=1)
 screen(zz[2])
-plot(x[y>=150], y[y>=150], xlim=c(0,50), ylim=c(150,600), pch=24, col="#231F20", bg=unlist(lapply(z1[y>=150], transparent_rgb, 155)), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.45, lwd=.55)
+plot(x[y>=150], y[y>=150], xlim=c(0,50), ylim=c(150,600), pch=24, col="#231F20", bg=unlist(lapply(z1[y>=150], transparent_rgb, 255)), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, cex=1.55, lwd=1)
 axis(2, at = c(550,600), labels=c(550,600), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
@@ -399,16 +395,16 @@ variants_hyper = variants %>%
 		   	filter(patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id)) %>%
 		   	filter(is_nonsyn | bio_source=="biopsy_only") %>%
 		   	filter(bio_source %in% c("VUSo","biopsy_matched", "biopsy_only", "IMPACT-BAM_matched"))
-		   
-print(sum(variants_nohyper$bio_source=="VUSo"))
-print(sum(variants_nohyper$subj_type=="Breast" & variants_nohyper$bio_source=="VUSo"))
-print(sum(variants_nohyper$subj_type=="Lung" & variants_nohyper$bio_source=="VUSo"))
-print(sum(variants_nohyper$subj_type=="Prostate" & variants_nohyper$bio_source=="VUSo"))
 
-print(sum(variants_hyper$bio_source=="VUSo"))
-print(sum(variants_hyper$subj_type=="Breast" & variants_hyper$bio_source=="VUSo"))
-print(sum(variants_hyper$subj_type=="Lung" & variants_hyper$bio_source=="VUSo"))
-print(sum(variants_hyper$subj_type=="Prostate" & variants_hyper$bio_source=="VUSo"))
+pander(sum(variants_nohyper$bio_source=="VUSo"))
+pander(sum(variants_nohyper$subj_type=="Breast" & variants_nohyper$bio_source=="VUSo"))
+pander(sum(variants_nohyper$subj_type=="Lung" & variants_nohyper$bio_source=="VUSo"))
+pander(sum(variants_nohyper$subj_type=="Prostate" & variants_nohyper$bio_source=="VUSo"))
+
+pander(sum(variants_hyper$bio_source=="VUSo"))
+pander(sum(variants_hyper$subj_type=="Breast" & variants_hyper$bio_source=="VUSo"))
+pander(sum(variants_hyper$subj_type=="Lung" & variants_hyper$bio_source=="VUSo"))
+pander(sum(variants_hyper$subj_type=="Prostate" & variants_hyper$bio_source=="VUSo"))
 
 pdf(file="../res/figure3/venn_diagram_somatic_vuso.pdf", width=14, height=9)
 par(mar = c(6.1, 6, 4.1, 1))
@@ -418,7 +414,7 @@ fit = euler(c("VUSo_nonh" = sum(variants_nohyper$bio_source=="VUSo"),
 			  "VUSo_hyp" = sum(variants_hyper$bio_source=="VUSo"),
 			  "Biopsy_only_hyp" = sum(variants_hyper$bio_source=="biopsy_only"),
 		      "VUSo_hyp&Biopsy_only_hyp" = sum(variants_hyper$bio_source=="biopsy_matched" | variants_hyper$bio_source=="IMPACT-BAM_matched")))
-plot(fit, fills=rep(unlist(lapply(c("salmon3", "steelblue"), transparent_rgb, 155)), 2))
+plot(fit, fills=rep(unlist(lapply(c(variant_cols["VUSo"], variant_cols["biopsy_only"]), transparent_rgb, 155)), 2))
 dev.off()
 
 #==================================================

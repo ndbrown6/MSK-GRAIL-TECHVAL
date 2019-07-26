@@ -528,7 +528,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Violin plot of cfDNA fraction by cancer type
+# Violin plot of ctDNA fraction by cancer type
 #==================================================
 cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 			 filter(!is.na(ctdna_frac)) %>%
@@ -541,11 +541,21 @@ pdf(file="../res/figure2/cfdna_fraction_by_cancer_type.pdf", width=5.5, height=7
 par(mar = c(6.1, 6, 4.1, 1))
 plot(0, 0, type="n", xlim=c(0.5,3.5), ylim=c(0.01,1), axes=FALSE, frame.plot=FALSE, xlab="", ylab="")
 beeswarm(cfdna_frac[cfdna_frac[,3]==1,2], method="swarm", col=cohort_cols["Breast"], add=TRUE, pch=19, at=1, cex=1.75, corral="random", corralWidth=.9)
-vioplot(cfdna_frac[cfdna_frac[,3]==1,2], at = 1, add = TRUE, col=NA, border = NA, rectCol = "black", lineCol = "black", pchMed = 19, colMed = "white")
 beeswarm(cfdna_frac[cfdna_frac[,3]==2,2], method="swarm", col=cohort_cols["Lung"], add=TRUE, at=2, pch=19, cex=1.75, corral="random", corralWidth=.85)
-vioplot(cfdna_frac[cfdna_frac[,3]==2,2], at = 2, add = TRUE, col=NA, border = NA, rectCol = "black", lineCol = "black", pchMed = 19, colMed = "white")
 beeswarm(cfdna_frac[cfdna_frac[,3]==3,2], method="swarm", col=cohort_cols["Prostate"], add=TRUE, at=3, pch=19, cex=1.75, corral="random", corralWidth=.8)
-vioplot(cfdna_frac[cfdna_frac[,3]==3,2], at = 3, add = TRUE, col=NA, border = NA, rectCol = "black", lineCol = "black", pchMed = 19, colMed = "white")
+axis(1, at = 1:3, labels=cancer_types, cex.axis = 1.5, padj = 0.25)
+axis(2, at = NULL, cex.axis = 1.5, las = 1)
+text(x=2, y=.995, "p = 0.0046" , cex=1.05)
+box()
+mtext(side = 2, text = "ctDNA fraction", line = 4, cex = 1.5)
+dev.off()
+
+pdf(file="../res/figure2/cfdna_fraction_by_cancer_type_bis.pdf", width=5.5, height=7)
+par(mar = c(6.1, 6, 4.1, 1))
+plot(0, 0, type="n", xlim=c(0.5,3.5), ylim=c(0.01,1), axes=FALSE, frame.plot=FALSE, xlab="", ylab="")
+vioplot(cfdna_frac[cfdna_frac[,3]==1,2], at = 1, add = TRUE, col=cohort_cols["Breast"], border = "black", rectCol = "black", lineCol = "black", pchMed = 19, colMed = "white")
+vioplot(cfdna_frac[cfdna_frac[,3]==2,2], at = 2, add = TRUE, col=cohort_cols["Lung"], border = "black", rectCol = "black", lineCol = "black", pchMed = 19, colMed = "white")
+vioplot(cfdna_frac[cfdna_frac[,3]==3,2], at = 3, add = TRUE, col=cohort_cols["Prostate"], border = "black", rectCol = "black", lineCol = "black", pchMed = 19, colMed = "white")
 axis(1, at = 1:3, labels=cancer_types, cex.axis = 1.5, padj = 0.25)
 axis(2, at = NULL, cex.axis = 1.5, las = 1)
 text(x=2, y=.995, "p = 0.0046" , cex=1.05)
@@ -553,7 +563,7 @@ mtext(side = 2, text = "ctDNA fraction", line = 4, cex = 1.5)
 dev.off()
  
 #==================================================
-# Box plot plot of cfDNA fraction by number of
+# Box plot of ctDNA fraction by number of
 # metastatic sites
 #==================================================
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
@@ -575,133 +585,248 @@ x = list(cfdna_frac[number_metastatic_sites==1 | number_metastatic_sites==2,2],
 y = list(cfdna_frac[number_metastatic_sites==1 | number_metastatic_sites==2,1],
 		 cfdna_frac[number_metastatic_sites==3,1],
 		 cfdna_frac[number_metastatic_sites>4,1])
-z = list()
 for (i in 1:3) {
 	y[[i]][grep("VB", y[[i]])] = "Breast"
 	y[[i]][grep("VL", y[[i]])] = "Lung"
 	y[[i]][grep("VP", y[[i]])] = "Prostate"
 }
+z = list()
 for (i in 1:3) {
 	z[[i]] = rep(i, length(x[[i]]))
 }
 
-tmp.0 = data_frame(ctdna_frac = unlist(x),
-				   tissue = unlist(y),
-				   cat3 = unlist(z))
+tmp.0 = data_frame(
+			ctdna = as.numeric(unlist(x)),
+			tissue = factor(unlist(y), levels=c("Breast", "Lung", "Prostate"), ordered=TRUE),
+			cat3 = factor(unlist(z), levels=c("1", "2", "3"), ordered=TRUE))
+				 
+plot.0 = ggplot(tmp.0, aes(x = tissue, y = ctdna, color = cat3)) + 
+	     geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, fill="white", width=.8) +
+	     scale_colour_manual(values=c("1"="black", "2"="black", "3"="black")) +
+	     geom_jitter(
+		 	aes(x = tissue, y = ctdna, group = cat3, fill=tissue),
+  		    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+  		    alpha=1, size=3, shape=21,
+  		 ) +
+  		 scale_fill_manual(values=cohort_cols) +
+	     theme_classic(base_size=15) +
+ 	     theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10), legend.position="none") +
+ 	     labs(x="", y="ctDNA fraction\n") +
+ 	     coord_cartesian(ylim = c(0,1))
+ 	     
+pdf(file="../res/figure2/cfdna_fraction_by_number_of_site.pdf", width=8.5, height=5)
+print(plot.0)
+dev.off()
 
-plot.0 = ggplot(tmp.0, aes(x = tissue, y = ctdna_frac, color = factor(cat3))) + 
-		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, fill="white", width=1) +
+#==================================================
+# Box plot of ctDNA fraction by disease
+# volume
+#==================================================
+ctdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character()))  %>%
+ 				 type_convert() %>%
+ 				 rename(GRAIL_ID = ID)
+
+vol_breast = read.xls(xls=url_volumetric_data, sheet=1, stringsAsFactors=FALSE) %>%
+			 type_convert() %>%
+			 mutate(Date_Tissue = as.character(Date_Tissue)) %>%
+			 mutate(Date_Most_Recent_Scan = as.character(Date_Most_Recent_Scan)) %>%
+			 mutate(Date_of_Last_Treatment = as.character(Date_of_Last_Treatment))
+
+vol_lung = read.xls(xls=url_volumetric_data, sheet=2, stringsAsFactors=FALSE) %>%
+		   type_convert() %>%
+		   mutate(Date_Tissue = as.character(Date_Tissue)) %>%
+		   mutate(Date_Most_Recent_Scan = as.character(Date_Most_Recent_Scan)) %>%
+		   mutate(Date_of_Last_Treatment = as.character(Date_of_Last_Treatment)) %>%
+		   mutate(Date_Dx = as.character(Date_Dx)) %>%
+		   mutate(Date_Metastatic = as.character(Date_Metastatic)) %>%
+		   mutate(Date_Tissue = as.character(Date_Tissue))
+		   
+vol_prostate = read.xls(xls=url_volumetric_data, sheet=3, stringsAsFactors=FALSE) %>%
+		       type_convert() %>%
+		       mutate(BSI_Value = ifelse(BSI_Value==">13", 14, BSI_Value)) %>%
+		       mutate(BSI_Value = ifelse(BSI_Value=="n/a", NA, BSI_Value)) %>%
+		       mutate(BSI_Value = as.numeric(BSI_Value)) %>%
+		       rename(BSI_Volume = BSI_Value) %>%
+		       mutate(Date_Dx = as.character(Date_Dx)) %>%
+		       mutate(Date_Metastatic = as.character(Date_Metastatic)) %>%
+		       mutate(Date_Tissue = as.character(Date_Tissue))
+
+volumetric_data = bind_rows(vol_breast, vol_lung) %>%
+				  bind_rows(vol_prostate) %>%
+				  left_join(ctdna_fraction, by="GRAIL_ID")
+				  
+volumetric_data = volumetric_data %>%
+				  mutate(tot_volu = apply( volumetric_data[,which(grepl('volume', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(as.numeric(x), na.rm=T) )) %>%
+				  mutate(tot_mets = apply( volumetric_data[,which(!grepl('volume', colnames(volumetric_data), ignore.case = T) & grepl('Lesions|Lymph_Nodes|Pleural_Disease', colnames(volumetric_data), ignore.case = T))] , 1 , function(x) sum(as.numeric(x), na.rm=T))) %>%
+				  filter(!(GRAIL_ID %in% c('MSK-VL-0057','MSK-VL-0003','MSK-VB-0046')))
+				  
+pattern = c("VB", "VL", "VP")
+tissue = c("Breast", "Lung", "Prostate")
+
+tmp.1 = p.1 = NULL
+for (i in 1:length(pattern)) {
+	tmp = volumetric_data %>%
+		  mutate(tot_volu = ifelse(tot_volu==0, 0.1, tot_volu)) %>%
+	 	  mutate(ln_frac = log(ctdna_frac)) %>%
+	 	  mutate(ln_vol = log(tot_volu)) %>%
+		  filter(grepl(pattern[i], GRAIL_ID)) %>%
+		  mutate(Tissue = tissue[i]) %>%
+		  filter(!(is.infinite(ln_frac) | is.na(ln_frac))) %>%
+		  filter(!(is.infinite(ln_vol) | is.na(ln_vol)))
+		
+	if (tissue[i]=="Breast") {
+		tmp = tmp %>%
+			  mutate(shape = ifelse(is.na(Bone_Lesions) & is.na(Pleural_Disease), 21, 24))
+	} else if (tissue[i]=="Lung") {
+		tmp = tmp %>%
+			  mutate(shape = ifelse(is.na(Bone_Lesions) & is.na(Pleural_Disease), 21, 24)) %>%
+	  		  # Large left forearm bone and soft-tissue mass 10 by 7 by 17 cm not included in PET-scan and measurements
+	  		  mutate(shape = ifelse(GRAIL_ID=="MSK-VL-0008", 24, shape))
+	} else if (tissue[i]=="Prostate") {
+		tmp = tmp %>%
+			  mutate(shape = 24)
+	}
+	
+
+	tmp.0 = tmp %>%
+			mutate(cat = case_when(
+				tot_volu >= 0 & tot_volu <= quantile(tot_volu, 1/3) ~ 1,
+				tot_volu > quantile(tot_volu, 1/3) & tot_volu <= quantile(tot_volu, 2/3) ~ 2,
+				tot_volu > quantile(tot_volu, 2/3) ~ 3,
+			)) %>%
+ 			mutate(cat = as.factor(cat))
+ 	p = signif(jonckheere.test(x=tmp.0$ctdna_frac, g=as.numeric(tmp.0$cat), alternative = "increasing")$p.value, 3)
+ 	tmp.1 = rbind(tmp.1, tmp.0)
+ 	p.1 = c(p.1, p)
+}
+
+plot.0 = ggplot(tmp.1, aes(x = Tissue, y = ctdna_frac, color = cat)) + 
+		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, fill="white", width=.8) +
+		 scale_colour_manual(values=c("1"="black", "2"="black", "3"="black")) +
 		 geom_jitter(
-		 	aes(x = cat3, y = ctdna_frac, color = tissue),
+		 	aes(x = Tissue, y = ctdna_frac, fill = factor(Tissue), shape = factor(shape)),
   			position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-  			alpha=1, size=3, shape=21
+  			alpha=1, size=3
   			) +
+  		 scale_shape_manual(values=c("21"=21, "24"=24)) +
+  		 scale_fill_manual(values=cohort_cols) +
 		 theme_classic(base_size=15) +
  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10), legend.position="none") +
  		 labs(x="", y="ctDNA fraction\n") +
  		 coord_cartesian(ylim = c(0,1))
 
-pdf(file="../res/figure2/cfdna_fraction_by_number_of_site.pdf", width=9, height=5)
+pdf(file="../res/figure2/cfdna_fraction_by_total_dx_vol.pdf", width=8.5, height=5)
 print(plot.0)
 dev.off()
 
+#==================================================
+# Trend test ctDNA fraction by cancer type
+#==================================================
+x = cfdna_frac[,"ctdna_frac"]
+y = rep(1, length(x))
+y[grepl("VL", cfdna_frac[,1])] = 2
+y[grepl("VP", cfdna_frac[,1])] = 3
+ 
+pander(cor.test(x=x, y=y, method="kendall", alternative="two.sided", exact=FALSE)$p.value)
+pander(kruskal.test(x=x, g=y)$p.value)
 
-# #==================================================
-# # Trend test ctDNA fraction versus number of sites
-# #==================================================
-# x = cfdna_frac[,"ctdna_frac"]
-# y = number_metastatic_sites
-# 
-# print(cor.test(x=x, y=y, method="kendall", alternative="two.sided", exact=FALSE)$p.value)
-# print(jonckheere.test(x=x, g=y, alternative="two.sided", nperm=10000)$p.value)
-#  
-# ## jonckheere-terpstra test by cancer type
-# for (i in c("VB", "VL", "VP")) {
-#  	index = grepl(i, names(number_metastatic_sites))
-#  	x = cfdna_frac[index,"ctdna_frac"]
-#  	y = number_metastatic_sites[index]
-#  	print(jonckheere.test(x=x, g=y, alternative="two.sided", nperm=10000)$p.value)
-# }
-# for (i in c("VB", "VL", "VP")) {
-#  	index = grepl(i, names(number_metastatic_sites))
-#  	x = cfdna_frac[index,"ctdna_frac"]
-#  	y = number_metastatic_sites[index]
-#  	y0 = rep(1, length(y))
-#  	y0[y==3] = 2
-#  	y0[y>3] = 3
-# 	print(jonckheere.test(x=x, g=y0, alternative="increasing", nperm=10000)$p.value)
-# }
-# 
-# ## kendall correlation test by cancer type
-# for (i in c("VB", "VL", "VP")) {
-#  	index = grepl(i, names(number_metastatic_sites))
-#  	x = cfdna_frac[index,"ctdna_frac"]
-#  	y = number_metastatic_sites[index]
-#  	print(cor.test(x=x, y=y, method="kendall", alternative="two.sided", exact = FALSE)$p.value)
-# }
-# for (i in c("VB", "VL", "VP")) {
-#  	index = grepl(i, names(number_metastatic_sites))
-#  	x = cfdna_frac[index,"ctdna_frac"]
-#  	y = number_metastatic_sites[index]
-#  	y0 = rep(1, length(y))
-#  	y0[y==3] = 2
-#  	y0[y>3] = 3
-#  	print(cor.test(x=x, y=y0, method="kendall", alternative="greater", exact = FALSE)$p.value)
-# }
-# 
-# ## mblm association test by cancer type
-# for (i in c("VB", "VL", "VP")) {
-#  	index = grepl(i, names(number_metastatic_sites))
-#  	x = cfdna_frac[index,"ctdna_frac"]
-#  	y = number_metastatic_sites[index]
-# 	data = data.frame(ctDNA_fraction=x, n_sites=y) 
-#  
-#  	z = mblm(ctDNA_fraction ~ n_sites, dataframe=data, repeated=FALSE)
-#  	p = summary(z)$coefficients[2,4]
-#  	print(p)
-# }
-# 
-# #==================================================
-# # Trend test ctDNA fraction by cancer type
-# #==================================================
-# x = cfdna_frac[,"ctdna_frac"]
-# y = rep(1, length(x))
-# y[grepl("VL", cfdna_frac[,1])] = 2
-# y[grepl("VP", cfdna_frac[,1])] = 3
-# 
-# print(cor.test(x=x, y=y, method="kendall", alternative="two.sided", exact=FALSE)$p.value)
-# print(jonckheere.test(x=x, g=y, alternative="two.sided", nperm=10000)$p.value)
-# print(kruskal.test(x=x, g=y)$p.value)
-#  	
-# #==================================================
-# # P-values of detection rate
-# #==================================================
-# N = c(39, 41, 44)
-# n = c(37, 31, 36)
-#  
-# # Breast versus lung
-# m1 = matrix(NA, 2, 2)
-# m1[1,1] = N[1]-n[1]
-# m1[2,1] = N[2]-n[2]
-# m1[1,2] = n[1]
-# m1[2,2] = n[2]
-# p1 = fisher.test(m1)$p.value
-#   
-# # Breast versus prostate
-# m2 = matrix(NA, 2, 2)
-# m2[1,1] = N[1]-n[1]
-# m2[2,1] = N[3]-n[3]
-# m2[1,2] = n[1]
-# m2[2,2] = n[3]
-# p2 = fisher.test(m2)$p.value
-#   
-# # Lung versus prostate
-# m3 = matrix(NA, 2, 2)
-# m3[1,1] = N[2]-n[2]
-# m3[2,1] = N[3]-n[3]
-# m3[1,2] = n[2]
-# m3[2,2] = n[3]
-# p3 = fisher.test(m3)$p.value
-#   
-# p = p.adjust(c(p1, p2, p3), method="bonferroni")
-# print(p)
+
+#==================================================
+# Trend test ctDNA fraction versus number of sites
+#==================================================
+clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   mutate(subj_type = ifelse(subj_type == "Healthy", "Control", subj_type))
+cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
+			 filter(!is.na(ctdna_frac)) %>%
+			 mutate(index = order_samples(ID)) %>%
+ 			 arrange(desc(ctdna_frac)) %>%
+			 arrange(index)
+number_metastatic_sites = unlist(lapply(strsplit(clinical[,"metastatic_sites",drop=TRUE], split=",", fixed=TRUE), function(x) {length(x)}))
+number_metastatic_sites[is.na(clinical[,"metastatic_sites",drop=TRUE])] = 0
+names(number_metastatic_sites) = clinical[,"patient_id",drop=TRUE]
+number_metastatic_sites = number_metastatic_sites[cfdna_frac[,1]]
+
+x = cfdna_frac[,"ctdna_frac"]
+y = number_metastatic_sites
+
+pander(cor.test(x=x, y=y, method="kendall", alternative="greater", exact=FALSE)$p.value)
+pander(jonckheere.test(x=x, g=y, alternative="increasing", nperm=10000)$p.value)
+
+# jonckheere-terpstra test by cancer type
+for (i in c("VB", "VL", "VP")) {
+  	index = grepl(i, names(number_metastatic_sites))
+  	x = cfdna_frac[index,"ctdna_frac"]
+  	y = number_metastatic_sites[index]
+  	pander(jonckheere.test(x=x, g=y, alternative="increasing", nperm=10000)$p.value)
+}
+for (i in c("VB", "VL", "VP")) {
+  	index = grepl(i, names(number_metastatic_sites))
+  	x = cfdna_frac[index,"ctdna_frac"]
+  	y = number_metastatic_sites[index]
+  	y0 = rep(1, length(y))
+  	y0[y==3] = 2
+  	y0[y>3] = 3
+ 	pander(jonckheere.test(x=x, g=y0, alternative="increasing", nperm=10000)$p.value)
+}
+ 
+# kendall correlation test by cancer type
+for (i in c("VB", "VL", "VP")) {
+ 	index = grepl(i, names(number_metastatic_sites))
+ 	x = cfdna_frac[index,"ctdna_frac"]
+ 	y = number_metastatic_sites[index]
+  	pander(cor.test(x=x, y=y, method="kendall", alternative="greater", exact = FALSE)$p.value)
+}
+for (i in c("VB", "VL", "VP")) {
+ 	index = grepl(i, names(number_metastatic_sites))
+ 	x = cfdna_frac[index,"ctdna_frac"]
+ 	y = number_metastatic_sites[index]
+ 	y0 = rep(1, length(y))
+ 	y0[y==3] = 2
+  	y0[y>3] = 3
+ 	pander(cor.test(x=x, y=y0, method="kendall", alternative="greater", exact = FALSE)$p.value)
+}
+ 
+# mblm association test by cancer type
+for (i in c("VB", "VL", "VP")) {
+ 	index = grepl(i, names(number_metastatic_sites))
+ 	x = cfdna_frac[index,"ctdna_frac"]
+ 	y = number_metastatic_sites[index]
+	data = data.frame(ctDNA_fraction=x, n_sites=y) 
+ 
+ 	z = mblm(ctDNA_fraction ~ n_sites, dataframe=data, repeated=FALSE)
+ 	pander(z)
+}
+  	
+#==================================================
+# P-values of detection rate
+#==================================================
+N = c(39, 41, 44)
+n = c(37, 31, 36)
+ 
+# Breast versus lung
+m1 = matrix(NA, 2, 2)
+m1[1,1] = N[1]-n[1]
+m1[2,1] = N[2]-n[2]
+m1[1,2] = n[1]
+m1[2,2] = n[2]
+p1 = fisher.test(m1)$p.value
+   
+# Breast versus prostate
+m2 = matrix(NA, 2, 2)
+m2[1,1] = N[1]-n[1]
+m2[2,1] = N[3]-n[3]
+m2[1,2] = n[1]
+m2[2,2] = n[3]
+p2 = fisher.test(m2)$p.value
+   
+# Lung versus prostate
+m3 = matrix(NA, 2, 2)
+m3[1,1] = N[2]-n[2]
+m3[2,1] = N[3]-n[3]
+m3[1,2] = n[2]
+m3[2,2] = n[3]
+p3 = fisher.test(m3)$p.value
+   
+p = p.adjust(c(p1, p2, p3), method="bonferroni")
+pander(p)

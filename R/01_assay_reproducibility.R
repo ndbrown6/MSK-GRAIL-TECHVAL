@@ -79,11 +79,11 @@ y = ifelse(y>1, 1, ifelse(y<0, 0, y))
 points(x, y, type="p", pch=1, cex=.85, col=transparent_rgb(cols[2], 185), lwd=.65)
 points(x=rep(lod95_real,2), y=c(-1,1.01), col=cols[1], type="l", lwd=1.5, lty=3)
 points(x=rep(lod95_syn,2), y=c(-1,1.01), col=cols[2], type="l", lwd=1.5, lty=3)
-legend(x=.97, y=0.195, col=cols, legend=c("2430X", "4577X\n(synthetic)"), title="Mean collapsed\ntarget coverage", box.lwd=-1, lty=1, pch=1, pt.cex=.75, cex=.9)
+legend(x=.94, y=0.25, col=cols, legend=c("2430X", "4577X\n(synthetic)"), title="Mean collapsed\ntarget coverage", box.lwd=-1, lty=1, pch=1, pt.cex=.75, cex=.9)
 axis(1, at = NULL, cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
 axis(2, at = NULL, cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
 mtext(side = 1, text = "Variant allele frequency (%)", line = 4, cex = 1.5)
-mtext(side = 2, text = "Detection probability", line = 4, cex = 1.85)
+mtext(side = 2, text = "Detection probability", line = 4, cex = 1.5)
 dev.off()
 
 #==================================================
