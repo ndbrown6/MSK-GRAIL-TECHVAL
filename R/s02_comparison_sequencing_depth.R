@@ -138,9 +138,12 @@ plot.0 = ggplot(tmp.0, aes(x = Tissue, y = Uncollapsed_Mean_Coverage, fill = Tis
 		 	   legend.background = element_blank(),
 		 	   legend.key.size = unit(1, 'lines')) +
 		 labs(x="", y=expression("Uncollapsed mean coverage (" %.% 10^3~")")) +
-		 guides(fill=guide_legend(title=c("Assay type"))) +
-		 guides(alpha=guide_legend(title=c("Sample type"))) +
-		 scale_y_continuous(breaks=c(50000, 75000, 100000, 125000, 150000), labels=c("50", "75", "100", "125", "150")) +
+		 guides(fill=guide_legend(title=c("Cohort"))) +
+		 guides(alpha=guide_legend(title=c("Assay"))) +
+		 scale_y_continuous(
+		 	breaks=c(50000, 75000, 100000, 125000, 150000),
+		 	labels=c("50", "75", "100", "125", "---")
+		 ) +
 		 coord_cartesian(ylim = c(30000,150000))
 
 pdf(file="../res/figureS2/UNCOLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
@@ -201,16 +204,16 @@ plot.0 = ggplot(tmp.1, aes(x = Sample_Type, y = Collapsed_Mean_Coverage, fill = 
 		 theme(axis.text.y = element_text(size=13),
 		 	   axis.text.x = element_text(size=10),
 		 	   legend.title=element_text(size=10, face="bold"),
-		 	   legend.position = c(0.125, 0.775),
+		 	   legend.position = c(1-0.125, 0.775),
 		 	   legend.background = element_blank(),
 		 	   legend.key.size = unit(1, 'lines')) +
 		 labs(x="", y=expression("Collapsed mean coverage (" %.% 10^3~")")) +
 		 scale_y_continuous(
-		 	breaks=c(1000, 3000, 5000, 7000, 9000, 100000),
+		 	breaks=c(1000, 3000, 5000, 7000, 9000, 10000),
 		 	labels=c("1", "3", "5", "7", "9", "---")
 		 ) +
-		 guides(fill=guide_legend(title=c("Assay type"))) +
-		 guides(alpha=guide_legend(title=c("Sample type"))) +
+		 guides(fill=guide_legend(title=c("Cohort"))) +
+		 guides(alpha=guide_legend(title=c("Assay"))) +
 		 coord_cartesian(ylim = c(500,11000))
 
 pdf(file="../res/figureS2/COLLAPSED_MEAN_BAIT_COVERAGE_cfDNA_vs_gDNA_by_tissue.pdf", width=8, height=6)
@@ -292,15 +295,15 @@ plot.0 = ggplot(tmp.3, aes(x = Tissue, y = Library_preparation_input_ng, fill = 
 		 scale_fill_manual(values = cohort_cols) +
 		 theme_classic(base_size=15) +
 		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=12)) +
-		 labs(x="", y="Input DNA for library preparation (ng)\n") +
+		 labs(x="", y="Input DNA for library preparation (ng)") +
 		 scale_y_continuous(
-		 	breaks=c(0, 20, 40, 60, 80, 9000),
-		 	labels=c("0", "20", "40", "60", "80", "9000")
+		 	breaks=c(0, 20, 40, 60, 80, 100),
+		 	labels=c("0", "20", "40", "60", "80", "---")
 		 ) +
 		 coord_cartesian(ylim = c(-10, 130)) +
 		 guides(fill=FALSE)
 
-pdf(file="../res/figureS2/Input_cfDNA_by_Tissue.pdf", width=5.5, height=6)
+pdf(file="../res/figureS2/INPUT_cfDNA_by_Tissue.pdf", width=5.5, height=6)
 print(plot.0)
 dev.off()
 
@@ -361,16 +364,16 @@ plot.0 = ggplot(tmp.4, aes(x = Sample_Type, y = 1e5*Indel_and_Substitution_Error
 		 theme(axis.text.y = element_text(size=13),
 		 	   axis.text.x = element_text(size=10),
 		 	   legend.title=element_text(size=10, face="bold"),
-		 	   legend.position = c(0.125, 0.775),
+		 	   legend.position = c(1-0.125, 0.775),
 		 	   legend.background = element_blank(),
 		 	   legend.key.size = unit(1, 'lines')) +
 		 labs(x="", y=expression("% collapsed bases (" %.% 10^-5~")")) +
 		 scale_y_continuous(
 		 	breaks=c(6, 8, 10),
-		 	labels=c("6", "8", "900000")
+		 	labels=c("6", "8", "---")
 		 ) +
-		 guides(fill=guide_legend(title=c("Assay type"))) +
-		 guides(alpha=guide_legend(title=c("Sample type"))) +
+		 guides(fill=guide_legend(title=c("Cohort"))) +
+		 guides(alpha=guide_legend(title=c("Assay"))) +
 		 coord_cartesian(ylim = c(5,11))
 		 
 
@@ -424,7 +427,7 @@ p[[6]] = wilcox.test(tmp.5 %>% filter(Sample_Type=="WBC" & Tissue=="Prostate") %
 				alternative = "two.sided", correct = FALSE)$p.value
 p = p.adjust(unlist(p), "bonferroni")
 
-plot.0 = ggplot(tmp.5, aes(x = Tissue, y = 1e5*Substitution_Error_Rate, fill = Tissue, alpha = Sample_Type, group=interaction(Sample_Type, Tissue))) + 
+plot.0 = ggplot(tmp.5, aes(x = Sample_Type, y = 1e5*Substitution_Error_Rate, fill = Tissue, alpha = Sample_Type, group=interaction(Sample_Type, Tissue))) + 
 		 geom_boxplot(outlier.size=2.5, outlier.shape=21) +
 		 scale_fill_manual(values = cohort_cols) +
 		 scale_alpha_manual(values = c("cfDNA" = 1, "WBC"=.65)) +
@@ -432,16 +435,16 @@ plot.0 = ggplot(tmp.5, aes(x = Tissue, y = 1e5*Substitution_Error_Rate, fill = T
 		 theme(axis.text.y = element_text(size=13),
 		 	   axis.text.x = element_text(size=10),
 		 	   legend.title=element_text(size=10, face="bold"),
-		 	   legend.position = c(0.125, 0.775),
+		 	   legend.position = c(1-0.125, 0.775),
 		 	   legend.background = element_blank(),
 		 	   legend.key.size = unit(1, 'lines')) +
 		 labs(x="", y=expression("% collapsed bases (" %.% 10^-5~")")) +
 		 scale_y_continuous(
 		 	breaks=c(2, 4, 6),
-		 	labels=c("2", "4", "900000")
+		 	labels=c("2", "4", "---")
 		 ) +
-		 guides(fill=guide_legend(title=c("Assay type"))) +
-		 guides(alpha=guide_legend(title=c("Sample type"))) +
+		 guides(fill=guide_legend(title=c("Cohort"))) +
+		 guides(alpha=guide_legend(title=c("Assay"))) +
 		 coord_cartesian(ylim = c(.5,7))
 		 
 
