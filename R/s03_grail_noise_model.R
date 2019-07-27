@@ -5,8 +5,8 @@
 rm(list=ls(all=TRUE))
 source('config.R')
 
-if (!dir.exists("../res/rebuttal")) {
-	dir.create("../res/rebuttal")
+if (!dir.exists("../res/figureS3")) {
+	dir.create("../res/figureS3")
 }
 
 approx_posterior <- read_tsv(file="../modified_v11/Resources/Grail_noise_model/inputs/approx_posterior_by_alt.dispersion.tsv",
@@ -103,30 +103,25 @@ obs_error_rates <- cfdna_pileups_noise_params %>%
                    mutate(facet = "Allele Frequency") %>%
                    mutate(obs_mu = ifelse(obs_mu==0, 1e-6, obs_mu))
 
-plot.0 <- ggplot(obs_error_rates, aes(mu, obs_mu, fill = tot_ad_range, color = tot_ad_range)) + 
-  		  geom_point(alpha = 0.5, size = 2, shape = 21) +
-  		  scale_color_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue", "grey50", "steelblue")) +
-  		  scale_fill_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue", "grey50", "steelblue")) +
-  		  geom_abline(color="goldenrod3", size=.5) +
-		  facet_wrap(~facet) +
-		  theme_bw(base_size=15) +
-		  theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		  labs(x=expression("Mean posterior"~lambda[p]~"("~mu[p]~")"), y=expression("Observed "~lambda[p])) +
-		  coord_cartesian(xlim=c(1e-7,1), ylim = c(1e-6,1)) +
-		  scale_x_log10(
- 		  ) +
-		  scale_y_log10(
- 		  ) +
- 		  annotation_logticks() +
-		  theme(legend.justification = c(1, 0),
-		 	    legend.position = c(0.2, 0.6),
-		 	    legend.title = element_blank(),
-		 	    legend.background = element_blank(),
-		 	    legend.text=element_text(size=8)) +
-		  guides(fill=guide_legend(title=c("Allele Depth")), color=FALSE)
-  
-pdf(file="../res/rebuttal/Observed_vs_Posterior_Lambda_Mu.pdf", width=5, height=6)
-print(plot.0)
+pdf(file="../res/figureS3/Observed_vs_Posterior_Lambda_Mu.pdf", width=7.5, height=8)
+par(mar = c(6.1, 7, 4.1, 1))
+shapes = 21
+cols = c("0"="salmon", "1"="#FDAE61", "2"="#ABDDA4", "3"="cadetblue", "4"="grey50", ">= 5"="steelblue")
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(1e-7,1), ylim=c(1e-6,1), log="xy")
+axis(1, at=c(1e-7, 1e-5, 1e-3, 1e-1, 1), labels=c(expression(10^-7), expression(10^-5), expression(10^-3), 1e-1, 1), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=c(1e-6, 1e-5, 1e-3, 1e-1, 1), labels=c(0, expression(10^-5), expression(10^-3), 1e-1, 1), cex.axis = 1.75, las = 1, lwd=1.85, lwd.ticks=1.75)
+mtext(side = 1, text = expression("Mean posterior"~lambda[p]~"("~mu[p]~")"), line = 4, cex = 1.75)
+mtext(side = 2, text = expression("Observed "~lambda[p]), line = 4.5, cex = 1.75)
+points(c(1e-7,1), c(1e-7,1), type="l", lty=1, lwd=2, col="goldenrod3")
+x = as.numeric(obs_error_rates$mu)
+y = as.numeric(obs_error_rates$obs_mu)
+z = as.character(obs_error_rates$tot_ad_range)
+points(x, y, pch=shapes, col="black", bg=cols[z], cex=1.25)
+log10_axis(side=1, at=c(1e-7, 1e-5, 1e-3, 1e-1, 1), lwd=0, lwd.ticks=1)
+log10_axis(side=2, at=c(1e-6, 1e-5, 1e-3, 1e-1, 1), lwd=0, lwd.ticks=1)
+legend(x=1e-7, y=.5, pch=shapes, col="black", pt.bg=cols, legend=names(cols), box.lwd=-1, pt.cex=1.35)
+text(x=1e-7, y=.8, labels="Alternate\nallele count", pos=4, font=2)
+text(x=1e-1, y=.8, labels="y = x", pos=4, col="goldenrod3", cex=1.25)
 dev.off()
 
 sites <- distinct(approx_posterior, CHROM, POS)
@@ -146,37 +141,72 @@ annotated <- approx_posterior %>%
 			 mutate(ALT = factor(ALT)) %>%
 			 mutate(facet = "Allele Frequency")
 			 
-plot.0 = ggplot(annotated, aes(x = substitution_type, y = mu * 1e5, color = REF)) + 
-		 stat_summary(fun.data = mean_cl_normal) +
-		 scale_color_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue")) + 
-		 facet_wrap(~facet) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=10)) +
-		 labs(x="", y=expression("Mean posterior"~lambda[p]~"("~mu[p] %.% 10^5~")")) +
-		 coord_cartesian(ylim = c(0,10)) +
-		 scale_y_continuous(
-  			 	breaks = function(x) { c(0, 2, 4, 6, 8, 10) },
-  			 	labels = function(x) { c("0", "2", "4", "6", "8", 10) }
-  			 ) + 
-		 guides(color=FALSE)
-		 
-pdf(file="../res/rebuttal/Posterior_Mu_by_Substitution_Type.pdf", width=8, height=6)
-print(plot.0)
+pdf(file="../res/figureS3/Posterior_Mu_by_Substitution_Type.pdf", width=6.5, height=7)
+par(mar = c(6.1, 6, 4.1, 1))
+shapes = 21
+cols = c("\nA>C"="salmon", "\nA>G"="salmon", "\nA>T"="salmon",
+		 "\nT>A"="#FDAE61", "\nT>C"="#FDAE61", "\nT>G"="#FDAE61",
+		 "\nG>A"="#ABDDA4", "\nG>C"="#ABDDA4", "\nG>T"="#ABDDA4",
+		 "\nC>A"="steelblue", "\nC>G"="steelblue", "\nC>T"="steelblue")
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(1,12), ylim=c(0,8))
+for (i in 1:length(cols)) {
+	z = mean_cl_normal((annotated$mu*1e5)[annotated$substitution_type==names(cols)[i]])
+	points(c(i,i), z[1,2:3], type="l", col="black", lwd=1.5)
+	points(i, z[1,1], pch=shapes, bg=cols[i], col="black", cex=1.25)
+}
+axis(1, at=1:length(cols), labels=names(cols), cex.axis = 1, las = 2, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=c(0, 2, 4, 6, 8), labels=c(0, 2, 4, 6, 8), cex.axis = 1.5, las = 1, lwd=1.85, lwd.ticks=1.75)
+mtext(side = 2, text = expression("Mean posterior"~lambda[p]~"("~mu[p] %.% 10^5~")"), line = 3, cex = 1.5)
 dev.off()
 
-plot.0 = ggplot(annotated, aes(x = trinucleotide_context, y = mu * 1e5, color = ALT)) +
-  		 stat_summary(fun.data = mean_cl_normal) +
-  		 scale_color_manual(values = c("salmon", "#FDAE61", "#ABDDA4", "cadetblue")) + 
-  		 facet_wrap(~REF, ncol = 2, nrow = 2, scales = "free_x") +
-  		 ylab(expression("Mean posterior"~lambda[p]~"("~mu[p] %.% 10^5~")")) +
-  		 xlab(" ") +
-  		 theme_bw(base_size=15) +
-  		 theme(axis.text.y = element_text(size=13), axis.text.x = element_text(size=6)) +
-  		 guides(color=guide_legend(title=c("Alternate\nAllele")))
-
-pdf(file="../res/rebuttal/Posterior_Mu_by_Trinucleotide_Context.pdf", width=9, height=6)
-print(plot.0)
+pdf(file="../res/figureS3/Posterior_Mu_by_Trinucleotide_Context.pdf", width=9, height=7)
+par(mar = c(5.1, 7, 3.1, 1.1))
+zz = split.screen(figs=matrix(c(0,.575, 0.425,1, 0.425,1,0.425,1, 0,.575,0,.575, .425,1,0,.575, 0,1,0,1) , nrow=5, ncol=4, byrow=TRUE))
+shapes = 21
+cols = c("A"="salmon",
+		 "T"="#FDAE61",
+		 "G"="#ABDDA4",
+		 "C"="steelblue")
+nuc = c("A", "T", "G", "C")
+for (i in 1:length(nuc)) {
+	screen(zz[i])
+	plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(1,16), ylim=c(0,40))
+	for (j in 1:length(nuc)) {
+		if (i!=j) {
+			trinuc = sort(unique(annotated$trinucleotide_context[annotated$REF==nuc[i]]))
+			for (ii in 1:length(trinuc)) {
+				for (jj in 1:length(nuc)) {
+					if (i!=jj) {
+						z = mean_cl_normal((annotated$mu*1e5)[annotated$trinucleotide_context==trinuc[ii] & annotated$ALT==nuc[jj]])
+						points(c(ii,ii), c(max(0,z[1,2]), z[1,3]), type="l", col="black", lwd=1.5)
+					}
+				}
+				for (jj in 1:length(nuc)) {
+					if (i!=jj) {
+						z = mean_cl_normal((annotated$mu*1e5)[annotated$trinucleotide_context==trinuc[ii] & annotated$ALT==nuc[jj]])
+						points(ii, z[1,1], pch=shapes, bg=cols[nuc[jj]], col="black", cex=1.25)
+					}
+				}
+			}
+		}
+	}
+	axis(1, at=1:16, labels=trinuc, cex.axis = 0.75, las = 2, lwd=1.5, lwd.ticks=1.25, line=0)
+	if (i==1 | i==3) {
+		axis(2, at=c(0, 10, 20, 30, 40), labels=c(0, 10, 20, 30, 40), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.25)
+	} else {
+		axis(2, at=c(0, 10, 20, 30, 40), labels=rep("", 5), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.25)
+	}
+	if (i==2) {
+		text(x=13, y=38, labels="Alternate\nallele", pos=4, font=2, cex=.85)
+		legend(x=13, y=37, pch=21, col="black", pt.bg=cols, legend=c("A", "T", "G", "C"), box.lwd=-1, cex=.85, pt.cex=1.15)
+	}
+}
+screen(zz[5])
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,1), ylim=c(0,1))
+mtext(side = 2, text = expression("Mean posterior"~lambda[p]~"("~mu[p] %.% 10^5~")"), line = 4, cex = 1.5)
+close.screen(all.screens=TRUE)
 dev.off()
+
 
 scored_test_data <- read_tsv(file="../modified_v11/Resources/Grail_noise_model/inputs/scored_merged_snvs.tsv",
 					col_types = cols(.default = col_character())) %>%
