@@ -10,7 +10,7 @@ if (!dir.exists("../res/figureS2")) {
 }
 
 #==================================================
-# QC metrics table
+# qc metrics table
 #==================================================
 tracker_grail = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
  				type_convert()
@@ -62,8 +62,8 @@ qc_metrics = rbind(qc_metrics_cfdna, qc_metrics_wbc) %>%
 			mutate(Library_preparation_input_ng = ifelse(Library_preparation_input_ng>75, 75, Library_preparation_input_ng))
 
 #==================================================
-# Comparison of sequencing depth cfDNA and gDNA by
-# tissue type
+# comparison of sequencing depth cfDNA and gDNA
+# by tissue type
 #==================================================
 tmp.0 = qc_metrics %>%
 	    mutate(Tissue = ifelse(Tissue=="Healthy", "Control", Tissue)) %>%
@@ -221,7 +221,7 @@ print(plot.0)
 dev.off()
 
 #==================================================
-# Correlation of input DNA to library preparation
+# correlation of input DNA to library preparation
 # with mean target coverage
 #==================================================
 tmp.2 = qc_metrics %>%
@@ -261,7 +261,7 @@ print(plot.0)
 dev.off()
 
 #==================================================
-# Correlation of input DNA to library preparation
+# correlation of input DNA to library preparation
 # with sample type
 #==================================================
 tmp.3 = qc_metrics %>%
@@ -308,7 +308,7 @@ print(plot.0)
 dev.off()
 
 #==================================================
-# Comparison of error rate
+# comparison of error rate
 #==================================================
 tmp.4 = qc_metrics %>%
 	    mutate(Tissue = ifelse(Tissue=="Healthy", "Control", Tissue)) %>%

@@ -103,9 +103,12 @@ obs_error_rates <- cfdna_pileups_noise_params %>%
                    mutate(facet = "Allele Frequency") %>%
                    mutate(obs_mu = ifelse(obs_mu==0, 1e-6, obs_mu))
 
+#==================================================
+# observed versus posterior mean estimate
+#==================================================
 pdf(file="../res/figureS3/Observed_vs_Posterior_Lambda_Mu.pdf", width=7.5, height=8)
 par(mar = c(6.1, 7, 4.1, 1))
-shapes = 21
+shapes = 1
 cols = c("0"="salmon", "1"="#FDAE61", "2"="#ABDDA4", "3"="cadetblue", "4"="grey50", ">= 5"="steelblue")
 plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(1e-7,1), ylim=c(1e-6,1), log="xy")
 axis(1, at=c(1e-7, 1e-5, 1e-3, 1e-1, 1), labels=c(expression(10^-7), expression(10^-5), expression(10^-3), 1e-1, 1), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
@@ -116,10 +119,10 @@ points(c(1e-7,1), c(1e-7,1), type="l", lty=1, lwd=2, col="goldenrod3")
 x = as.numeric(obs_error_rates$mu)
 y = as.numeric(obs_error_rates$obs_mu)
 z = as.character(obs_error_rates$tot_ad_range)
-points(x, y, pch=shapes, col="black", bg=cols[z], cex=1.25)
+points(x, y, pch=shapes, col=unlist(lapply(cols[z], transparent_rgb, 205)), cex=1.25, lwd=1.25)
 log10_axis(side=1, at=c(1e-7, 1e-5, 1e-3, 1e-1, 1), lwd=0, lwd.ticks=1)
 log10_axis(side=2, at=c(1e-6, 1e-5, 1e-3, 1e-1, 1), lwd=0, lwd.ticks=1)
-legend(x=1e-7, y=.5, pch=shapes, col="black", pt.bg=cols, legend=names(cols), box.lwd=-1, pt.cex=1.35)
+legend(x=1e-7, y=.5, pch=shapes, col=cols, legend=names(cols), box.lwd=-1, pt.cex=1.35, pt.lwd=1.25)
 text(x=1e-7, y=.8, labels="Alternate\nallele count", pos=4, font=2)
 text(x=1e-1, y=.8, labels="y = x", pos=4, col="goldenrod3", cex=1.25)
 dev.off()
@@ -140,7 +143,10 @@ annotated <- approx_posterior %>%
 			 mutate(REF = factor(REF)) %>%
 			 mutate(ALT = factor(ALT)) %>%
 			 mutate(facet = "Allele Frequency")
-			 
+
+#==================================================
+# posterior estimate by type of substitution
+#==================================================			 
 pdf(file="../res/figureS3/Posterior_Mu_by_Substitution_Type.pdf", width=6.5, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 shapes = 21
@@ -154,11 +160,15 @@ for (i in 1:length(cols)) {
 	points(c(i,i), z[1,2:3], type="l", col="black", lwd=1.5)
 	points(i, z[1,1], pch=shapes, bg=cols[i], col="black", cex=1.25)
 }
-axis(1, at=1:length(cols), labels=names(cols), cex.axis = 1, las = 2, lwd=1.85, lwd.ticks=1.75)
+axis(1, at=1:length(cols), labels=names(cols), cex.axis = 1, las = 1, lwd=1.85, lwd.ticks=1.75)
+axis(1, at=seq(from=2, to=length(cols), by=2), labels=names(cols)[seq(from=2, to=length(cols), by=2)], cex.axis = 1, las = 1, lwd=-1)
 axis(2, at=c(0, 2, 4, 6, 8), labels=c(0, 2, 4, 6, 8), cex.axis = 1.5, las = 1, lwd=1.85, lwd.ticks=1.75)
 mtext(side = 2, text = expression("Mean posterior"~lambda[p]~"("~mu[p] %.% 10^5~")"), line = 3, cex = 1.5)
 dev.off()
 
+#==================================================
+# posterior estimate by trinucleotide context
+#==================================================
 pdf(file="../res/figureS3/Posterior_Mu_by_Trinucleotide_Context.pdf", width=9, height=7)
 par(mar = c(5.1, 7, 3.1, 1.1))
 zz = split.screen(figs=matrix(c(0,.575, 0.425,1, 0.425,1,0.425,1, 0,.575,0,.575, .425,1,0,.575, 0,1,0,1) , nrow=5, ncol=4, byrow=TRUE))
@@ -281,22 +291,21 @@ calibration <- data_frame(Nominal = seq(0, 70, 1)) %>%
 			   mutate(Observed = -10 * log10(p_obs)) %>%
 			   mutate(facet = "Calibration of quality scores")
 
-plot.0 = ggplot(calibration,  aes(x = Nominal, y = Observed)) +
-		 geom_line() +
-		 geom_abline(color="goldenrod3", size=.5) +
-		 facet_wrap(~facet) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		 labs(x="Nominal score (Phred-scaled)", y="Observed probability (Phred-scaled)\n\n") +
-		 coord_cartesian(xlim=c(0,70), ylim = c(0,70)) +
-		 theme(legend.justification = c(1, 0),
-		 	   legend.position = c(0.2, 0.6),
-		 	   legend.title = element_blank(),
-		 	   legend.background = element_blank(),
-		 	   legend.text=element_text(size=8))
-
-pdf(file="../res/rebuttal/Nominal_vs_Observed_Pr.pdf", width=5.15, height=6)
-print(plot.0)
+#==================================================
+# nominal versis observed probability
+#==================================================
+pdf(file="../res/figureS3/Nominal_vs_Observed_Pr.pdf", width=6, height=7)
+par(mar = c(6.1, 7, 4.1, 1))
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,70), ylim=c(0,70))
+axis(1, at=NULL, labels=NULL, cex.axis = 1.35, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=NULL, labels=NULL, cex.axis = 1.35, las = 1, lwd=1.85, lwd.ticks=1.75)
+mtext(side = 1, text = "Nominal score (Phred-scaled)", line = 4, cex = 1.5)
+mtext(side = 2, text = "Observed probability (Phred-scaled)", line = 4, cex = 1.5)
+points(c(0,70), c(0,70), type="l", lty=1, lwd=2, col="goldenrod3")
+x = as.numeric(calibration$Nominal)
+y = as.numeric(calibration$Observed)
+points(x, y, type="l", col="black", lwd=1.5)
+text(x=55, y=69, labels="y = x", pos=4, col="goldenrod3", cex=1.25)
 dev.off()
 
 all_snvs <- stacked_vcfs %>%
@@ -396,30 +405,35 @@ recall_FP_qual <- roc_qual %>%
 highlight_recall_FP_q60 <- recall_FP_qual %>%
 						   filter(abs(qualnobaq_min - 60) < kNumericalTol)
 
-plot.0 = ggplot(recall_FP_qual %>% mutate(facet = "Recall rate"), aes(x = sample_mean, y = recall, color=subj_type)) +
-		 geom_line(size=1) +
-		 scale_color_manual(values=c("salmon", "#FDAE61", "#ABDDA4")) +
-		 facet_wrap(~facet) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
-         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
-         geom_point(data = highlight_recall_FP_q60,
-             aes(x = sample_mean, y = recall, colour = factor(subj_type)),
-             show.legend = FALSE) +
-         geom_label(data = highlight_recall_FP_q60,
-             aes(label = "QUALNOBAQ >= 60"),
-             nudge_x = 0.1, nudge_y = -0.1, size = 3) +
-         guides(color=guide_legend(title=c("Cancer\ntype"))) +
-         theme(legend.justification = c(1, 0),
-		 	   legend.position = c(1, 0),
-		 	   legend.title = element_blank(),
-		 	   legend.background = element_blank(),
-		 	   legend.text=element_text(size=8))
-             
-pdf(file="../res/rebuttal/Number_SNVs_Recall.pdf", width=5.15, height=6)
-print(plot.0)
+#==================================================
+# number snvs in healthy versus recall rate by
+# qualnobaq
+#==================================================
+pdf(file="../res/figureS3/Number_SNVs_Recall.pdf", width=6, height=7)
+par(mar = c(6.1, 7, 4.1, 1))
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,7), ylim=c(0,1))
+axis(1, at=NULL, labels=NULL, cex.axis = 1.35, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=NULL, labels=NULL, cex.axis = 1.35, las = 1, lwd=1.85, lwd.ticks=1.75)
+mtext(side = 1, text = "Mean number SNVs / sample", line = 4, cex = 1.5)
+mtext(side = 2, text = "Recall rate", line = 4, cex = 1.5)
+for (i in rev(c("Breast", "Lung", "Prostate"))) {
+	x = recall_FP_qual$sample_mean[recall_FP_qual$subj_type==i]
+	y = recall_FP_qual$recall[recall_FP_qual$subj_type==i]
+	points(x, y, type="s", col=cohort_cols[i], lwd=1.85)
+	x = highlight_recall_FP_q60$sample_mean[highlight_recall_FP_q60$subj_type==i]
+	y = highlight_recall_FP_q60$recall[highlight_recall_FP_q60$subj_type==i]
+	points(x, y, pch=21, col=cohort_cols[i], bg="white", cex=1.35, lwd=1.85)
+	if (i=="Breast" | i=="Prostate") {
+		text(x=x, y=y+.045, labels=expression(" QUALNOBAQ">=60), pos=4, col=cohort_cols[i], cex=.95)
+		rect(xleft=x+.1, xright=x+3, ybottom=y+.025, ytop=y+.075, col=NA, border=cohort_cols[i])
+	} else if (i=="Lung") {
+		text(x=x, y=y-.04, labels=expression(" QUALNOBAQ">=60), pos=4, col=cohort_cols[i], cex=.95)
+		rect(xleft=x+.1, xright=x+3, ybottom=y+.025-.085, ytop=y+.075-.085, col=NA, border=cohort_cols[i])
+	}
+}
+legend(x=4.75, y=0.15, lwd=2, pch=21, col=cohort_cols[2:4], legend=names(cohort_cols)[2:4], box.lwd=-1, cex=.95, pt.bg="white", pt.cex=1.15)
 dev.off()
+
 
 recall_FP_joint <- roc_joint %>%
 				   inner_join(roc_noncancer_joint, by = "joint_min")
@@ -429,61 +443,31 @@ highlight_recall_FP_joint <- recall_FP_joint %>%
 							 		(subj_type == "Lung" & abs(joint_min - 0.82) < kNumericalTol) |
 							 		(subj_type == "Prostate" & abs(joint_min - 0.79) < kNumericalTol))
 							 		
-							 		
-plot.0 = ggplot(recall_FP_joint %>% filter(subj_type=="Breast"), aes(x = sample_mean, y = recall)) +
-		 geom_line(size=1, color="salmon") +
-		 facet_wrap(~subj_type) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
-         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
-         geom_point(data = highlight_recall_FP_joint %>% filter(subj_type=="Breast"),
-         		aes(x = sample_mean, y = recall),
-         		show.legend = FALSE, color="salmon") +
-         geom_label(data = highlight_recall_FP_joint %>% filter(subj_type=="Breast"),
-         		aes(label = paste("pgtkxgdna >=", joint_min, sep = " ")),
-         		nudge_x = 0.1, nudge_y = -0.1, size = 3, color="salmon")
-         
-
-pdf("../res/rebuttal/Number_SNVs_Recall_Pr_WBC_Breast.pdf", width=5, height=6)
-print(plot.0)
-dev.off()
-
-plot.0 = ggplot(recall_FP_joint %>% filter(subj_type=="Lung"), aes(x = sample_mean, y = recall)) +
-		 geom_line(size=1, color="#FDAE61") +
-		 facet_wrap(~subj_type) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
-         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
-         geom_point(data = highlight_recall_FP_joint %>% filter(subj_type=="Lung"),
-         		aes(x = sample_mean, y = recall),
-         		show.legend = FALSE, color="#FDAE61") +
-         geom_label(data = highlight_recall_FP_joint %>% filter(subj_type=="Lung"),
-         		aes(label = paste("pgtkxgdna >=", joint_min, sep = " ")),
-         		nudge_x = 0.1, nudge_y = -0.1, size = 3, color="#FDAE61")
-         
-
-pdf("../res/rebuttal/Number_SNVs_Recall_Pr_WBC_Lung.pdf", width=5, height=6)
-print(plot.0)
-dev.off()
-
-
-plot.0 = ggplot(recall_FP_joint %>% filter(subj_type=="Prostate"), aes(x = sample_mean, y = recall)) +
-		 geom_line(size=1, color="#ABDDA4") +
-		 facet_wrap(~subj_type) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=12), axis.text.x = element_text(size=12)) +
-		 labs(x="Mean number of SNVs / sample", y="Recall rate\n\n") +
-         coord_cartesian(xlim=c(0, 7), ylim = c(0.2, 1)) +
-         geom_point(data = highlight_recall_FP_joint %>% filter(subj_type=="Prostate"),
-         		aes(x = sample_mean, y = recall),
-         		show.legend = FALSE, color="#ABDDA4") +
-         geom_label(data = highlight_recall_FP_joint %>% filter(subj_type=="Prostate"),
-         		aes(label = paste("pgtkxgdna >=", joint_min, sep = " ")),
-         		nudge_x = 0.1, nudge_y = -0.1, size = 3, color="#ABDDA4")
-         
-
-pdf("../res/rebuttal/Number_SNVs_Recall_Pr_WBC_Prostate.pdf", width=5, height=6)
-print(plot.0)
+#==================================================
+# number snvs in healthy versus recall rate by
+# pgtkxgdna
+#==================================================
+pdf(file="../res/figureS3/Number_SNVs_Recall_Pr_WBC.pdf", width=6, height=7)
+par(mar = c(6.1, 7, 4.1, 1))
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,7), ylim=c(0,1))
+axis(1, at=NULL, labels=NULL, cex.axis = 1.35, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=NULL, labels=NULL, cex.axis = 1.35, las = 1, lwd=1.85, lwd.ticks=1.75)
+mtext(side = 1, text = "Mean number SNVs / sample", line = 4, cex = 1.5)
+mtext(side = 2, text = "Recall rate", line = 4, cex = 1.5)
+for (i in rev(c("Breast", "Lung", "Prostate"))) {
+	x = recall_FP_joint$sample_mean[recall_FP_joint$subj_type==i]
+	y = recall_FP_joint$recall[recall_FP_joint$subj_type==i]
+	points(x, y, type="s", col=cohort_cols[i], lwd=1.85)
+	x = highlight_recall_FP_joint$sample_mean[highlight_recall_FP_joint$subj_type==i]
+	y = highlight_recall_FP_joint$recall[highlight_recall_FP_joint$subj_type==i]
+	points(x, y, pch=21, col=cohort_cols[i], bg="white", cex=1.35, lwd=1.85)
+ 	if (i=="Breast" | i=="Prostate") {
+ 		text(x=x, y=y+.045, labels=expression(" PGTKXGDNA">=x), pos=4, col=cohort_cols[i], cex=.95)
+ 		rect(xleft=x+.1, xright=x+3, ybottom=y+.025, ytop=y+.075, col=NA, border=cohort_cols[i])
+ 	} else if (i=="Lung") {
+ 		text(x=x, y=y-.045, labels=expression(" PGTKXGDNA">=x), pos=4, col=cohort_cols[i], cex=.95)
+ 		rect(xleft=x+.1, xright=x+3, ybottom=y+.025-.09, ytop=y+.075-.09, col=NA, border=cohort_cols[i])
+ 	}
+}
+legend(x=4.75, y=0.15, lwd=2, pch=21, col=cohort_cols[2:4], legend=names(cohort_cols)[2:4], box.lwd=-1, cex=.95, pt.bg="white", pt.cex=1.15)
 dev.off()

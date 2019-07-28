@@ -4,12 +4,12 @@
 #==================================================
 source('config.R')
 
-if (!dir.exists("../res/figureS5")) {
-	dir.create("../res/figureS5")
+if (!dir.exists("../res/figureS6")) {
+	dir.create("../res/figureS6")
 }
 
 #==================================================
-# Bar plot of mutational signatures
+# bar plot of mutational signatures
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -124,6 +124,6 @@ res = foreach (i=1:length(patient_ids)) %dopar% {
  	cat(i, "of", length(patient_ids), "\n")
  	vcf = vcf %>%
 		  filter(Sample == patient_ids[i])
-	plot96_mutation_spectrum(vcf, sample.col = "Sample",  plot.file = paste0("../res/figureS5/", patient_ids[i], ".pdf"))
+	plot_96_spectrum(vcf, sample.col = "Sample",  file = paste0("../res/figureS6/", patient_ids[i], ".pdf"))
 	return(1)
 }
