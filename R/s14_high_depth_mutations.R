@@ -10,7 +10,7 @@ if (!dir.exists("../res/figureS14")) {
 }
 
 #==================================================
-# heatmap of ch-related variants in wbc
+# mutations detected at high depth
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -263,31 +263,31 @@ z = split.screen(figs=matrix(c(0+.05,.5,.5+.05,1,
 screen(z[1])
 x = tmp$Collapsed_Mean_Coverage[tmp$bio_source=="biopsy_matched"]/10e2
 y = tmp$dpnobaq[tmp$bio_source=="biopsy_matched"]
-plot(x, y, pch=21, bg=variant_cols["biopsy_matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(1,100000))
+plot(x, y, pch=21, bg=variant_cols["biopsy_matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(100,100000))
 axis(1, at=NULL, cex.axis=1.5, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=c(1, expression(10^1), expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+axis(2, at=c(100, 1000, 10000, 100000), labels=c(expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 screen(z[2])
 x = tmp$Collapsed_Mean_Coverage[tmp$bio_source=="IMPACT-BAM_matched"]/10e2
 y = tmp$dpnobaq[tmp$bio_source=="IMPACT-BAM_matched"]
-plot(x, y, pch=21, bg=variant_cols["IMPACT-BAM_matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(1,100000))
+plot(x, y, pch=21, bg=variant_cols["IMPACT-BAM_matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(100,100000))
 axis(1, at=NULL, cex.axis=1.5, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=c(1, expression(10^1), expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+axis(2, at=c(100, 1000, 10000, 100000), labels=c(expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 screen(z[3])
 x = tmp$Collapsed_Mean_Coverage[tmp$bio_source=="VUSo"]/10e2
 y = tmp$dpnobaq[tmp$bio_source=="VUSo"]
-plot(x, y, pch=21, bg=variant_cols["VUSo"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(1,100000))
+plot(x, y, pch=21, bg=variant_cols["VUSo"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(100,100000))
 axis(1, at=NULL, cex.axis=1.5, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=c(1, expression(10^1), expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+axis(2, at=c(100, 1000, 10000, 100000), labels=c(expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 screen(z[4])
 x = tmp$Collapsed_Mean_Coverage[tmp$bio_source=="WBC_matched"]/10e2
 y = tmp$dpnobaq[tmp$bio_source=="WBC_matched"]
-plot(x, y, pch=21, bg=variant_cols["WBC_matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(1,100000))
+plot(x, y, pch=21, bg=variant_cols["WBC_matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="y", xlim=c(0,8), ylim=c(100,100000))
 axis(1, at=NULL, cex.axis=1.5, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=c(1, expression(10^1), expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+axis(2, at=c(100, 1000, 10000, 100000), labels=c(expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 screen(z[5])
 plot(0, 0, type="n", axes=FALSE, frame.plot=FALSE, xlab="", ylab="")
 mtext(side=1, text=expression("Mean collapsed depth ("%.%10^3~")"), line=3, cex=1.5)
@@ -357,7 +357,7 @@ plot.0 = ggplot(tmp, aes(y = dpnobaq, x = af_nobaq)) +
 cols = c("Tumor matched" = as.character(variant_cols["biopsy_matched"]),
 		 "WBC matched"	 = as.character(variant_cols["WBC_matched"]),
 		 "VUSo"			 = as.character(variant_cols["VUSo"]))
-pdf(file="../res/figureS14/High_Depth_Mutations_by_VAF.pdf", width=8.35, height=6)
+pdf(file="../res/figureS14/High_Depth_Mutations_by_VAF.pdf", width=8.5, height=6)
 par(mar=c(6.1, 6.5, 4.1, 1.1))
 z = split.screen(figs=matrix(c(0,1/3+.1,0,1,
 							   1/3-.05,2/3+.05,0,1,
@@ -366,28 +366,28 @@ z = split.screen(figs=matrix(c(0,1/3+.1,0,1,
 screen(z[1])
 x = tmp$af_nobaq[tmp$bio_source=="Tumor matched"]
 y = tmp$dpnobaq[tmp$bio_source=="Tumor matched"]
-plot(x, y, pch=21, bg=cols["Tumor matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="xy", xlim=c(.01,100), ylim=c(1,100000))
-axis(1, at=c(.01, .1, 1, 10, 100), labels=c(expression(10^-2), expression(10^-1), expression(1), expression(10^1), expression(10^2)), cex.axis=1.35, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=c(1, expression(10^1), expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+plot(x, y, pch=21, bg=cols["Tumor matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="xy", xlim=c(.01,100), ylim=c(100,100000))
+axis(1, at=c(.01, .1, 1, 10, 100), labels=c(expression(10^-2), expression(10^-1), expression(1), expression(10^1), expression(10^2)), cex.axis=1.15, padj=0.25, lwd=1.75, lwd.ticks=1.55)
+axis(2, at=c(100, 1000, 10000, 100000), labels=c(expression(10^2), expression(10^3), expression(10^4), expression(10^5)), cex.axis=1.25, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 mtext(side=2, text="Collapsed variant depth in cfDNA", line=4, cex=1.5)
 title(main="\nTumor matched")
 screen(z[2])
 x = tmp$af_nobaq[tmp$bio_source=="VUSo"]
 y = tmp$dpnobaq[tmp$bio_source=="VUSo"]
-plot(x, y, pch=21, bg=cols["VUSo"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="xy", xlim=c(.01,100), ylim=c(1,100000))
-axis(1, at=c(.01, .1, 1, 10, 100), labels=c(expression(10^-2), expression(10^-1), expression(1), expression(10^1), expression(10^2)), cex.axis=1.35, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=rep("", 6), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+plot(x, y, pch=21, bg=cols["VUSo"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="xy", xlim=c(.01,100), ylim=c(100,100000))
+axis(1, at=c(.01, .1, 1, 10, 100), labels=c(expression(10^-2), expression(10^-1), expression(1), expression(10^1), expression(10^2)), cex.axis=1.15, padj=0.25, lwd=1.75, lwd.ticks=1.55)
+axis(2, at=c(100, 1000, 10000, 100000), labels=rep("", 4), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 mtext(side=1, text="VAF (%)", line=4, cex=1.5)
 title(main="\nVUSo")
 screen(z[3])
 x = tmp$af_nobaq[tmp$bio_source=="WBC matched"]
 y = tmp$dpnobaq[tmp$bio_source=="WBC matched"]
-plot(x, y, pch=21, bg=cols["WBC matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="xy", xlim=c(.01,100), ylim=c(1,100000))
-axis(1, at=c(.01, .1, 1, 10, 100), labels=c(expression(10^-2), expression(10^-1), expression(1), expression(10^1), expression(10^2)), cex.axis=1.35, padj=0.25, lwd=1.75, lwd.ticks=1.55)
-axis(2, at=c(1, 10, 100, 1000, 10000, 100000), labels=rep("", 6), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
-log10_axis(side=2, at=c(1, 10, 100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
+plot(x, y, pch=21, bg=cols["WBC matched"], col="black", cex=1.5, axes=FALSE, frame.plot=FALSE, main="", xlab="", ylab="", log="xy", xlim=c(.01,100), ylim=c(100,100000))
+axis(1, at=c(.01, .1, 1, 10, 100), labels=c(expression(10^-2), expression(10^-1), expression(1), expression(10^1), expression(10^2)), cex.axis=1.15, padj=0.25, lwd=1.75, lwd.ticks=1.55)
+axis(2, at=c(100, 1000, 10000, 100000), labels=rep("", 4), cex.axis=1.5, las=1, lwd=1.75, lwd.ticks=1.55)
+log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 title(main="\nWBC matched")
 close.screen(all.screens=TRUE)
 dev.off()

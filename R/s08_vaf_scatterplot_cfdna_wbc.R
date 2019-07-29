@@ -562,7 +562,7 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afmeancfdna, y = afmeangdna, fil
  			 annotation_logticks() +
 			 guides(fill=guide_legend(title=c("Variant category")))
 			 
-pdf(file="../res/figureS8/VAF_VAF_posterior_mean.pdf", width=7.5, height=8)
+pdf(file="../res/figureS8/VAF_VAF_posterior_mean.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
 points(x=c(0.01, 15), y=c(0.01,15), type="l", lty=1, lwd=2, col="goldenrod3")
@@ -605,7 +605,7 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq, y = afgdna_nobaq,
  			 annotation_logticks() +
 			 guides(fill=guide_legend(title=c("Variant category")))
 		 
-pdf(file="../res/figureS8/VAF_VAF_pseudo_no_BAQ.pdf", width=7.5, height=8)
+pdf(file="../res/figureS8/VAF_VAF_pseudo_no_BAQ.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
 points(x=c(0.01, 15), y=c(0.01,15), type="l", lty=1, lwd=2, col="goldenrod3")
@@ -648,7 +648,7 @@ plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq_nos, y = afgdna_no
  			 annotation_logticks() +
 			 guides(fill=guide_legend(title=c("Variant category")))
 		 
-pdf(file="../res/figureS8/VAF_VAF_nopsedo_no_BAQ.pdf", width=7.5, height=8)
+pdf(file="../res/figureS8/VAF_VAF_nopsedo_no_BAQ.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
 points(x=c(0.01, 15), y=c(0.01,15), type="l", lty=1, lwd=2, col="goldenrod3")
