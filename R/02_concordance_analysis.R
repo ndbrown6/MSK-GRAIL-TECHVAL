@@ -10,7 +10,8 @@ if (!dir.exists("../res/figure2")) {
 }
 
 #==================================================
-# Barplot of recurrent genes
+# barplot of recurrent genes including
+# hypermutators
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -203,8 +204,8 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Barplot of mutation burden and sources of mutation
-# per patient and cohort
+# barplot of mutation burden and sources of mutation
+# per patient and cohort including hypermutators
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -528,7 +529,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Violin plot of ctDNA fraction by cancer type
+# violin plot of ctdna fraction by cancer type
 #==================================================
 cfdna_frac = read.csv(file=url_ctdna_frac, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
 			 filter(!is.na(ctdna_frac)) %>%
@@ -563,7 +564,7 @@ mtext(side = 2, text = "ctDNA fraction", line = 4, cex = 1.5)
 dev.off()
  
 #==================================================
-# Box plot of ctDNA fraction by number of
+# box plot of ctdna fraction by number of
 # metastatic sites
 #==================================================
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
@@ -600,7 +601,7 @@ tmp.0 = data_frame(
 			tissue = factor(unlist(y), levels=c("Breast", "Lung", "Prostate"), ordered=TRUE),
 			cat3 = factor(unlist(z), levels=c("1", "2", "3"), ordered=TRUE))
 				 
-plot.0 = ggplot(tmp.0, aes(x = tissue, y = ctdna, color = cat3)) + 
+plot.0 = ggplot(tmp.0, aes(x = tissue, y = ctdna, color = cat3, group=interaction(tissue, cat3))) + 
 	     geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, fill="white", width=.8) +
 	     scale_colour_manual(values=c("1"="black", "2"="black", "3"="black")) +
 	     geom_jitter(
@@ -619,8 +620,7 @@ print(plot.0)
 dev.off()
 
 #==================================================
-# Box plot of ctDNA fraction by disease
-# volume
+# box plot of ctdna fraction by disease volume
 #==================================================
 ctdna_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_character()))  %>%
  				 type_convert() %>%
@@ -700,7 +700,7 @@ for (i in 1:length(pattern)) {
  	p.1 = c(p.1, p)
 }
 
-plot.0 = ggplot(tmp.1, aes(x = Tissue, y = ctdna_frac, color = cat)) + 
+plot.0 = ggplot(tmp.1, aes(x = Tissue, y = ctdna_frac, color = cat, group=interaction(Tissue, cat))) + 
 		 geom_boxplot(alpha=1, outlier.size=NA, outlier.shape=NA, fill="white", width=.8) +
 		 scale_colour_manual(values=c("1"="black", "2"="black", "3"="black")) +
 		 geom_jitter(
@@ -720,7 +720,7 @@ print(plot.0)
 dev.off()
 
 #==================================================
-# Trend test ctDNA fraction by cancer type
+# trend test ctdna fraction by cancer type
 #==================================================
 x = cfdna_frac[,"ctdna_frac"]
 y = rep(1, length(x))
@@ -732,7 +732,7 @@ pander(kruskal.test(x=x, g=y)$p.value)
 
 
 #==================================================
-# Trend test ctDNA fraction versus number of sites
+# trend test ctdna fraction versus number of sites
 #==================================================
 clinical = read_tsv(file=clinical_file_updated, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -799,7 +799,7 @@ for (i in c("VB", "VL", "VP")) {
 }
   	
 #==================================================
-# P-values of detection rate
+# p-values of detection rate
 #==================================================
 N = c(39, 41, 44)
 n = c(37, 31, 36)

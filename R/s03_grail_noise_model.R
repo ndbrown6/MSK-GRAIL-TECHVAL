@@ -181,22 +181,18 @@ nuc = c("A", "T", "G", "C")
 for (i in 1:length(nuc)) {
 	screen(zz[i])
 	plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(1,16), ylim=c(0,40))
-	for (j in 1:length(nuc)) {
-		if (i!=j) {
-			trinuc = sort(unique(annotated$trinucleotide_context[annotated$REF==nuc[i]]))
-			for (ii in 1:length(trinuc)) {
-				for (jj in 1:length(nuc)) {
-					if (i!=jj) {
-						z = mean_cl_normal((annotated$mu*1e5)[annotated$trinucleotide_context==trinuc[ii] & annotated$ALT==nuc[jj]])
-						points(c(ii,ii), c(max(0,z[1,2]), z[1,3]), type="l", col="black", lwd=1.5)
-					}
-				}
-				for (jj in 1:length(nuc)) {
-					if (i!=jj) {
-						z = mean_cl_normal((annotated$mu*1e5)[annotated$trinucleotide_context==trinuc[ii] & annotated$ALT==nuc[jj]])
-						points(ii, z[1,1], pch=shapes, bg=cols[nuc[jj]], col="black", cex=1.25)
-					}
-				}
+	trinuc = sort(unique(annotated$trinucleotide_context[annotated$REF==nuc[i]]))
+	for (j in 1:length(trinuc)) {
+		for (ii in 1:length(nuc)) {
+			if (i!=ii) {
+				z = mean_cl_normal((annotated$mu*1e5)[annotated$trinucleotide_context==trinuc[j] & annotated$ALT==nuc[ii]])
+				points(c(j,j), c(max(0,z[1,2]), z[1,3]), type="l", col="black", lwd=1.5)
+			}
+		}
+		for (ii in 1:length(nuc)) {
+			if (i!=ii) {
+				z = mean_cl_normal((annotated$mu*1e5)[annotated$trinucleotide_context==trinuc[j] & annotated$ALT==nuc[ii]])
+				points(j, z[1,1], pch=shapes, bg=cols[nuc[ii]], col="black", cex=1.25)
 			}
 		}
 	}

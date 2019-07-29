@@ -10,7 +10,7 @@ if (!dir.exists("../res/figure5")) {
 }
 
 #==================================================
-# CH-derived mutations in cfDNA
+# ch-derived mutations in cfdna
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -162,7 +162,7 @@ if (length(indx)!=0) {
 }
 
 #==================================================
-# Extract mutation calls from wbc in all genes
+# extract mutation calls from wbc in all genes
 #==================================================
 if (FLAG) {
   	clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
@@ -330,12 +330,12 @@ if (FLAG) {
 }
 
 #==================================================
-# Save variants
+# save variants
 #==================================================
 save_vars = all_vars
  
 #==================================================
-# Default filters
+# default filters
 #==================================================
 all_vars = all_vars %>%
  		   filter(is_patient_valid) %>%
@@ -348,7 +348,7 @@ all_vars = all_vars %>%
  
 #==================================================
 # < 5% recurrence | is_hotspot | frame-shifting
-# in CH related gene
+# in ch-related gene
 #==================================================
 n_samples = all_vars %>%
  			distinct(patient_id) %>%
@@ -365,7 +365,7 @@ all_vars = all_vars %>%
  		   filter(f_recurrence < 0.05 | is_hotspot | (Variant_Classification %in% c("Frame_Shift_Ins", "Frame_Shift_Del", "Nonsense_Mutation", "Nonstop_Mutation") & (SYMBOL %in% chip_genes)))
   		   
 #==================================================
-# Co-occurring indels filter
+# co-occurring indels filter
 #==================================================
 recurrence = all_vars %>%
    			 group_by(patient_id, loc_srt) %>%
@@ -378,7 +378,7 @@ all_vars = all_vars %>%
 		   filter(!(n_indel > 1 & indel))
 		   
 #==================================================
-# Variant class filter
+# variant class filter
 #==================================================
 all_vars = all_vars %>%
  		   filter(Variant_Classification!="3'Flank") %>%
@@ -394,31 +394,31 @@ all_vars = all_vars %>%
   		   filter(Variant_Classification!="Translation_Start_Site")
   		   
 #==================================================
-# HLA-A
+# hla-a filter
 #==================================================
 all_vars = all_vars %>%
  		   filter(SYMBOL!="HLA-A")
 
 #==================================================
-# Germline filter
+# germline filter
 #==================================================
 all_vars = all_vars %>%
  		   filter((adnobaq/dpnobaq)<=.3 | (Variant_Classification %in% c("Frame_Shift_Ins", "Frame_Shift_Del", "Nonsense_Mutation", "Nonstop_Mutation") & SYMBOL %in% chip_genes))
 		   
 #==================================================
-# ExAC filter
+# exac filter
 #==================================================
 all_vars = all_vars %>%
  		   filter(!in_exac)
  		   
 #==================================================
-# gnomAD filter
+# gnomad filter
 #==================================================
 all_vars = all_vars %>%
  		   filter(!in_gnomad)
  		   
 #==================================================
-# Scatter plot mutation burden versus age for
+# scatter plot mutation burden versus age for
 # all individuals and all genes
 #==================================================
 burden_healthy = all_vars %>%
@@ -524,7 +524,7 @@ legend("topleft", legend=c("Cancer", "Control"), pch=21, col="#231F20", pt.bg=c(
 dev.off()
  
 #==================================================
-# Barplot of mutation burden for all individuals
+# bar plot of mutation burden for all individuals
 #==================================================
 snvs = read_tsv(somatic_snvs_grail$scored, col_types = cols(.default = col_character()))  %>%
 	   mutate(ID=paste0(patient_id, ":", chrom, ":", position, ":", ref_orig, ">", alt_orig))
@@ -734,7 +734,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Stacked barplot of dominant CH mutation
+# stacked barplot of dominant ch mutation
 #==================================================
 pdf(file="../res/figure5/stacked_barplot_max_vaf_ch_only_tx_combined.pdf", width=7, height=5)
 par(mar = c(6.1, 6, 4.1, 1))
@@ -824,7 +824,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Bubble plot of ratio indels to snvs
+# corr plot of ratio indels to snvs
 #==================================================
 top_ch = c("DNMT3A", "TP53", "TET2", "ASXL1", "PPM1D")
 other_ch = c("JAK2", "RUNX1", "SF3B1", "SRSF2", "IDH1", "IDH2", "U2AF1", "CBL", "ATM", "CHEK2")

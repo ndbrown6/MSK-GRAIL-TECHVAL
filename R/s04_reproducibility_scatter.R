@@ -566,7 +566,7 @@ for (i in 1:length(patient_ids)) {
 }
 
 #==================================================
-# Tabulate %PPA for 6 patients used to test
+# tabulate %ppa for 6 patients used to test
 # assay reproducibility
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
@@ -773,7 +773,7 @@ for (i in 1:length(patient_ids)) {
 }
 
 #==================================================
-# Variants with VAF < 1%
+# variants with vaf <1%
 #==================================================
 for (i in 1:length(patient_ids)) {
 	tmp_r1 = vars_rep1 %>%
@@ -789,7 +789,7 @@ for (i in 1:length(patient_ids)) {
 }
 				
 #==================================================
-# Tabulate %PPA for 3 patients used to test
+# tabulate %ppa for 3 patients used to test
 # assay reproducibility
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
@@ -996,7 +996,7 @@ for (i in 1:length(patient_ids)) {
 }
 
 #==================================================
-# Variants with VAF < 1%
+# variants with vaf < 1%
 #==================================================
 for (i in 1:length(patient_ids)) {
 	tmp_r1 = vars_rep1 %>%
@@ -1012,7 +1012,7 @@ for (i in 1:length(patient_ids)) {
 }
 
 #==================================================
-# Tabulate variants for 6 patients used to test
+# tabulate variants for 6 patients used to test
 # assay reproducibility where relabelling required
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%

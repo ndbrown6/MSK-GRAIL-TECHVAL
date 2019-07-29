@@ -21,7 +21,7 @@ useful_msi_df = all_msi_df %>%
 				dplyr::select(patient_id,original_msi,fixed_msi,subject_type,sample)
 				
 #==================================================
-# Scatter plot of MSI scores
+# scatter plot of msi scores
 #==================================================
 pdf(file="../res/figure3/msi_scatter.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
@@ -56,8 +56,8 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Scatter plot of TMB estimated using cfDNA versus
-# MSK-IMPACT
+# scatter plot of tmb estimated using cfdna versus
+# msk-impact
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -212,7 +212,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Bar plot of mutational signatures
+# bar plot of mutational signatures
 #==================================================
 variants_cfdna = variants %>%
  				 filter(patient_id %in% c(msi_hypermutators$patient_id, hypermutators$patient_id)) %>%
@@ -283,7 +283,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Venn diagram of number of mutations
+# venn diagram of number of mutations
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
 		   type_convert() %>%
@@ -418,7 +418,7 @@ plot(fit, fills=rep(unlist(lapply(c(variant_cols["VUSo"], variant_cols["biopsy_o
 dev.off()
 
 #==================================================
-# RECIST and PSA
+# recist and psa
 #==================================================
 PSA = read_tsv(file=url_psa, col_types = cols(.default = col_character())) %>%
 	  type_convert()

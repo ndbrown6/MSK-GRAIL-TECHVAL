@@ -10,7 +10,7 @@ if (!dir.exists("../res/figure4")) {
 }
 
 #==================================================
-# Pie-charts of the number of variants classified
+# pie-charts of the number of variants classified
 # by source across control, cancer non-hypermutators
 # and cancer hypermutators
 #==================================================
@@ -168,7 +168,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Barplot of mutation burden and sources of mutation
+# barplot of mutation burden and sources of mutation
 # per patient and cohort
 #==================================================
 clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_character())) %>%
@@ -369,8 +369,8 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Scatter plot of mutation burden versus age for
-# biopsy matched, VUSo and WBC matched mutations
+# scatter plot of mutation burden versus age for
+# biopsy matched, vuso and wbc-matched mutations
 #==================================================
 burden_healthy = variants %>%
  		  		 filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched"), is_nonsyn) %>%
@@ -543,8 +543,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Heat map of WBC matched variants
-# number of variants
+# heat map of wbc-matched variants number of variants
 #==================================================
 variants_nohyper = variants %>%
  				   filter(!(patient_id %in% hypermutators$patient_id)) %>%
@@ -571,8 +570,7 @@ corrplot(corr=ny[1:30,,drop=FALSE], method="color", type="full", add=FALSE,
 dev.off()
 
 #==================================================
-# Heat map of WBC matched variants
-# gene recurrences
+# heat map of wbc-matched variants gene recurrences
 #==================================================
 variants_nohyper = variants %>%
  				   filter(!(patient_id %in% hypermutators$patient_id)) %>%
@@ -643,7 +641,7 @@ corrplot(corr=gene_stats_matrix[1:30,,drop=FALSE], method="color", type="full", 
 dev.off()
 
 #==================================================
-# Scatter of VAF in cfDNA versus VAF in WBC
+# scatter of vaf in cfdna versus vaf in wbc
 #==================================================
 variants_nohyper = variants %>%
 		   		   filter(!patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id))

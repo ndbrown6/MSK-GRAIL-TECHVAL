@@ -10,7 +10,7 @@ if (!dir.exists("../res/figure1")) {
 }
 
 #==================================================
-# Scatter plot of analytical performance
+# scatter plot of analytical performance
 #==================================================
 cell_line = read_tsv(url_cell.line, col_types = NULL) %>%
 		   	type_convert()
@@ -87,7 +87,7 @@ mtext(side = 2, text = "Detection probability", line = 4, cex = 1.5)
 dev.off()
 
 #==================================================
-# Scatter plot of replicates non-hypermutators
+# scatter plot of replicates non-hypermutators
 #==================================================
 sample_tracker = read.csv(file=url_sample.tracker, header=TRUE, sep=",", stringsAsFactors=FALSE)
 msk_snvs = read.csv(file=url_msk.snv, header=TRUE, sep="\t", stringsAsFactors=FALSE)
@@ -306,7 +306,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Scatter plot of replicates hypermutator
+# scatter plot of replicates hypermutator
 #==================================================
 sample_tracker = read.csv(file=url_sample.tracker, header=TRUE, sep=",", stringsAsFactors=FALSE)
 msk_snvs = read.csv(file=url_msk.snv, header=TRUE, sep="\t", stringsAsFactors=FALSE)
@@ -527,7 +527,7 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 #==================================================
-# Scatter plot of replicates and ddPCR
+# scatter plot of replicates and ddpcr
 #==================================================
 ddpcr_manifest = data.frame(
   patient_id = c("MSK-VB-0050",
