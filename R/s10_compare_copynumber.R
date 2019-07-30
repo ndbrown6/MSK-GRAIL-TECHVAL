@@ -405,7 +405,7 @@ ctDNA_fraction = read_csv(file=url_ctdna_frac, col_types = cols(.default = col_c
 		   		 
 key_file = left_join(key_file, ctDNA_fraction, by="GRAIL_ID")
  
-if (FALSE) {
+if (TRUE) {
 	res = foreach (i=1:nrow(key_file)) %dopar% {
 		cat(key_file$GRAIL_ID[i], "\n")
 		impact_path = paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[i], ".RData")
@@ -612,10 +612,9 @@ if (FALSE) {
 
 	p = jonckheere.test(x=tmp.0$correlation_coefficient, g=tmp.0$ctdna_fraction_cat, alternative = "increasing", nperm=10000)
 
-	plot.0 = ggplot(tmp.0 %>% mutate(facet="Pearson correlation vs ctDNA fraction"), aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
+	plot.0 = ggplot(tmp.0, aes(x = ctdna_fraction_cat, y = correlation_coefficient)) + 
 			 geom_boxplot(outlier.shape=NA, width=.5, color="black", fill="salmon") +
-			 theme_bw(base_size=15) +
-			 facet_wrap(~facet) +
+			 theme_classic(base_size=15) +
 			 coord_cartesian(ylim = c(-.25,1)) +
 			 scale_y_continuous(
 		 		breaks = function(x) { c(-.2, 0, .2, .4, .6, .8, 1) },
@@ -624,13 +623,28 @@ if (FALSE) {
 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
 			 labs(x="\nctDNA fraction (%)", y="\n\nCorrelation coefficient\n")
 		 
-	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=9.1, height=6)
+	pdf(file="../res/rebuttal/ctDNA_Fraction_versus_Correlation_Coefficient_Log2_BoxPlot.pdf", width=6, height=6)
+	print(plot.0)
+	dev.off()
+	
+	plot.0 = ggplot(tmp.0, aes(x = tumor_purity*100, y = correlation_coefficient, fill = tissue)) + 
+			 geom_point(alpha = 1, shape = 21, size = 3, color = "black") +
+			 scale_fill_manual(values = cohort_cols) +
+			 theme_classic(base_size=15) +
+			 coord_cartesian(ylim = c(-.25,1)) +
+			 scale_y_continuous(
+		 		breaks = function(x) { c(-.2, 0, .2, .4, .6, .8, 1) },
+ 				labels = function(x) { c(-.2, 0, .2, .4, .6, .8, 1) }
+		 	 ) +
+			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15)) +
+			 labs(x="\nTumor purity (%)", y="\n\nCorrelation coefficient\n") +
+			 guides(fill=guide_legend(title="Cohort"))
+		 
+	pdf(file="../res/rebuttal/Tumor_Purity_versus_Correlation_Coefficient_Log2.pdf", width=7, height=6)
 	print(plot.0)
 	dev.off()
 }
 
-
-		 
 #==================================================
 # ROC curves
 #==================================================
@@ -1769,63 +1783,6 @@ if (FALSE) {
 	plot_log3_(x=tmp2, y=tmp, title = "MSK-VB-0023 | cfDNA")
 	dev.off()
 }
-
-#==================================================
-# Histogram of Log2 Ratios grail cfdna healthy
-# controls
-#==================================================
-if (FALSE) {
-	fileNames = dir(path="../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy", pattern="W", full.names=TRUE)
-	res = foreach (i=1:length(fileNames)) %dopar% {
-		load(fileNames[i])
-		sex = ifelse(mean(CN[CN[,"Chromosome"]==23,"Log2Ratio"])<(-.5), "M", "F")
-		if (sex=="M") {
-			fit = density(undo_(tmp, n=2)[,"Log2Ratio"], adjust=.5, from=-1, to=1)
-		} else {
-			fit = density(undo_(tmp, n=1)[,"Log2Ratio"], adjust=5, from=-1, to=1)
-		}
-		res = list(x = fit$x,
-				   y = fit$y,
-				   z = sex)
-		return(invisible(res))
-	}
-
-	pdf(file="../res/rebuttal/Histogram_Log2_Ratio_Healthy_M.pdf", width=4, height=6)
-	plot(0, 0, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,10.625), xlim=c(-2,2))
-	for (i in 1:length(fileNames)) {
-		if (res[[i]]$z=="M") {
-			points(res[[i]]$x, res[[i]]$y, type="l", col=transparent_rgb("salmon"), lwd=1.5)
-		}
-	}
-	abline(v=0, lty=3, col="grey10", lwd=1)
-	abline(v=-.85, lty=3, col="grey10", lwd=1)
-	axis(1, at = NULL, cex.axis = 1.15, las = 1)
-	axis(2, at = NULL, cex.axis = 1.15, las = 1)
-	mtext(side = 1, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
-	mtext(side = 2, text = "Density", line = 3.15, cex = 1.25)
-	rect(-100, 10, 1000, 12, col="lightgrey", border="black", lwd=1.5)
-	title(main=paste0("Healthy male controls (n=", sum(unlist(lapply(res, function(x) {x$z} ))=="M"), ")"), line=-1.35, cex.main=1, font.main=1)
-	box(lwd=1.5)
-	dev.off()
-
-	pdf(file="../res/rebuttal/Histogram_Log2_Ratio_Healthy_F.pdf", width=4, height=6)
-	plot(0, 0, type="n", xlab="", ylab="", frame.plot=FALSE, axes=FALSE, ylim=c(0,10.625), xlim=c(-2,2))
-	for (i in 1:length(fileNames)) {
-		if (res[[i]]$z=="F") {
-			points(res[[i]]$x, res[[i]]$y, type="l", col=transparent_rgb("steelblue"), lwd=1.5)
-		}
-	}
-	abline(v=0, lty=3, col="grey10", lwd=1)
-	axis(1, at = NULL, cex.axis = 1.15, las = 1)
-	axis(2, at = NULL, cex.axis = 1.15, las = 1)
-	mtext(side = 1, text = expression(Log[2]~"Ratio"), line = 3.15, cex = 1.25)
-	mtext(side = 2, text = "Density", line = 3.15, cex = 1.25)
-	rect(-100, 10, 1000, 12, col="lightgrey", border="black", lwd=1.5)
-	title(main=paste0("Healthy female controls (n=", sum(unlist(lapply(res, function(x) {x$z} ))=="F"), ")"), line=-1.35, cex.main=1, font.main=1)
-	box(lwd=1.5)
-	dev.off()
-}
-
 
 #==================================================
 # Breast ERBB2 amplified cases
