@@ -9,6 +9,58 @@ if (!dir.exists("../res/figureS15")) {
 	dir.create("../res/figureS15")
 }
 
+'plot_log3_' <- function(x, y, axis = TRUE, ylim=c(-2.5, 2.5))
+{
+   	par(mar=c(6.1, 9.5, 4.1, 1.1))
+   	data(CytoBand)
+   	end = NULL
+	for (j in 1:23) {
+		end = c(end, max(CytoBand$End[CytoBand$Chromosome==j]))
+	}
+	end = cumsum(end)
+	start = rep(0, 23)
+	start[2:23] = end[1:22]+1
+	for (j in 1:23) {
+		y[y[,"Chromosome"]==j,"Start"] = y[y[,"Chromosome"]==j,"Start"] + start[j]
+		y[y[,"Chromosome"]==j,"End"] = y[y[,"Chromosome"]==j,"End"] + start[j]
+		x[x[,"Chromosome"]==j,"Position"] = x[x[,"Chromosome"]==j,"Position"] + start[j]
+	}
+	plot(x[,"Position"], x[,"Log2Ratio"], type="p", pch=".", cex=1, col="grey75", axes=FALSE, frame=FALSE, xlab="", ylab="", main="", ylim=ylim)
+	for (j in 1:nrow(y)) {
+ 		lines(x=c(y[j,"Start"], y[j,"End"]), y=rep(y[j,"Log2Ratio"],2), lty=1, lwd=2.5, col="red")
+ 	}
+  	axis(2, at = c(-3, -2, -1, 0, 1, 2, 3), labels = c(-3, -2, -1, 0, 1, 2, 3), cex.axis = 1, las = 1)
+	mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3, cex = 1.15, las=1)
+	points(c(-10000000, max(x[,"Position"])), c(0,0), type="l", col="black", lty=1, lwd=1)
+	if (axis) {
+		axis(side=1, at=c(start, end[length(end)]), labels=rep("", length(start)+1), tcl=.5)
+		axis(1, at = .5*(start+end), labels=c(1:22, "X"), tcl=-.5, lwd=0, lwd.ticks=1, tcl=-.25)
+	}
+
+}
+
+'undo_' <- function(x, n=10)
+{
+	cnm = matrix(NA, nrow=nrow(x), ncol=nrow(x))
+	for (j in 1:nrow(x)) {
+		cnm[,j] = abs(2^x[j,"Log2Ratio"] - 2^x[,"Log2Ratio"])
+	}
+	cnt = hclust(as.dist(cnm), "average")
+	cnc = cutree(tree=cnt, k=n)
+	for (j in unique(cnc)) {
+		indx = which(cnc==j)
+		if (length(indx)>2) {
+ 			mcl = mean(x[indx,"Log2Ratio"])
+			scl = sd(x[indx,"Log2Ratio"])
+			ind = which(x[indx,"Log2Ratio"]<(mcl+1.96*scl) & x[indx,"Log2Ratio"]>(mcl-1.96*scl))
+			x[indx[ind],"Log2Ratio"] = mean(x[indx[ind],"Log2Ratio"])
+		} else {
+			x[indx,"Log2Ratio"] = mean(x[indx,"Log2Ratio"])
+		}
+	}
+	return(x)
+}
+
 #==================================================
 # 2-by-2 scatterplots of technical replicates
 #==================================================
@@ -343,7 +395,7 @@ plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill 
 		 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
 		 guides(fill=guide_legend(title=c("Variant category")))
 		 
-pdf(file=paste0("../res/figureS15/", patient_ids, "_R1_R2_High_Depth.pdf"), width=5.5, height=6.5)
+pdf(file=paste0("../res/figureS15/", patient_ids, "_R1_R2_High_Depth.pdf"), width=6.5, height=6.5)
 par(mar = c(6.1, 6, 4.1, 1))
 epsilon = 0
 shapes = c("Biopsy matched"=24,
@@ -429,7 +481,7 @@ plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill 
 		 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
 		 guides(fill=guide_legend(title=c("Variant category")))
 	 
-pdf(file=paste0("../res/figureS15/", patient_ids, "_R1_R3_High_Depth.pdf"), width=5.5, height=6.5)
+pdf(file=paste0("../res/figureS15/", patient_ids, "_R1_R3_High_Depth.pdf"), width=6.5, height=6.5)
 par(mar = c(6.1, 6, 4.1, 1))
 epsilon = 0
 shapes = c("Biopsy matched"=24,
@@ -453,51 +505,34 @@ log10_axis(side=1, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 log10_axis(side=2, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 dev.off()
 
+#==================================================
+# log2 ratio plots grail cfdna tumor samples
+#==================================================
+load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VB-0023-T.RData")
+tmp2 = winsorize(CN, method="mad", tau=3.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp = undo_(tmp, n=2)
+pdf(file="../res/figureS15/MSK-VB-0023_cfDNA.pdf", width=8, height=4)
+plot_log3_(x=tmp2, y=tmp, axis=TRUE, ylim=c(-3.25,3.25))
+dev.off()
 
-# pdf(file="../res/figureS14/MSK-VB-0023_Manhattan-Plot_High_DP.pdf", width=10, height=2.25)
-# par(mar=c(5, 5, 4, 2)+.1)
-# data(CytoBand)
-# end = NULL
-# for (i in 1:23) {
-# 	end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
-# }
-# end = cumsum(end)
-# start = c(1, end[1:22]+1)
-# CytoBand = cbind(start, end)
-# index = NULL
-# for (i in 1:23) {
-# 	index = c(index, seq(from = CytoBand[i, "start"], to=CytoBand[i, "end"], length=sum(tmp$chrom==i)))
-# }
-# indx = tmp$dpnobaq>=10000
-# plot(0, 0, type="n", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-.07,.1), xlim=c(1,max(index)))
-# points(index[indx], rep(0, sum(indx)), type="p", pch="|", cex=2, col=cols[tmp$bio_source[indx]])
-# abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
-# for (j in 1:23) {
-# 	abline(v=CytoBand[j,"end"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
-# }
-# axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
-# dev.off()
-# 
-# pdf(file="../res/figureS14/MSK-VB-0023_Manhattan-Plot_Low_DP.pdf", width=10, height=2.25)
-# par(mar=c(5, 5, 4, 2)+.1)
-# data(CytoBand)
-# end = NULL
-# for (i in 1:23) {
-# 	end = c(end, max(CytoBand[CytoBand[,1]==i,"End"]))
-# }
-# end = cumsum(end)
-# start = c(1, end[1:22]+1)
-# CytoBand = cbind(start, end)
-# index = NULL
-# for (i in 1:23) {
-# 	index = c(index, seq(from = CytoBand[i, "start"], to=CytoBand[i, "end"], length=sum(tmp$chrom==i)))
-# }
-# indx = tmp$dpnobaq<10000
-# plot(0, 0, type="n", axes=FALSE, frame=TRUE, xlab="", ylab="", main="", ylim=c(-.07,.1), xlim=c(1,max(index)))
-# points(index[indx], rep(0, sum(indx)), type="p", pch="|", cex=2, col=cols[tmp$bio_source[indx]])
-# abline(v=1, col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
-# for (j in 1:23) {
-# 	abline(v=CytoBand[j,"end"], col=transparent_rgb("goldenrod3", 255), lty=3, lwd=.5)
-# }
-# axis(1, at = .5*(CytoBand[,"start"]+CytoBand[,"end"]), labels=c(1:22, "X"), cex.axis = 0.85, las = 1)
-# dev.off()
+#==================================================
+# log2 ratio plots msk-impact tumor samples
+#==================================================
+key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi) %>%
+		   filter(GRAIL_ID == "MSK-VB-0023")
+
+res = foreach (i=1:nrow(key_file)) %dopar% {
+	cat(key_file$GRAIL_ID[i], "\n")
+	load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[i], ".RData"))
+	tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+	colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+	tmp = pcf(data=tmp2, kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+	colnames(tmp) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	tmp = undo_(tmp, n=3)
+	pdf(file=paste0("../res/figureS15/", key_file$GRAIL_ID[i], "_Tumor.pdf"), width=8, height=4)
+	plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-3.25,3.25))
+	dev.off()
+}
