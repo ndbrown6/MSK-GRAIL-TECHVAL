@@ -135,7 +135,7 @@ for (subj in subj_num_smry$subj_type[subj_num_smry$subj_type != "Control"]) {
  						  summarise(all = sum(percent_patient)) %>%
  						  ungroup() %>%
  						  arrange(-all) %>%
- 						  slice(1:15) %>%
+ 						  slice(1:45) %>%
  						  .[["gene"]]
  	gene_list = c(gene_list, top_cancer_gene_ids)
 }
@@ -147,7 +147,7 @@ top_cancer_genes_ordered = gene_recurrences %>%
  						   summarise(perc = sum(percent_patient)) %>%
  						   ungroup() %>%
  						   arrange(-perc) %>%
- 						   .[["gene"]]
+ 						   .[["gene"]][1:100]
    
 top_cancer_genes_table = gene_recurrences %>%
  						 filter(bio_source %in% c("biopsy_matched", "IMPACT-BAM_matched", "VUSo"), gene %in% gene_list) %>%
@@ -160,12 +160,12 @@ top_cancer_genes_table = top_cancer_genes_table %>%
   
 bar_fill_cols = variant_cols[c("biopsy_matched", "IMPACT-BAM_matched", "VUSo")]
 
-pdf(file="../res/figureS5/recurrent_genes_combined.pdf", width=10, height=8.7)
+pdf(file="../res/figureS5/recurrent_genes_combined.pdf", width=14, height=8)
 par(mar = c(6.1, 6, 4.1, 1))
-zz = split.screen(figs=matrix(c(0,1, 3/4-.1, 1,
-								0,1, 1/2-.05, 3/4+.05,
-								0,1, 1/4-.05, 1/2+.05,
-								0,1, 0,   1/4+.1,
+zz = split.screen(figs=matrix(c(0,1, 3/4-.15, 1,
+								0,1, 1/2-.075, 3/4+.075,
+								0,1, 1/4-.075, 1/2+.075,
+								0,1, 0,   1/4+.15,
 								0,1,0,1),
 				  nrow=5, ncol=4, byrow=TRUE))
 cancer_types = c("Control", "Breast", "Lung", "Prostate")
@@ -192,7 +192,7 @@ for (i in 1:length(cancer_types)) {
  	zzz = barplot(t(x), beside=FALSE, names.arg=rep("",nrow(x)), col=bar_fill_cols, axes=FALSE, ylim=c(0,50))
  	axis(2, at = seq(0,50,l=6), labels = seq(0,50,l=6), cex.axis = 1.05, las = 1, line = 0, lwd=1)
  	if (i==4) {
- 		axis(side=1, at=zzz, labels=top_cancer_genes_ordered, las=2, font=3, cex=.75, lwd=-1)
+ 		axis(side=1, at=zzz, labels=top_cancer_genes_ordered, las=2, font=3, cex.axis=.85, lwd=-1)
  	}
  	title(main=paste0("\n\n",cancer_types[i]), cex.main=1.25)
 }
@@ -403,42 +403,78 @@ plot.0 = ggplot(tmp.0, aes(x=x/10e3, y=y_1, fill=z_1)) +
 pdf(file="../res/figureS5/VUSo_target_lengths_hyper.pdf", width=7, height=7)
 par(mar = c(6.1, 7, 4.1, 1))
 shapes = 1
-plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(.001,2), ylim=c(0.005,2.5), log="x")
-axis(1, at=c(1e-3, 1e-2, 1e-1, 1, 2), labels=c(expression(10^-3), expression(10^-2), expression(10^-1), 1, 2), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,20000), ylim=c(0,2.5))
+axis(1, at=c(0, 5000, 10000, 15000, 20000), labels=c("0", "5", "10", "15", "20"), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
 axis(2, at=NULL, labels=NULL, cex.axis = 1.75, las = 1, lwd=1.85, lwd.ticks=1.75)
 mtext(side = 1, text = "Coding target length (Kb)", line = 4, cex = 1.75)
 mtext(side = 2, text = "VUSo / patient", line = 4.5, cex = 1.75)
-x = as.numeric(tmp.0$x[tmp.0$z_1=="+"])/10e3
+x = as.numeric(tmp.0$x[tmp.0$z_1=="+"])
 y = as.numeric(tmp.0$y_1[tmp.0$z_1=="+"])
-points(x, y, pch=1, col=transparent_rgb("salmon", 205), cex=1.5, lwd=1.5)
-fit = lm(y ~ x^2)
-y_p = predict(object = fit, nexdata=data.frame(x=seq(.01, 10, l=1000)))
-points(x, y_p, type="l", col="goldenrod3", lwd=3, lty=1)
-x = as.numeric(tmp.0$x[tmp.0$z_1=="-"])/10e3
-y = as.numeric(tmp.0$y_1[tmp.0$z_1=="-"])
-points(x, y, pch=1, col=transparent_rgb("steelblue", 205), cex=1.5, lwd=1.5)
-fit = lm(y ~ x)
-y_p = predict(object = fit, nexdata=data.frame(x=seq(.01, 10, l=1000)))
-points(x, y_p, type="l", col="goldenrod3", lwd=3, lty=1)
-log10_axis(side=1, at=c(1e-3, 1e-2, 1e-1, 1), lwd=0, lwd.ticks=1)
-legend(x=1e-3, y=2.5, pch=shapes, col=c("salmon", "steelblue"), legend=c("Hypermutated", "Non-hypermutated"), box.lwd=-1, pt.cex=1.35, pt.lwd=1.5)
+index = y!=0
+points(x[index], y[index], pch=1, col=transparent_rgb("salmon", 205), cex=1.5, lwd=1.5)
+abline(lm(y ~ x), col="goldenrod3", lwd=3, lty=1)
+title(main="Hypermutators", cex.main=1.5)
+#index = (tmp.0$x>8000 | tmp.0$y_0>1.5) & tmp.0$z_1=="+"
+#text(x=tmp.0$x[index], y=tmp.0$y_1[index], labels=tmp.0$z_0[index], font=3)
 dev.off()
 
 pdf(file="../res/figureS5/VUSo_target_lengths_nohyper.pdf", width=7, height=7)
 par(mar = c(6.1, 7, 4.1, 1))
 shapes = 1
-plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(.001,2), ylim=c(0.005,.1), log="xy")
-axis(1, at=c(1e-3, 1e-2, 1e-1, 1, 2), labels=c(expression(10^-3), expression(10^-2), expression(10^-1), 1, 2), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
-axis(2, at=c(5e-3, 1e-2, 2e-2, 5e-2, 1e-1), labels=c(expression("5e"^-3), expression("1e"^-2), expression("2e"^-2), expression("5e"^-2), 0.1), cex.axis = 1.75, las = 1, lwd=1.85, lwd.ticks=1.75)
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,20000), ylim=c(0,2.5))
+axis(1, at=c(0, 5000, 10000, 15000, 20000), labels=c("0", "5", "10", "15", "20"), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=NULL, labels=NULL, cex.axis = 1.75, las = 1, lwd=1.85, lwd.ticks=1.75)
 mtext(side = 1, text = "Coding target length (Kb)", line = 4, cex = 1.75)
 mtext(side = 2, text = "VUSo / patient", line = 4.5, cex = 1.75)
-x = as.numeric(tmp.0$x[tmp.0$z_1=="-"])/10e3
+x = as.numeric(tmp.0$x[tmp.0$z_1=="-"])
 y = as.numeric(tmp.0$y_1[tmp.0$z_1=="-"])
-points(x, y, pch=1, col=transparent_rgb("steelblue", 205), cex=1.5, lwd=1.5)
-fit = lm(y ~ x)
-y_p = predict(object = fit, nexdata=data.frame(x=seq(.01, 10, l=1000)))
-points(x, y_p, type="l", col="goldenrod3", lwd=3, lty=1)
-log10_axis(side=1, at=c(1e-3, 1e-2, 1e-1, 1), lwd=0, lwd.ticks=1)
-log10_axis(side=2, at=c(5e-3, 1e-2, 2e-2, 5e-2, 1e-1), lwd=0, lwd.ticks=1)
+index = y!=0
+points(x[index], y[index], pch=1, col=transparent_rgb("steelblue", 205), cex=1.5, lwd=1.5)
+abline(lm(y ~ x), col="goldenrod3", lwd=3, lty=1)
+title(main="Non-hypermutators", cex.main=1.5)
+#index = tmp.0$x>10000 & tmp.0$z_1=="-"
+#text(x=tmp.0$x[index], y=tmp.0$y_0[index], labels=tmp.0$z_0[index], font=3)
+dev.off()
+
+
+pdf(file="../res/figureS5/VUSo_target_lengths_combined.pdf", width=7, height=7)
+par(mar = c(6.1, 7, 4.1, 1))
+shapes = 1
+plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xlim=c(0,20000), ylim=c(0,2.5))
+axis(1, at=c(0, 5000, 10000, 15000, 20000), labels=c("0", "5", "10", "15", "20"), cex.axis = 1.75, padj = 0.25, lwd=1.85, lwd.ticks=1.75)
+axis(2, at=NULL, labels=NULL, cex.axis = 1.75, las = 1, lwd=1.85, lwd.ticks=1.75)
+mtext(side = 1, text = "Coding target length (Kb)", line = 4, cex = 1.75)
+mtext(side = 2, text = "VUSo / patient", line = 4.5, cex = 1.75)
+
+x = as.numeric(tmp.0$x[tmp.0$z_1=="+"])
+y = as.numeric(tmp.0$y_1[tmp.0$z_1=="+"])
+df = data.frame(x, y)[y!=0,]
+mod <- lm(y ~ x, data = df)
+newx <- seq(min(df$x), max(df$x), length.out=100)
+preds <- predict(mod, newdata = data.frame(x=newx), interval = 'confidence')
+polygon(c(rev(newx), newx), c(rev(preds[ ,3]), preds[ ,2]), col = transparent_rgb('grey80'), border = NA)
+lines(newx, preds[ ,3], lty = 'dashed', col = 'red')
+lines(newx, preds[ ,2], lty = 'dashed', col = 'red')
+index = y!=0
+points(x[index], y[index], pch=1, col=transparent_rgb("salmon", 125), cex=1.5, lwd=1.5)
+abline(mod, col="#de2d26", lwd=2, lty=1)
+index = (tmp.0$x>8000 | tmp.0$y_1>15) & tmp.0$z_1=="+"
+text(x=tmp.0$x[index], y=tmp.0$y_1[index], labels=tmp.0$z_0[index], font=3, col="salmon", cex=.85)
+
+x = as.numeric(tmp.0$x[tmp.0$z_1=="-"])
+y = as.numeric(tmp.0$y_1[tmp.0$z_1=="-"])
+df = data.frame(x, y)[y!=0,]
+mod <- lm(y ~ x, data = df)
+newx <- seq(min(df$x), max(df$x), length.out=100)
+preds <- predict(mod, newdata = data.frame(x=newx), interval = 'confidence')
+polygon(c(rev(newx), newx), c(rev(preds[ ,3]), preds[ ,2]), col = transparent_rgb('grey80'), border = NA)
+lines(newx, preds[ ,3], lty = 'dashed', col = 'blue')
+lines(newx, preds[ ,2], lty = 'dashed', col = 'blue')
+index = y!=0
+points(x[index], y[index], pch=1, col=transparent_rgb("steelblue", 125), cex=1.5, lwd=1.5)
+abline(mod, col="#756bb1", lwd=2, lty=1)
+index = tmp.0$x>10000 & tmp.0$z_1=="-"
+text(x=tmp.0$x[index], y=tmp.0$y_1[index], labels=tmp.0$z_0[index], font=3, col="steelblue", cex=.85)
+
 dev.off()
 
