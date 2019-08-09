@@ -72,8 +72,8 @@ patient_tracker <- str_c(
 impact_tracker <- str_c(
 	"../",
 	"modified_v11/",
-    "Tracker_files/",
-    "sample_tracker_IMPACT_BAM_20170227.csv"
+    	"Tracker_files/",
+    	"sample_tracker_IMPACT_BAM_20170227.csv"
 )
 
 wbc_variants <- list(
@@ -159,17 +159,17 @@ hotspot_v2 <- str_c(
 
 wbc_scored_annotated_and_clinical <- list(
 	scored = str_c(
-				"../",
-				"modified_v11/",
-				"Variants_Calls/",
-				"Stacked_Scored_WBC/",
-				"wbc_scored_annotated_280519.tsv"),
+		"../",
+		"modified_v11/",
+		"Variants_Calls/",
+		"Stacked_Scored_WBC/",
+		"wbc_scored_annotated_280519.tsv"),
 	clinical = str_c(
-				"../",
-				"modified_v11/",
-				"Variants_Calls/",
-				"Stacked_Scored_WBC/",
-				"clinical_280519.tsv")
+		"../",
+		"modified_v11/",
+		"Variants_Calls/",
+		"Stacked_Scored_WBC/",
+		"clinical_280519.tsv")
 )
 
 chip_genes <- c(
