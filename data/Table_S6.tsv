@@ -1,9 +1,0 @@
-Patient ID	Cancer type	Number of tumor variants 	cfDNA yield (ng)	ddPCR of cfDNA  
-MSK-VB-0050	Breast	22	11420	PIK3CA H1047R
-MSK-VB-0041	Breast	8	6880	None
-MSK-VL-0028	Lung	4	1201	EGFR L861Q
-MSK-VL-0042	Lung	7	1199	KRAS G12C
-MSK-VB-0023	Breast	21	11840	PIK3CA E542K
-MSK-VL-0038	Lung	9	231	KRAS G12A
-  Number of tumor variants identified by MSK-IMPACT				
-   Selected hotspot variants assayed in cfDNA by ddPCR				
