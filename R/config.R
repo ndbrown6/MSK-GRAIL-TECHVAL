@@ -498,8 +498,8 @@ variant_cols <- c(
 }
 
 
-'transparent_rgb' <- function (col="black",
-							   alpha=85)
+'transparent_rgb' <- function (col = "black",
+							   alpha = 85)
 {
 	tmp = c(col2rgb(col), alpha, 255)
 	names(tmp) = c("red", "green", "blue", "alpha", "maxColorValue")
@@ -520,7 +520,7 @@ variant_cols <- c(
 
 'split_column_by_overlap' <- function (query,
 									   subject,
-									   column="ENTREZID",
+									   column = "ENTREZID",
 									   ...)
 {
     olaps = findOverlaps(query, subject, ...)
@@ -607,8 +607,8 @@ variant_cols <- c(
 							pgtkxgdna,
 							is_edge,
 							min_p,
-							min_qual=60,
-							sep=";")
+							min_qual = 60,
+							sep = ";")
 {
 	high_qual = which(qualnobaq >= min_qual)
 	low_qual = which(qualnobaq < min_qual)
@@ -654,8 +654,8 @@ variant_cols <- c(
 
 'fun_zerob' <- function(x,
 						y,
-						n=100,
-						seed=0)
+						n = 100,
+						seed = 0)
 {
 	set.seed(seed)
 	init = data.frame(y, x)
@@ -697,11 +697,11 @@ variant_cols <- c(
 }
 
 'plot_96_spectrum' <- function(vcf,
-							   sample.col="sample",
-							   mutcat3.col="mutcat3",
-							   ymax=NULL,
-							   averageProp=FALSE,
-							   file=NULL)
+							   sample.col = "sample",
+							   mutcat3.col = "mutcat3",
+							   ymax = NULL,
+							   averageProp = FALSE,
+							   file = NULL)
 {
     bases = c("A", "C", "G", "T")
     ctxt16 = paste(rep(bases, each = 4), rep(bases, 4), sep = ".")
@@ -754,55 +754,55 @@ variant_cols <- c(
 
 'corr_plot' <- function(corr,
 						corr2,
-						method=c("circle", "square", "ellipse", "number", "shade", "color", "pie"),
-						type=c("full", "lower", "upper"),
-						add=FALSE,
-						col=NULL,
-						bg="white",
-						title="",
-						is.corr=TRUE,
-						diag=TRUE,
-						outline=FALSE,
-						mar=c(0, 0, 0, 0),
-						addgrid.col=NULL,
-						addCoef.col=NULL,
-						addCoefasPercent=FALSE,
-						order=c("original", "AOE", "FPC", "hclust", "alphabet"),
-						hclust.method=c("complete", "ward", "ward.D", "ward.D2", "single", "average", "mcquitty", "median", "centroid"),
-						addrect=NULL,
-						rect.col="black",
-						rect.lwd=2,
-						tl.pos=NULL,
-						tl.cex=1,
-						tl.col="red", 
-						tl.offset=0.4,
-						tl.srt=90,
-						cl.pos=NULL,
-						cl.lim=NULL,
-						cl.lim2=NULL, 
-						cl.length=NULL,
-						cl.cex=0.8,
-						cl.ratio=0.15,
-						cl.align.text="c", 
-						cl.offset=0.5,
-						number.cex=1,
-						number.font=2,
-						number.digits=NULL, 
-						addshade=c("negative", "positive", "all"),
-						shade.lwd=1,
-						shade.col="white",
-						p.mat=NULL,
-						sig.level=0.05,
-						insig=c("pch", "p-value", "blank", "n", "label_sig"),
-						pch=4,
-						pch.col="black",
-						pch.cex=3,
-						plotCI=c("n", "square", "circle", "rect"),
-						lowCI.mat=NULL,
-						uppCI.mat=NULL,
-						na.label="?",
-						na.label.col="black",
-						win.asp=1,
+						method = c("circle", "square", "ellipse", "number", "shade", "color", "pie"),
+						type = c("full", "lower", "upper"),
+						add = FALSE,
+						col = NULL,
+						bg = "white",
+						title = "",
+						is.corr = TRUE,
+						diag = TRUE,
+						outline = FALSE,
+						mar = c(0, 0, 0, 0),
+						addgrid.col = NULL,
+						addCoef.col = NULL,
+						addCoefasPercent = FALSE,
+						order = c("original", "AOE", "FPC", "hclust", "alphabet"),
+						hclust.method = c("complete", "ward", "ward.D", "ward.D2", "single", "average", "mcquitty", "median", "centroid"),
+						addrect = NULL,
+						rect.col = "black",
+						rect.lwd = 2,
+						tl.pos = NULL,
+						tl.cex = 1,
+						tl.col = "red", 
+						tl.offset = 0.4,
+						tl.srt = 90,
+						cl.pos = NULL,
+						cl.lim = NULL,
+						cl.lim2 = NULL, 
+						cl.length = NULL,
+						cl.cex = 0.8,
+						cl.ratio = 0.15,
+						cl.align.text = "c", 
+						cl.offset = 0.5,
+						number.cex = 1,
+						number.font = 2,
+						number.digits = NULL, 
+						addshade = c("negative", "positive", "all"),
+						shade.lwd = 1,
+						shade.col = "white",
+						p.mat = NULL,
+						sig.level = 0.05,
+						insig = c("pch", "p-value", "blank", "n", "label_sig"),
+						pch = 4,
+						pch.col = "black",
+						pch.cex = 3,
+						plotCI = c("n", "square", "circle", "rect"),
+						lowCI.mat = NULL,
+						uppCI.mat = NULL,
+						na.label = "?",
+						na.label.col = "black",
+						win.asp = 1,
 						...)
 {
     method <- match.arg(method)
@@ -1348,12 +1348,12 @@ variant_cols <- c(
 }
 
 'm0_oncodrive' <- function(maf,
-						   AACol=NULL,
-						   minMut=5,
-						   pvalMethod="zscore",
-						   nBgGenes=100,
-						   bgEstimate=TRUE,
-						   ignoreGenes=NULL) 
+						   AACol = NULL,
+						   minMut = 5,
+						   pvalMethod = "zscore",
+						   nBgGenes = 100,
+						   bgEstimate = TRUE,
+						   ignoreGenes = NULL) 
 {
 	gl = read.csv(system.file("extdata", "prot_len.txt.gz", package = "maftools"), sep = "\t", header=TRUE, stringsAsFactors = FALSE)
 	pval.options = c("zscore", "poisson", "combined")
