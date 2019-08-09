@@ -399,9 +399,9 @@ cohort_cols <- c(
 )
 
 variant_cols <- c(
-	"VUSo"					=	"#4E9B3C",
-	"biopsy_matched"		=	"#2C80C3",
+	"VUSo"			=	"#4E9B3C",
+	"biopsy_matched"	=	"#2C80C3",
 	"IMPACT-BAM_matched"	=	"#F9CA03",
-	"WBC_matched"			=	"#EA7180",
-	"biopsy_only"			=	"#2C80C3"
+	"WBC_matched"		=	"#EA7180",
+	"biopsy_only"		=	"#2C80C3"
 )
