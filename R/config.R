@@ -281,11 +281,6 @@ msk_anno_joined <- str_c(
 						 
 url_techval.repeats <- str_c(
 	"../",
-	"annotated.tsv"
-)
-
-url_techval.repeats <- str_c(
-	"../",
 	"modified_v11/",
 	"Variants_Calls/",
 	"Joined_cfDNA_IMPACT_variants/",
@@ -405,13 +400,6 @@ url_cytogenetic_data <- str_c(
 	"hg19_cytoBandIdeo.txt"
 )
 
-url_qc_metrics_cfdna <- str_c(
-	"../",
-	"modified_v11/",
-	"QC_metrics/",
-	"TechVal_Merlin_QC_metrics.tsv"
-)
-
 url_leftover_samples <- str_c(
 	"../",
 	"modified_v11/",
@@ -478,7 +466,8 @@ variant_cols <- c(
 	"biopsy_only"			=	"#2C80C3"
 )
 
-'in_common_bed' <- function (chromosome, position)
+'in_common_bed' <- function (chromosome,
+							 position)
 {
 	bed = read.csv(file=common_bed, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	index = rep(FALSE, length(chromosome))
@@ -492,19 +481,25 @@ variant_cols <- c(
 }
 
 
-'make_id_x' <- function (patient_id, chrom, pos, ref, alt)
+'make_id_x' <- function (patient_id,
+						 chrom,
+						 pos,
+						 ref,
+						 alt)
 {
 	return(invisible(paste0(patient_id, ":", chrom, ":", pos, ":", ref, ">", alt)))
 }
 
 
-'make_id_y' <- function (patient_id, hgvsp)
+'make_id_y' <- function (patient_id,
+						 hgvsp)
 {
 	return(invisible(paste0(patient_id, ":", hgvsp)))
 }
 
 
-'transparent_rgb' <- function (col = "black", alpha = 85)
+'transparent_rgb' <- function (col="black",
+							   alpha=85)
 {
 	tmp = c(col2rgb(col), alpha, 255)
 	names(tmp) = c("red", "green", "blue", "alpha", "maxColorValue")
@@ -512,7 +507,8 @@ variant_cols <- c(
     return(invisible(out))
 }
 
-'gene_ranges' <-  function(db, column="ENTREZID")
+'gene_ranges' <-  function(db,
+						   column="ENTREZID")
 {
     g = genes(db, columns=column)
     col = mcols(g)[[column]]
@@ -522,7 +518,10 @@ variant_cols <- c(
 }
 
 
-'split_column_by_overlap' <- function(query, subject, column="ENTREZID", ...)
+'split_column_by_overlap' <- function (query,
+									   subject,
+									   column="ENTREZID",
+									   ...)
 {
     olaps = findOverlaps(query, subject, ...)
     f1 = factor(subjectHits(olaps), levels=seq_len(subjectLength(olaps)))
@@ -550,129 +549,66 @@ variant_cols <- c(
 	return(invisible(target_lengths))
 }
 
-'label_bio_source' <- function(small_vars_plasma) {
-  n_samples <- small_vars_plasma %>%
+'label_bio_source' <- function(small_vars_plasma)
+{
+	n_samples <- small_vars_plasma %>%
     distinct(patient_id) %>%
     count()
-  
-  recurrence <- small_vars_plasma %>%
+    
+    recurrence <- small_vars_plasma %>%
     group_by(loc) %>%
     summarize(n_recur = length(ref_orig),
               g_recur = sum(grepl("GDNA", filter) , na.rm = TRUE),
               q_germ = delta_germ(adgdna / (dpgdna + 0.5)),
               m_recur = mean(adgdna / dpgdna, na.rm=TRUE),
               f_recur = n_recur / n_samples$n,
-              gf_recur = g_recur / n_samples$n
-    )
+              gf_recur = g_recur / n_samples$n)
   
-  small_vars_plasma <- small_vars_plasma %>%
-    mutate(gratio = (adnobaq + 2) * (dpgdna + 4) / ((adgdna + 2) * (dpnobaq + 4)),
-           gzero = adgdna / sqrt(adgdna + 2)) %>%
-    left_join(recurrence)
+	small_vars_plasma <- small_vars_plasma %>%
+  					   mutate(gratio = (adnobaq + 2) * (dpgdna + 4) / ((adgdna + 2) * (dpnobaq + 4)),
+  					   gzero = adgdna / sqrt(adgdna + 2)) %>%
+  					   left_join(recurrence)
   
-  variants <- small_vars_plasma %>%
-    mutate(
-      category = case_when(
-        .$isedge == TRUE ~ "edge",
-        .$dpnobaq < 200 ~ "low_depth",
-        grepl("QUAL_LT", .$filter) ~ "low_qual",
-        (.$q_germ < 0.005 & .$adgdna / (.$dpgdna + 0.5) > germline_alpha) ~ "germline",
-        (.$adgdna / (.$dpgdna + 0.5) > germline_alpha) ~ "germlineish",
-        .$gf_recur > 0.05 ~ "artifact",
-        !is_nonsyn ~ "SSV",
-        grepl("GDNA",.$filter) & .$adgdna > 0 ~ "blood",
-        grepl("GDNA", .$filter) ~ "bloodish",
-        .$gzero>2 & .$gratio<4 ~ "bloodier",
-        grepl("PASS", .$filter) ~ "somatic",
-        TRUE ~ "other"
-      )
-    )
-  
-  variants <- variants %>%
-    mutate(bio_source = case_when(
-      category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
-      category %in% c("germline", "germlineish") ~ "germline",
-      category %in% c("blood", "bloodier") ~ "WBC_matched",
-      MSK == 1 ~ "biopsy_matched",
-      category == "somatic" ~ "VUSo",
-      TRUE ~ "other")
-    )
-  
-  return(variants)
-}
-
-'label_bio_source_hypermutator' <- function(small_vars_plasma, small_vars_hypermutator) {
-  n_samples <- small_vars_plasma %>%
-  			   distinct(patient_id) %>%
-  			   count()
-  
-  recurrence <- small_vars_plasma %>%
-  				group_by(loc) %>%
-  				summarize(n_recur = length(ref_orig),
-  						  g_recur = sum(grepl("GDNA", filter) , na.rm = TRUE),
-  						  q_germ = delta_germ(adgdna / (dpgdna + 0.5)),
-  						  m_recur = mean(adgdna / dpgdna, na.rm=TRUE),
-  						  f_recur = n_recur / n_samples$n,
-  						  gf_recur = g_recur / n_samples$n)
-  
-  small_vars_hypermutator <- small_vars_hypermutator %>%
-  							 mutate(gratio = (adnobaq + 2) * (dpgdna + 4) / ((adgdna + 2) * (dpnobaq + 4)), gzero = adgdna / sqrt(adgdna + 2)) %>%
-  							 left_join(recurrence)
-  
-  variants <- small_vars_hypermutator %>%
-    		  mutate(category = case_when(
-    		  				.$isedge == TRUE ~ "edge",
-    		  				.$dpnobaq < 200 ~ "low_depth",
-    		  				grepl("QUAL_LT", .$filter) ~ "low_qual",
-    		  				(.$q_germ < 0.005 & .$adgdna / (.$dpgdna + 0.5) > germline_alpha) ~ "germline",
-    		  				(.$adgdna / (.$dpgdna + 0.5) > germline_alpha) ~ "germlineish",
-    		  				.$gf_recur > 0.05 ~ "artifact",
-    		  				!is_nonsyn ~ "SSV",
-    		  				grepl("GDNA",.$filter) & .$adgdna > 0 ~ "blood",
-    		  				grepl("GDNA", .$filter) ~ "bloodish",
-    		  				.$gzero>2 & .$gratio<4 ~ "bloodier",
-    		  				grepl("PASS", .$filter) ~ "somatic",
-    		  				TRUE ~ "other"))
-  
-  variants <- variants %>%
-  			  mutate(bio_source = case_when(
-  			  			category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
-  			  			category %in% c("germline", "germlineish") ~ "germline",
-  			  			category %in% c("blood", "bloodier") ~ "WBC_matched",
-  			  			MSK == 1 ~ "biopsy_matched",
-  			  			category == "somatic" ~ "VUSo",
+	variants <- small_vars_plasma %>%
+  				mutate(category = case_when(
+  			  			.$isedge == TRUE ~ "edge",
+  			  			.$dpnobaq < 200 ~ "low_depth",
+  			  			grepl("QUAL_LT", .$filter) ~ "low_qual",
+  			  			(.$q_germ < 0.005 & .$adgdna / (.$dpgdna + 0.5) > germline_alpha) ~ "germline",
+  			  			(.$adgdna / (.$dpgdna + 0.5) > germline_alpha) ~ "germlineish",
+  			  			.$gf_recur > 0.05 ~ "artifact",
+  			  			!is_nonsyn ~ "SSV",
+  			  			grepl("GDNA",.$filter) & .$adgdna > 0 ~ "blood",
+  			  			grepl("GDNA", .$filter) ~ "bloodish",
+  			  			.$gzero>2 & .$gratio<4 ~ "bloodier",
+  			  			grepl("PASS", .$filter) ~ "somatic",
   			  			TRUE ~ "other"))
+ 
+	variants <- variants %>%
+				mutate(bio_source = case_when(
+  			  					category %in% c("artifact", "edge", "low_depth", "low_qual") ~ "noise",
+  			  					category %in% c("germline", "germlineish") ~ "germline",
+  			  					category %in% c("blood", "bloodier") ~ "WBC_matched",
+  			  					MSK == 1 ~ "biopsy_matched",
+  			  					category == "somatic" ~ "VUSo",
+  			  					TRUE ~ "other"))
   
-  return(variants)
+	return(invisible(variants))
 }
 
-'label_wbc_variants' <- function(wbc_stacked) {
-  n_samples <- wbc_stacked %>%
-  			   distinct(patient_id) %>%
-  			   count()
-  
-  recurrence <- wbc_stacked %>%
-  				group_by(chrom, pos, ref, alt) %>%
-  				summarize(n_recur = n(), f_recur = n_recur / n_samples$n)
-  
-  wbc_stacked <- wbc_stacked %>%
-  				 left_join(recurrence) %>%
-  				 mutate(filter = case_when(
-  				 				qualnobaq < 60 ~ "low_qual",
-  				 				dpnobaq < 500 ~ "low_depth",
-  				 				adnobaq / dpnobaq > germline_alpha ~ "germline",
-  				 				f_recur > 0.05 ~ "recurrent",
-  				 				TRUE ~ "PASS"))
-  
-  return(wbc_stacked)
+'delta_germ' <- function(zz)
+{
+  return(invisible(mean(pmin((zz - 0)^2, (zz - 0.5)^2, (zz - 1.0)^2), na.rm = T)))
 }
 
-'delta_germ' <- function(zz) {
-  return(mean(pmin((zz - 0)^2, (zz - 0.5)^2, (zz - 1.0)^2), na.rm = T))
-}
 
-'update_filter' <- function (filter, qualnobaq, pgtkxgdna, is_edge, min_p,
-                          min_qual = 60, sep = ";")
+'update_filter' <- function(filter,
+							qualnobaq,
+							pgtkxgdna,
+							is_edge,
+							min_p,
+							min_qual=60,
+							sep=";")
 {
 	high_qual = which(qualnobaq >= min_qual)
 	low_qual = which(qualnobaq < min_qual)
@@ -697,10 +633,13 @@ variant_cols <- c(
 			  ungroup() %>%
 			  full_join(ids) %>%
 			  arrange(i)
-	filters$filter[filters$i]
+	return(invisible(filters$filter[filters$i]))
 }
 
-'fun_lodmdl' <- function(df, mdl, grp, ...)
+'fun_lodmdl' <- function(df,
+						 mdl,
+						 grp,
+						 ...)
 {
 	model <- glm(call ~ expected_af, data=df, family = binomial(link = mdl))
 	temp.data <- data.frame(expected_af = seq(0.01, max(df$expected_af), 0.01))
@@ -710,10 +649,13 @@ variant_cols <- c(
 				        ymax = model$family$linkinv(fit + 1.96*se.fit),
 				        yfit = model$family$linkinv(fit),
 				        group = grp)
-  	return(show.data)
+  	return(invisible(show.data))
 }
 
-'fun_zerob' <- function(x, y, n=100, seed=0)
+'fun_zerob' <- function(x,
+						y,
+						n=100,
+						seed=0)
 {
 	set.seed(seed)
 	init = data.frame(y, x)
@@ -733,7 +675,9 @@ variant_cols <- c(
 	return(invisible(y0))
 }
 
-'log10_axis' <- function(side, at, ...)
+'log10_axis' <- function(side,
+						 at,
+						 ...)
 {
     minor = NULL
     for (j in 2:length(at)) {
@@ -742,17 +686,22 @@ variant_cols <- c(
 	axis(side=side, at=minor, labels=NA, tcl=par("tcl")*0.65, ...)
 }
 
-'order_samples' <- function(x) {
+'order_samples' <- function(x)
+{
 	res = rep(1, length(x))
 	index = grep("VL", x, fixed=TRUE)
 	res[index] = 2
 	index = grep("VP", x, fixed=TRUE)
 	res[index] = 3
-	return(res)
+	return(invisible(res))
 }
 
-'plot_96_spectrum' <- function (vcf, sample.col = "sample", mutcat3.col = "mutcat3",
-								ymax = NULL, averageProp = FALSE, file = NULL)
+'plot_96_spectrum' <- function(vcf,
+							   sample.col="sample",
+							   mutcat3.col="mutcat3",
+							   ymax=NULL,
+							   averageProp=FALSE,
+							   file=NULL)
 {
     bases = c("A", "C", "G", "T")
     ctxt16 = paste(rep(bases, each = 4), rep(bases, 4), sep = ".")
@@ -800,26 +749,61 @@ variant_cols <- c(
     if (!is.null(file)) {
         dev.off()
     }
+    return(invisible(0))
 }
 
-'corr_plot' <- function (corr, corr2, method = c("circle", "square", "ellipse", "number",
-    "shade", "color", "pie"), type = c("full", "lower", "upper"), 
-    add = FALSE, col = NULL, bg = "white", title = "", is.corr = TRUE, 
-    diag = TRUE, outline = FALSE, mar = c(0, 0, 0, 0), addgrid.col = NULL, 
-    addCoef.col = NULL, addCoefasPercent = FALSE, order = c("original", 
-    "AOE", "FPC", "hclust", "alphabet"), hclust.method = c("complete", 
-    "ward", "ward.D", "ward.D2", "single", "average", "mcquitty", 
-    "median", "centroid"), addrect = NULL, rect.col = "black", 
-    rect.lwd = 2, tl.pos = NULL, tl.cex = 1, tl.col = "red", 
-    tl.offset = 0.4, tl.srt = 90, cl.pos = NULL, cl.lim = NULL, cl.lim2 = NULL, 
-    cl.length = NULL, cl.cex = 0.8, cl.ratio = 0.15, cl.align.text = "c", 
-    cl.offset = 0.5, number.cex = 1, number.font = 2, number.digits = NULL, 
-    addshade = c("negative", "positive", "all"), shade.lwd = 1, 
-    shade.col = "white", p.mat = NULL, sig.level = 0.05, insig = c("pch", 
-    "p-value", "blank", "n", "label_sig"), pch = 4, pch.col = "black", 
-    pch.cex = 3, plotCI = c("n", "square", "circle", "rect"), 
-    lowCI.mat = NULL, uppCI.mat = NULL, na.label = "?", na.label.col = "black", 
-    win.asp = 1, ...) 
+'corr_plot' <- function(corr,
+						corr2,
+						method=c("circle", "square", "ellipse", "number", "shade", "color", "pie"),
+						type=c("full", "lower", "upper"),
+						add=FALSE,
+						col=NULL,
+						bg="white",
+						title="",
+						is.corr=TRUE,
+						diag=TRUE,
+						outline=FALSE,
+						mar=c(0, 0, 0, 0),
+						addgrid.col=NULL,
+						addCoef.col=NULL,
+						addCoefasPercent=FALSE,
+						order=c("original", "AOE", "FPC", "hclust", "alphabet"),
+						hclust.method=c("complete", "ward", "ward.D", "ward.D2", "single", "average", "mcquitty", "median", "centroid"),
+						addrect=NULL,
+						rect.col="black",
+						rect.lwd=2,
+						tl.pos=NULL,
+						tl.cex=1,
+						tl.col="red", 
+						tl.offset=0.4,
+						tl.srt=90,
+						cl.pos=NULL,
+						cl.lim=NULL,
+						cl.lim2=NULL, 
+						cl.length=NULL,
+						cl.cex=0.8,
+						cl.ratio=0.15,
+						cl.align.text="c", 
+						cl.offset=0.5,
+						number.cex=1,
+						number.font=2,
+						number.digits=NULL, 
+						addshade=c("negative", "positive", "all"),
+						shade.lwd=1,
+						shade.col="white",
+						p.mat=NULL,
+						sig.level=0.05,
+						insig=c("pch", "p-value", "blank", "n", "label_sig"),
+						pch=4,
+						pch.col="black",
+						pch.cex=3,
+						plotCI=c("n", "square", "circle", "rect"),
+						lowCI.mat=NULL,
+						uppCI.mat=NULL,
+						na.label="?",
+						na.label.col="black",
+						win.asp=1,
+						...)
 {
     method <- match.arg(method)
     type <- match.arg(type)
@@ -1360,11 +1344,16 @@ variant_cols <- c(
         corrRect.hclust(corr, k = addrect, method = hclust.method, 
             col = rect.col, lwd = rect.lwd)
     }
-    invisible(corr)
+    return(invisible(corr))
 }
 
-'m0_oncodrive' <- function (maf, AACol = NULL, minMut = 5, pvalMethod = "zscore", 
-    					 nBgGenes = 100, bgEstimate = TRUE, ignoreGenes = NULL) 
+'m0_oncodrive' <- function(maf,
+						   AACol=NULL,
+						   minMut=5,
+						   pvalMethod="zscore",
+						   nBgGenes=100,
+						   bgEstimate=TRUE,
+						   ignoreGenes=NULL) 
 {
 	gl = read.csv(system.file("extdata", "prot_len.txt.gz", package = "maftools"), sep = "\t", header=TRUE, stringsAsFactors = FALSE)
 	pval.options = c("zscore", "poisson", "combined")
@@ -1468,5 +1457,5 @@ variant_cols <- c(
         nonsyn.scores = nonsyn.scores[order(fdr)]
     }
     message("Done !")
-    return(nonsyn.scores)
+    return(invisible(nonsyn.scores))
 }

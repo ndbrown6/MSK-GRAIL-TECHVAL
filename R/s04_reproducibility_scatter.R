@@ -322,32 +322,6 @@ for (i in 1:length(patient_ids)) {
 			   mutate(fill = ifelse(bio_source.x=="VUSo" & bio_source.y == "WBC_matched", "Incorrect assignment between replicates", fill)) %>%
 			   mutate(fill = ifelse(bio_source.y=="VUSo" & bio_source.x == "WBC_matched", "Incorrect assignment between replicates", fill))
 	
-	plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
-			 geom_abline(linetype = 1, color = "goldenrod3") +
-			 geom_point(alpha=1, size=3.5) +
-			 scale_fill_manual(values = cols) +
-			 scale_shape_manual(values = c(24, 21)) +
-			 facet_wrap(~patient_id) +
-			 theme_bw(base_size=15) +
-			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.4, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-			 labs(x="\nReplicate 1 (%)\n", y="Replicate 2 (%)\n") +
-			 scale_x_log10(
- 			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
- 			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
- 			 ) + 
- 			 scale_y_log10(
- 			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
- 			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
- 			 ) +
-			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
-			 annotation_logticks() +
-			 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
-			 guides(fill=guide_legend(title=c("Variant category")))
-		 
-	pdf(file=paste0("../res/figureS4/", patient_ids[i], "_R1_R2.pdf"), width=5.5, height=6.5)
-	print(plot.0)
-	dev.off()
-	
 	pdf(file=paste0("../res/figureS4/", patient_ids[i], "_R1_R2.pdf"), width=6.5, height=7)
 	par(mar = c(6.1, 6, 4.1, 1))
 	epsilon = 0
@@ -417,32 +391,6 @@ for (i in 1:length(patient_ids)) {
 			   mutate(fill = ifelse(bio_source.x=="VUSo" & bio_source.y == "WBC_matched", "Incorrect assignment between replicates", fill)) %>%
 			   mutate(fill = ifelse(bio_source.y=="VUSo" & bio_source.x == "WBC_matched", "Incorrect assignment between replicates", fill))
 			   	
-	plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
-			 geom_abline(linetype = 1, color = "goldenrod3") +
-			 geom_point(alpha=1, size=3.5) +
-			 scale_fill_manual(values = cols) +
-			 scale_shape_manual(values = c(24, 21)) +
-			 facet_wrap(~patient_id) +
-			 theme_bw(base_size=15) +
-			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.4, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-			 labs(x="\nReplicate 1 (%)\n", y="Replicate 3 (%)\n") +
-			 scale_x_log10(
- 			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
- 			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
- 			 ) + 
- 			 scale_y_log10(
- 			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
- 			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
- 			 ) +
-			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
-			 annotation_logticks() +
-			 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
-			 guides(fill=guide_legend(title=c("Variant category")))
-		 
-	pdf(file=paste0("../res/figureS4/", patient_ids[i], "_R1_R3.pdf"), width=5.5, height=6.5)
-	print(plot.0)
-	dev.off()
-	
 	pdf(file=paste0("../res/figureS4/", patient_ids[i], "_R1_R3.pdf"), width=6.5, height=7)
 	par(mar = c(6.1, 6, 4.1, 1))
 	epsilon = 0
@@ -512,33 +460,6 @@ for (i in 1:length(patient_ids)) {
 			   mutate(fill = ifelse(bio_source.x=="VUSo" & bio_source.y == "WBC_matched", "Incorrect assignment between replicates", fill)) %>%
 			   mutate(fill = ifelse(bio_source.y=="VUSo" & bio_source.x == "WBC_matched", "Incorrect assignment between replicates", fill))
 			   
-			   	
-	plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
-			 geom_abline(linetype = 1, color = "goldenrod3") +
-			 geom_point(alpha=1, size=3.5) +
-			 scale_fill_manual(values = cols) +
-			 scale_shape_manual(values = c(24, 21)) +
-			 facet_wrap(~patient_id) +
-			 theme_bw(base_size=15) +
-			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.4, 0.7), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-			 labs(x="\nReplicate 2 (%)\n", y="Replicate 3 (%)\n") +
-			 scale_x_log10(
- 			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
- 			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
- 			 ) + 
- 			 scale_y_log10(
- 			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
- 			 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
- 			 ) +
-			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
-			 annotation_logticks() +
-			 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
-			 guides(fill=guide_legend(title=c("Variant category")))
-		 
-	pdf(file=paste0("../res/figureS4/", patient_ids[i], "_R2_R3.pdf"), width=5.5, height=6.5)
-	print(plot.0)
-	dev.off()
-	
 	pdf(file=paste0("../res/figureS4/", patient_ids[i], "_R2_R3.pdf"), width=6.5, height=7)
 	par(mar = c(6.1, 6, 4.1, 1))
 	epsilon = 0
