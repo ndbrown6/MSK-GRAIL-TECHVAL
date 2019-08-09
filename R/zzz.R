@@ -192,22 +192,22 @@ chip_genes <- c(
 
 somatic_snvs_grail <- list(
 	scored = str_c(
-    "../",
-    "modified_v11/",
-    "Variants_Calls/",
-    "Joined_cfDNA_IMPACT_variants/",
-    "scored_merged_snvs_20171115.tsv"
-  )
+		"../",
+		"modified_v11/",
+		"Variants_Calls/",
+		"Joined_cfDNA_IMPACT_variants/",
+		"scored_merged_snvs_20171115.tsv"
+	)
 )
 
 somatic_indels_grail <- list(
-  scored = str_c(
-    "../",
-    "modified_v11/",
-    "Variants_Calls/",
-    "Joined_cfDNA_IMPACT_variants/",
-    "scored_merged_indels_20171115.tsv"
-  )
+	scored = str_c(
+		"../",
+		"modified_v11/",
+		"Variants_Calls/",
+		"Joined_cfDNA_IMPACT_variants/",
+		"scored_merged_indels_20171115.tsv"
+	)
 )
 
 msk_anno_joined <- str_c(
