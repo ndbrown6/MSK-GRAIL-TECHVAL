@@ -1,6 +1,6 @@
 'log10_axis' <- function(side,
-						 at,
-						 ...)
+			 at,
+			 ...)
 {
     minor = NULL
     for (j in 2:length(at)) {
