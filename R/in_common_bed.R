@@ -1,5 +1,5 @@
 'in_common_bed' <- function (chromosome,
-							 position)
+			     position)
 {
 	bed = read.csv(file=common_bed, header=FALSE, sep="\t", stringsAsFactors=FALSE)
 	index = rep(FALSE, length(chromosome))
