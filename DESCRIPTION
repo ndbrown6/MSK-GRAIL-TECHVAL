@@ -1,4 +1,5 @@
-Package: MSK-GRAIL-TECHVAL
+Type: package
+Package: MSK_GRAIL_TECHVAL
 Version: 0.0-1
 Date: 2019-06-29
 Title: High-intensity sequencing reveals the sources of plasma circulating cell-free DNA variants
