@@ -1,10 +1,10 @@
 'update_filter' <- function(filter,
-							qualnobaq,
-							pgtkxgdna,
-							is_edge,
-							min_p,
-							min_qual = 60,
-							sep = ";")
+			    qualnobaq,
+			    pgtkxgdna,
+			    is_edge,
+			    min_p,
+			    min_qual = 60,
+			    sep = ";")
 {
 	high_qual = which(qualnobaq >= min_qual)
 	low_qual = which(qualnobaq < min_qual)
