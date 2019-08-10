@@ -6,7 +6,7 @@ Title: High-intensity sequencing reveals the sources of plasma circulating cell-
 Author: David Brown <brownd7@mskcc.org>
 Description: Provides access to data in Razavi et al. and code base for reproducing results of the manuscript
 Maintainer: David Brown <ndbrown6@gmail.com>
-URL: https://github.com/ndbrown6
+URL: https://github.com/ndbrown6/MSK-GRAIL-TECHVAL
 Depends: R (>= 3.5.1), GenomicRanges, GenomicAlignments, GenomicFeatures, TxDb.Hsapiens.UCSC.hg19.knownGene, Homo.sapiens, org.Hs.eg.db, annotate, gdata, foreach, parallel, doMC, RColorBrewer, stringr, ggplot2, tidyverse, readr, reshape2, pander, broom, scales, gridExtra, ggridges, plotrix, deconstructSigs, gplots, fuzzyjoin, cowplot, googlesheets, Publish, Palimpsest, BSgenome.Hsapiens.UCSC.hg19, vioplot, corrplot, awtools, beeswarm, clinfun, data.table, mblm, pscl, boot, snow, colorspace, magrittr, ggrepel, copynumber, eulerr, maftools, GAP, pROC, lmtest, glmperm
 License: GPL (>= 2)
 biocViews:
