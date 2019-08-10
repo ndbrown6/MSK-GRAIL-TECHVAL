@@ -1,10 +1,10 @@
 Type: Package
-Package: ...
+Package: razavi_et_al
 Version: 0.0-1
 Date: 2019-06-29
-Title: ... (...)
+Title: High-intensity sequencing reveals the sources of plasma circulating cell-free DNA variants
 Author: David Brown <brownd7@mskcc.org>
-Description: ...
+Description: High-intensity sequencing reveals the sources of plasma circulating cell-free DNA variants
 Maintainer: David Brown <ndbrown6@gmail.com>
 URL: https://github.com/ndbrown6
 Depends: R (>= 3.5.1), GenomicRanges, GenomicAlignments, GenomicFeatures, TxDb.Hsapiens.UCSC.hg19.knownGene, Homo.sapiens, org.Hs.eg.db, annotate, gdata, foreach, parallel, doMC, RColorBrewer, stringr, ggplot2, tidyverse, readr, reshape2, pander, broom, scales, gridExtra, ggridges, plotrix, deconstructSigs, gplots, fuzzyjoin, cowplot, googlesheets, Publish, Palimpsest, BSgenome.Hsapiens.UCSC.hg19, vioplot, corrplot, awtools, beeswarm, clinfun, data.table, mblm, pscl, boot, snow, colorspace, magrittr, ggrepel, copynumber, eulerr, maftools, GAP, pROC, lmtest, glmperm
