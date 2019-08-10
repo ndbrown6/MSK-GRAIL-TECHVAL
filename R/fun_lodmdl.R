@@ -1,7 +1,7 @@
 'fun_lodmdl' <- function(df,
-						 mdl,
-						 grp,
-						 ...)
+			 mdl,
+			 grp,
+			 ...)
 {
 	model <- glm(call ~ expected_af, data=df, family = binomial(link = mdl))
 	temp.data <- data.frame(expected_af = seq(0.01, max(df$expected_af), 0.01))
