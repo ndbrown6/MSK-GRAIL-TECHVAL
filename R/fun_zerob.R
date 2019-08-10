@@ -1,7 +1,7 @@
 'fun_zerob' <- function(x,
-						y,
-						n = 100,
-						seed = 0)
+			y,
+			n = 100,
+			seed = 0)
 {
 	set.seed(seed)
 	init = data.frame(y, x)
