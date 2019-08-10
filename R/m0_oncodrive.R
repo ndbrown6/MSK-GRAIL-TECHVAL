@@ -1,10 +1,10 @@
 'm0_oncodrive' <- function(maf,
-						   AACol = NULL,
-						   minMut = 5,
-						   pvalMethod = "zscore",
-						   nBgGenes = 100,
-						   bgEstimate = TRUE,
-						   ignoreGenes = NULL) 
+			   AACol = NULL,
+			   minMut = 5,
+			   pvalMethod = "zscore",
+			   nBgGenes = 100,
+			   bgEstimate = TRUE,
+			   ignoreGenes = NULL)
 {
 	gl = read.csv(system.file("extdata", "prot_len.txt.gz", package = "maftools"), sep = "\t", header=TRUE, stringsAsFactors = FALSE)
 	pval.options = c("zscore", "poisson", "combined")
