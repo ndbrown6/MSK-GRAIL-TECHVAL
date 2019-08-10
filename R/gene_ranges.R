@@ -1,5 +1,5 @@
 'gene_ranges' <-  function(db,
-						   column="ENTREZID")
+			   column = "ENTREZID")
 {
     g = genes(db, columns=column)
     col = mcols(g)[[column]]
