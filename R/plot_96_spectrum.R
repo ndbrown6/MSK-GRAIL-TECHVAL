@@ -1,9 +1,9 @@
 'plot_96_spectrum' <- function(vcf,
-							   sample.col = "sample",
-							   mutcat3.col = "mutcat3",
-							   ymax = NULL,
-							   averageProp = FALSE,
-							   file = NULL)
+			       sample.col = "sample",
+			       mutcat3.col = "mutcat3",
+			       ymax = NULL,
+			       averageProp = FALSE,
+			       file = NULL)
 {
     bases = c("A", "C", "G", "T")
     ctxt16 = paste(rep(bases, each = 4), rep(bases, 4), sep = ".")
