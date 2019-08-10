@@ -1,19 +1,19 @@
-\name{label_bio_source}
-\alias{label_bio_source}
+\name{fun_zerob}
+\alias{fun_zerob}
 \title{
-Labels cfDNA variants with source of origin
+...
 }
 \description{
-Assigns source of origin labels to cfDNA variants
+...
 }
 \usage{
-variants_labelled = label_bio_source(variants)
+...
 }
 \arguments{
-\item{variants}{...}
+\item{...}{...}
 }
 \value{
-\item{variants_labelled}{...}
+\item{...}{...}
 }
 \author{
 \cr
