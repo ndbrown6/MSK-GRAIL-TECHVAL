@@ -1,3 +1,19 @@
 mskgrailtechval
 
 label_bio_source
+corr_plot
+delta_germ
+fun_lodmdl
+fun_zerob
+gene_ranges
+get_target_lengths
+in_common_bed
+log10_axis
+m0_oncodrive
+make_id_x
+make_id_y
+order_samples
+plot_96_spectrum
+split_column_by_overlap
+transparent_rgb
+update_filter
