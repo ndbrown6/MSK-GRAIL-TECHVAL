@@ -18,6 +18,6 @@ variants_labelled = label_bio_source(variants)
 \author{
 \cr
 David Brown\cr
-\email{brownd7@mskcc.org}\cr
+\email{ndbrown6@gmail.com}\cr
 }
 \keyword{}
