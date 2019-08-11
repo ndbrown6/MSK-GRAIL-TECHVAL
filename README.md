@@ -2,7 +2,7 @@
 
 This repository is still under construction
 
-Codes and data are provided *as is* whilst they are being migrated from MSK/GRAIL's servers into a stand-alone R package
+Codes and data are provided **as is** whilst they are being migrated from MSK/GRAIL's servers into a stand-alone R package
 
 
 
