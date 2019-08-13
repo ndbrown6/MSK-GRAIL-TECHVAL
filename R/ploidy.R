@@ -1,6 +1,6 @@
 'ploidy' <- function(x,
-					  y,
-					  w)
+		     y,
+		     w)
 {
 	psi = seq(from=1.5, to=3.5, length=100)
 	sse = vector(mode="numeric", length=length(psi))
