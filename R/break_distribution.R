@@ -1,5 +1,5 @@
 'break_distribution' <- function(x,
-								 y)
+				 y)
 {
 	a = as.numeric(str_split(x," ",simplify=TRUE)[2:101])
 	b = as.numeric(str_split(y," ",simplify=TRUE)[2:101])
