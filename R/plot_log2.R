@@ -1,7 +1,7 @@
 'plot_log2' <- function(x,
-						 y,
-						 axis = TRUE,
-						 ylim = c(-2.5, 2.5))
+			y,
+			axis = TRUE,
+			ylim = c(-2.5, 2.5))
 {
    	par(mar=c(6.1, 9.5, 4.1, 1.1))
    	data(CytoBand)
