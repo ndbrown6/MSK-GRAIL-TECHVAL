@@ -1,7 +1,7 @@
 'absolute' <- function(rho,
-						psi,
-						gamma = 1,
-						x)
+		       psi,
+		       gamma = 1,
+		       x)
 {
 	rho = ifelse(is.na(rho), 1, rho)
 	psi = ifelse(is.na(psi), 2, psi)

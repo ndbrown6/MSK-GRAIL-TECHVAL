@@ -1,5 +1,5 @@
 'prune' <- function(x,
-					 n = 10)
+		    n = 10)
 {
 	cnm = matrix(NA, nrow=nrow(x), ncol=nrow(x))
 	for (j in 1:nrow(x)) {
