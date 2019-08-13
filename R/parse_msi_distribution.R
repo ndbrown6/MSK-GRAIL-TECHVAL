@@ -1,5 +1,5 @@
 'parse_msi_distribution' <- function(data_dir,
-									 msi_dis_file)
+				     msi_dis_file)
 {
 	dd = readLines(sprintf("%s/%s",data_dir,msi_dis_file))
 	dd_var_ndx = which(!grepl("N:|T:",dd))
