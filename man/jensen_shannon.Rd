@@ -1,5 +1,5 @@
-\name{JS}
-\alias{JS}
+\name{jensen_shannon}
+\alias{jensen_shannon}
 \title{
 ...
 }
