@@ -4,10 +4,10 @@ Version: 0.0-1
 Date: 2019-06-29
 Title: High-intensity sequencing reveals the sources of plasma circulating cell-free DNA variants
 Authors@R: c(person("David", "Brown", role = "ctb", email = "brownd7@mskcc.org"),
-			 person("Earl Hubbel", "Hubbell", role = "ctb", email = "ehubbell@grailbio.com"),
-			 person("Byoungsok", "Jung", role = "ctb", email = "bjung@grailbio.com"),
-			 person("Qinwen", "Liu", role = "ctb", email = "qliu@grailbio.com"),
-			 person("Oliver", "Venn", role = "ctb", email = "ovenn@grailbio.com"))
+	     person("Earl Hubbel", "Hubbell", role = "ctb", email = "ehubbell@grailbio.com"),
+	     person("Byoungsok", "Jung", role = "ctb", email = "bjung@grailbio.com"),
+	     person("Qinwen", "Liu", role = "ctb", email = "qliu@grailbio.com"),
+	     person("Oliver", "Venn", role = "ctb", email = "ovenn@grailbio.com"))
 Author: David Brown <brownd7@mskcc.org>
 Description: Provides access to data in Razavi et al. and code base for reproducing results of the manuscript
 Maintainer: David Brown <ndbrown6@gmail.com>
