@@ -1,1 +1,4 @@
+.*.tmp
+*.pyc
 .DS_Store
+.Rapp.history
