@@ -53,6 +53,7 @@ suppressPackageStartupMessages(library("GAP"))
 suppressPackageStartupMessages(library("pROC"))
 suppressPackageStartupMessages(library("lmtest"))
 suppressPackageStartupMessages(library("glmperm"))
+suppressPackageStartupMessages(library("Hmisc"))
 
 registerDoMC(32)
 

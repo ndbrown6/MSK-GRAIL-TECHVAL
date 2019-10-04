@@ -873,3 +873,72 @@ p3 = fisher.test(m3)$p.value
    
 p = p.adjust(c(p1, p2, p3), method="bonferroni")
 pander(p)
+
+
+#==================================================
+# cfDNA detection rate by tumor CCF
+#==================================================
+tumor_vars = read_tsv(file="../modified_v11/Resources/MSK_additional_data/20180405_table_1f_grail_paper_filters.called_in_both_and_impact.tsv",
+			 col_types = cols(.default = col_character())) %>%
+		     type_convert()
+tumor_vars = tumor_vars %>%
+			 mutate("tissue" = case_when(
+			 	COHORT == "validation_breast" ~ "Breast",
+			 	COHORT == "validation_lung" ~ "Lung",
+			 	COHORT == "validation_prostate" ~ "Prostate"
+			 )) %>%
+			 mutate(is_snv = ifelse(nchar(ALT)==1 & nchar(REF)==1, TRUE, FALSE)) %>%
+			 filter(is_snv)
+
+cohort = c("Breast", "Lung", "Prostate")
+p = rep(NA, length(cohort))
+names(p) = cohort
+for (i in 1:length(cohort)) {
+	tmp_vars = tumor_vars %>%
+			   filter(tissue == cohort[i] & CALLED_IN %in% c("both","impact"))
+	ccf = tmp_vars %>%
+		  .[['IM-T.ccf']]
+	ccf_cat = cut(ccf, c(0,0.5,0.8,1))
+	called_in = tmp_vars %>%
+		  	    .[['CALLED_IN']]
+	dr_sum = by(called_in, ccf_cat, function(x) { sum(x=="both") })
+	tt_sum = table(ccf_cat)
+	dr = dr_sum/tt_sum
+	ci = binconf(x=dr_sum, n=tt_sum)
+	p[i] = prop.trend.test(dr_sum, tt_sum)$p.value
+
+	sum(tumor_vars$`IM-T.clonality` %in% c("clonal","likely_clonal") & tumor_vars$CALLED_IN=="both")
+	sum(tumor_vars$`IM-T.clonality` %in% c("clonal","likely_clonal") & tumor_vars$`IM-T.clonality`!="")
+	sum(tumor_vars$`IM-T.clonality` %in% c("subclonal") & tumor_vars$CALLED_IN=="both")
+	sum(tumor_vars$`IM-T.clonality` %in% c("subclonal") & tumor_vars$`IM-T.clonality`!="")
+
+	names = names(ttsum)
+	dfm = data.frame(names, dr=as.vector(dr), ll=as.vector(ci[,2]), uu=as.vector(ci[,3]))
+	pd = position_dodge(0.1)
+	ggplot(dfm, aes(x=names, y=dr)) + 
+  	geom_errorbar(aes(ymin=ll, ymax=uu), colour="black", width=.1, position=pd) +
+  	geom_point(position=pd, size=5) +
+  	geom_line(position=pd) +
+  	theme(axis.text.x=element_text(size=12),
+    	  axis.title.x=element_text(size=14),
+          axis.text.y=element_text(size=12),
+          axis.title.y=element_text(size=14),
+          legend.position="none") +
+    ylim(c(0,1)) +
+  	labs(x="Tumor mutation CCF", y="cfDNA detection rate")
+
+}
+
+export_x = tumor_vars %>%
+		   dplyr::select(
+		   		patient_id = `CASE`,
+		   		tissue = `tissue`,
+		   		gene_id = `GENE`,
+		   		chromosome = `CHROM`,
+		   		position = `POS`,
+		   		called_in = `CALLED_IN`,
+		   		t_ccf = `IM-T.ccf`,
+		   		t_clonality = `IM-T.clonality`) %>%
+		   filter(called_in %in% c("both", "impact"))
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2e.tsv", append=FALSE, col_names=TRUE)
