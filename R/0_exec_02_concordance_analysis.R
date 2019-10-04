@@ -203,6 +203,14 @@ mtext(side = 2, text = "% of patients", line = 3, cex = 1.15)
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = top_cancer_genes_table %>%
+		   dplyr::select(`tissue` = subj_type,
+		   				 `gene_id` = gene,
+		   				 `percent_patient` = percent_patient,
+		   				 `bio_source` = bio_source)
+		   				 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2b.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # barplot of mutation burden and sources of mutation
 # per patient and cohort including hypermutators
@@ -420,7 +428,16 @@ for (i in 1:length(cancer_types)) {
    	  	axis(2, at = c(.02,.1,.5,1,5,10,50,100), labels = rep("",8), cex.axis = 1.25, las = 1, line=0, lwd=2)
     }
     title(main=paste0("\n", cancer_types[i]), cex.main=1.85)
-  	
+    
+    export_x = plt_smry %>%
+    		   mutate(`patient_id` = rownames(plt_smry)) %>%
+    		   dplyr::select(`patient_id`, `biopsy_matched`, `biopsy_only`)
+    export_y = subj_small_vars %>%
+    		   dplyr::select(`patient_id` = patient_id,
+    		   				 `bio_source` = bio_source,
+    		   				 `af_cfdna` = af_nobaq)
+    write_tsv(export_x, path=paste0("../res/etc/Source_Data_Fig_2/Fig_2d_1_", i, ".tsv"), append=FALSE, col_names=TRUE)
+    write_tsv(export_y, path=paste0("../res/etc/Source_Data_Fig_2/Fig_2d_2_", i, ".tsv"), append=FALSE, col_names=TRUE)
 }
 close.screen(all.screens=TRUE)
 dev.off()
@@ -523,7 +540,12 @@ for (i in 1:length(cancer_types)) {
    	  	axis(2, at = c(.02,.1,.5,1,5,10,50,100), labels = rep("",8), cex.axis = 1.25, las = 1, line=0, lwd=2)
     }
     title(main=paste0("\n", cancer_types[i]), cex.main=1.85)
-   	
+    
+    export_x = subj_small_vars %>%
+    		   dplyr::select(`patient_id` = patient_id,
+    		   				 `bio_source` = bio_source,
+    		   				 `af_cfdna` = af_nobaq)
+    write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2c.tsv", append=FALSE, col_names=TRUE)
 }
 close.screen(all.screens=TRUE)
 dev.off()
@@ -562,6 +584,18 @@ axis(2, at = NULL, cex.axis = 1.5, las = 1)
 text(x=2, y=.995, "p = 0.0046" , cex=1.05)
 mtext(side = 2, text = "ctDNA fraction", line = 4, cex = 1.5)
 dev.off()
+
+export_x = cfdna_frac %>%
+		   dplyr::select(`patient_id` = ID,
+		   				 `tissue` = index,
+		   				 `ctdna_fraction` = ctdna_frac) %>%
+		   mutate(tissue = case_when(
+		   			tissue == 1 ~ "Breast",
+		   			tissue == 2 ~ "Lung",
+		   			tissue == 3 ~ "Prostate"))
+		   			
+		   			
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2f.tsv", append=FALSE, col_names=TRUE)
  
 #==================================================
 # box plot of ctdna fraction by number of
@@ -718,6 +752,15 @@ plot.0 = ggplot(tmp.1, aes(x = Tissue, y = ctdna_frac, color = cat, group=intera
 pdf(file="../res/figure2/cfdna_fraction_by_total_dx_vol.pdf", width=8.5, height=5)
 print(plot.0)
 dev.off()
+
+export_x = tmp.1 %>%
+		   dplyr::select(`patient_id` = GRAIL_ID,
+		   				 `tissue` = Tissue,
+		   				 `ctdna_fraction` = ctdna_frac,
+		   				 `tertiles_disease_volume` = cat)
+		   			
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2g.tsv", append=FALSE, col_names=TRUE)
+
 
 #==================================================
 # trend test ctdna fraction by cancer type

@@ -55,6 +55,14 @@ axis(2, at = c(9,15,20), labels=c(9,15,20), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = useful_msi_df %>%
+		   dplyr::select(`patient_id` = patient_id,
+		   		  		 `tissue` = subject_type,
+		   		 		 `msi_score` = fixed_msi,
+		   		  		 `sample_type` = sample)
+		   		  		 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3d.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # scatter plot of tmb estimated using cfdna versus
 # msk-impact
@@ -211,6 +219,17 @@ axis(2, at = c(550,600), labels=c(550,600), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = data_frame(`patient_id` = valid_patient_ids,
+					  `tissue` = valid_patient_ids,
+					  `tumor_tmb`= x[valid_patient_ids],
+					  `cfdna_tmb` = y[valid_patient_ids]) %>%
+		   mutate(tissue = case_when(
+		   		grepl("VB", tissue) ~ "Breast",
+		   		grepl("VL", tissue) ~ "Lung",
+		   		grepl("VP", tissue) ~ "Prostate"))
+		   		
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3a.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # bar plot of mutational signatures
 #==================================================
@@ -281,6 +300,19 @@ plot(z, rho, type="o", pch=21, col="black", bg="white", cex=1.5, lwd=1.5, ylim=c
 axis(2, at = c(.2, .6, 1), labels=c(".2", ".6", "1"), cex.axis = 1.5, las = 1, line=2.7)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = data.frame(patient_id = colnames(fsigs),
+					  t(fsigs)) %>%
+		   mutate(cor_coeff = rho[colnames(fsigs)]) %>%
+		   dplyr::rename(`ageing` = Aging,
+		   				 `apobec` = APOBEC,
+		   				 `hrd` = HRD,
+		   				 `mmr` = MMR,
+		   				 `smoking` = Smoking,
+		   				 `pole` = POLE,
+		   				 `other`= Other)
+		   				 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3c.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # venn diagram of number of mutations
@@ -417,6 +449,27 @@ fit = euler(c("VUSo_nonh" = sum(variants_nohyper$bio_source=="VUSo"),
 plot(fit, fills=rep(unlist(lapply(c(variant_cols["VUSo"], variant_cols["biopsy_only"]), transparent_rgb, 155)), 2))
 dev.off()
 
+export_x = data_frame(
+				`variant_category` = names(fit$original.values),
+				`number_variants` = fit$original.values)
+export_x[,"variant_category"] = c("VUSo non-hypermutated",
+								  "Biopsy-only non-hypermutated",
+								  "VUSo hypermutated",
+								  "Biopsy-only hypermutated",
+								  "VUSo & Biopsy-only non-hypermutated",
+								  "VUSo hypermutated & non-hypermutated",
+								  "VUSo non-hypermutated & Biopsy-only hypermutated",
+								  "Biopsy-only non-hypermutated & VUSo hypermutated",
+								  "Biopsy-only non-hypermutated & Biopsy-only hypermutated",
+								  "VUSo hypermutated & Biopsy-only hypermutated",
+								  "VUSo non-hypermutated & Biopsy-only non-hypermutated & VUSo hypermutated",
+								  "VUSo non-hypermutated & Biopsy-only non-hypermutated & Biopsy-only hypermutated",
+								  "VUSo non-hypermutated & VUSo hypermutated & Biopsy-only hypermutated",
+								  "Biopsy-only non-hypermutated & VUSo hypermutated & Biopsy-only hypermutated",
+								  "VUSo non-hypermutated & Biopsy-only non-hypermutated & VUSo hypermutated & Biopsy-only hypermutated")
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3b.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # recist and psa
 #==================================================
@@ -446,3 +499,9 @@ axis(2, at = NULL, labels=NULL, cex.axis = 1.5, las = 1, lwd=1.5)
 mtext(side = 1, text = "Time (days)", line = 4, cex = 1.5)
 mtext(side = 2, text = "Percent change in\ntumor size\n(RECIST v1.1)", line = 4, cex = 1.5)
 dev.off()
+
+export_x = PSA
+export_y = RECIST %>%
+		   dplyr::rename(`RECIST`= `RECIST1.1`)
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3e_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Fig_3/Fig_3e_2.tsv", append=FALSE, col_names=TRUE)

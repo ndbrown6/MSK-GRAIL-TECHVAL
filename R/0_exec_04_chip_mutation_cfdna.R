@@ -167,6 +167,60 @@ pie(x=My[2,2:5], col=variant_cols[colnames(My)[2:5]], labels=My[2,2:5])
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = as.data.frame(Mx) %>%
+		   mutate(cohort = rownames(Mx)) %>%
+		   dplyr::select(`cohort` = cohort,
+		   				 `biopsy_only` = `biopsy_only`,
+		   				 `biopsy_matched`= `biopsy_matched`,
+		   				 `biopsy_subthreshold` = `IMPACT-BAM_matched`,
+		   				 `wbc_matched` = `WBC_matched`,
+		   				 `vuso` = `VUSo`) %>%
+		   mutate(tissue = case_when(
+		   		cohort == "Control" ~ "Healthy",
+		   		cohort == "Non-Hypermutators" ~ "Cancer",
+		   		cohort == "Breast" ~ "Breast",
+		   		cohort == "Lung" ~ "Lung",
+		   		cohort == "Prostate" ~ "Prostate")) %>%
+		   mutate(category = case_when(
+		   		cohort == "Control" ~ "NA",
+		   		cohort == "Non-Hypermutators" ~ "non_hypermutated",
+		   		cohort == "Breast" ~ "non_hypermutated",
+		   		cohort == "Lung" ~ "non_hypermutated",
+		   		cohort == "Prostate" ~ "non_hypermutated"))
+		   		
+export_y = as.data.frame(My) %>%
+		   mutate(cohort = rownames(My)) %>%
+		   dplyr::select(`cohort` = cohort,
+		   				 `biopsy_only` = `biopsy_only`,
+		   				 `biopsy_matched`= `biopsy_matched`,
+		   				 `biopsy_subthreshold` = `IMPACT-BAM_matched`,
+		   				 `wbc_matched` = `WBC_matched`,
+		   				 `vuso` = `VUSo`) %>%
+		   mutate(tissue = case_when(
+		   		cohort == "Control" ~ "Healthy",
+		   		cohort == "Hypermutators" ~ "Cancer",
+		   		cohort == "Breast" ~ "Breast",
+		   		cohort == "Lung" ~ "Lung",
+		   		cohort == "Prostate" ~ "Prostate")) %>%
+		   mutate(category = case_when(
+		   		cohort == "Control" ~ "NA",
+		   		cohort == "Hypermutators" ~ "hypermutated",
+		   		cohort == "Breast" ~ "hypermutated",
+		   		cohort == "Lung" ~ "hypermutated",
+		   		cohort == "Prostate" ~ "hypermutated")) %>%
+		   filter(cohort!="Control")
+export_x = bind_rows(export_x,
+					 export_y) %>%
+		   dplyr::select(cohort = tissue,
+		   				 category,
+		   				 biopsy_only,
+		   				 biopsy_matched,
+		   				 biopsy_subthreshold,
+		   				 wbc_matched,
+		   				 vuso)
+		   				 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4a.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # barplot of mutation burden and sources of mutation
 # per patient and cohort
@@ -307,6 +361,7 @@ cohort_stats = per_pat_smry %>%
 			   summarise(cohort_size = n(), positive_scored = sum(num > 0), percent_of_samples = 100 * sum(num > 0) / n()) %>%
 			   ungroup()
 
+export_x = NULL
 pdf(file="../res/figure4/barplot_bio_sources.pdf", width=12, height=9)
 par(mar = c(6.1, 6, 4.1, 1))
 zz = split.screen(figs=matrix(c(0.05,.55,.43,.93, .46,.96,.43,.93, 0.05,.55,0.09,.59, .46,.96,0.09,.59, 0,1,0,1), nrow=5, ncol=4, byrow=TRUE))
@@ -350,6 +405,12 @@ for (i in 1:length(subj)) {
   	biopsy_matched = biopsy_matched[index,,drop=FALSE]
   	biopsy_subthreshold = biopsy_subthreshold[index,,drop=FALSE]
   	
+  	export_x = rbind(export_x,
+  					 wbc_matched,
+  					 vuso,
+  					 biopsy_matched,
+  					 biopsy_subthreshold)
+  	
   	barplot(wbc_matched[,"num"]-.9, col=variant_cols["WBC_matched"], border="black", space=.16, axes=FALSE, ylim=c(-30,30), lwd=.01)
   	abline(h=0, col="white", lwd=4)
   	barplot(vuso[,"num"]+biopsy_matched[,"num"]+biopsy_subthreshold[,"num"], col=variant_cols["VUSo"], border="black", space=.16, add=TRUE, axes=FALSE, lwd=.01)
@@ -367,6 +428,20 @@ plot(0,0, type="n", xlim=c(0,10), ylim=c(-1,1), xlab="", ylab="", axes=FALSE, fr
 mtext(side = 2, text = expression("Somatic cfDNA variants / Mb"), line = 1.5, cex = 1.4)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = export_x %>%
+		   dplyr::select(`patient_id` = patient_id,
+		   				 `tissue` = subj_type,
+		   				 `bio_source` = bio_source,
+		   				 `n` = num) %>%
+		   mutate(n = abs(n)) %>%
+		   mutate(bio_source = case_when(
+		   		bio_source == "WBC_matched" ~ "wbc_matched",
+		   		bio_source == "VUSo" ~ "vuso",
+		   		bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   		bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4b.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # scatter plot of mutation burden versus age for
@@ -389,6 +464,8 @@ burden_cancer = variants %>%
  		  		mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
  		  		filter(subj_type!="Control") %>%
  		  		filter(!patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id))
+ 		  		
+export_x = NULL
 pdf(file="../res/figure4/mutational_burden_cfdna_combined.pdf", width=12, height=12)
 par(mar = c(6.1, 6.5, 4.1, 1.1))
 zz = split.screen(figs=matrix(c(0,.5,.5,1, .5,1,.5,1, 0,.5,0,.5, .5,1,0,.5), nrow=4, ncol=4, byrow=TRUE))
@@ -412,6 +489,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
+export_x = rbind(export_x, data)
 p0 = zeroinfl(as.numeric(num_called) ~ as.numeric(age), dist = "poisson", data = data)
 text(42, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coefficients$count[2,4], 3)), ")", sep = ""), pos = 4)
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
@@ -452,6 +530,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
+export_x = rbind(export_x, data)
 p0 = zeroinfl(as.numeric(num_called) ~ as.numeric(age), dist = "poisson", data = data)
 text(42, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coefficients$count[2,4], 3)), ")", sep = ""), pos = 4)
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
@@ -491,6 +570,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
+export_x = rbind(export_x, data)
 p0 = zeroinfl(as.numeric(num_called) ~ as.numeric(age), dist = "poisson", data = data)
 text(45, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coefficients$count[2,4], 3)), ")", sep = ""), pos = 4)
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
@@ -524,6 +604,7 @@ if (length(indx)!=0) {
 	tmp = data.frame(tmp)
 	data = rbind(data, tmp)
 }
+export_x = rbind(export_x, data)
 p0 = zeroinfl(as.numeric(num_called) ~ as.numeric(age), dist = "poisson", data = data)
 text(45, 49, cex = 1.25, labels = paste("(P = ", toupper(signif(summary(p0)$coefficients$count[2,4], 3)), ")", sep = ""), pos = 4)
 y0 = fun_zerob(x=as.numeric(data[,"age"]), y=as.numeric(data[,"num_called"]), n=1000, seed=0)
@@ -541,6 +622,20 @@ title(main="Biopsy subthreshold", cex.main=1.5)
 
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = export_x %>%
+		   dplyr::select(`patient_id` = patient_id,
+		   				 `tissue` = subj_type,
+		   				 `bio_source` = bio_source,
+		   				 `n` = num_called,
+		   				 `age` = age) %>%
+		   mutate(bio_source = case_when(
+		   		bio_source == "WBC_matched" ~ "wbc_matched",
+		   		bio_source == "VUSo" ~ "vuso",
+		   		bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   		bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4c.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # heat map of wbc-matched variants number of variants
@@ -568,6 +663,13 @@ corrplot(corr=ny[1:30,,drop=FALSE], method="color", type="full", add=FALSE,
 		 addgrid.col="white", diag=TRUE, outline=FALSE, mar=c(1, 0, 1, 0), cl.pos="n",
  		 addCoef.col = "black", number.font = 1, number.cex = 1.15, tl.cex = 1.5, tl.col = "black", tl.offset = 0.5)
 dev.off()
+
+export_x = as.data.frame(ny) %>%
+		   mutate(gene_id = rownames(ny)) %>%
+		   dplyr::select(gene_id, `control` = Control, `breast` = Breast, `lung` = Lung, `prostate` = Prostate)
+export_x = export_x[1:30,,drop=FALSE]
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4d.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # heat map of wbc-matched variants gene recurrences
@@ -646,9 +748,9 @@ dev.off()
 variants_nohyper = variants %>%
 		   		   filter(!patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id))
 cfdna_vs_gdna_vaf_plot = variants_nohyper %>%
-						  filter(is_nonsyn) %>%
-						  filter(!is.na(afmeancfdna)) %>%
-						  filter(bio_source %in% c("WBC_matched","biopsy_matched","VUSo", "IMPACT-BAM_matched"))
+						 filter(is_nonsyn) %>%
+						 filter(!is.na(afmeancfdna)) %>%
+						 filter(bio_source %in% c("WBC_matched","biopsy_matched","VUSo", "IMPACT-BAM_matched"))
 
 pdf(file="../res/figure4/vaf2vaf_scatterplot.pdf", width=8, height=8)
 par(mar = c(6.1, 6, 4.1, 1))
@@ -670,3 +772,312 @@ mtext(side = 1, text = "VAF in cfDNA (%)", line = 4, cex = 1.85)
 mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
 legend(x=0.01, y=19, pch=21, col="black", pt.bg=variant_cols[c("biopsy_matched", "IMPACT-BAM_matched", "VUSo", "WBC_matched")], pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
 dev.off()
+
+export_x = cfdna_vs_gdna_vaf_plot %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 gene_id = gene_id,
+		   				 chromosome = chrom,
+		   				 position = position,
+		   				 reference_allele = ref_orig,
+		   				 alternate_allele = alt_orig,
+		   				 cfdna_af = afmeancfdna,
+		   				 wbc_af = afmeangdna,
+		   				 bio_source = bio_source) %>%
+		   	mutate(bio_source = case_when(
+		   			bio_source == "WBC_matched" ~ "wbc_matched",
+		   			bio_source == "VUSo" ~ "vuso",
+		   			bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   			bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4e.tsv", append=FALSE, col_names=TRUE)
+
+#==================================================
+# scatter of vaf in cfdna versus
+# vaf by ddPCR for VUSo
+#==================================================
+tracker = read_csv(file=patient_tracker, col_types = cols(.default = col_character()))  %>%
+ 				   type_convert()
+ 				   
+qc = read_tsv(file=url_qc.metrics, col_types = cols(.default = col_character()))  %>%
+ 			  type_convert()
+ 			  
+snv = read_tsv(snv_file$scored, col_types = cols(.default = col_character())) %>%
+		       type_convert() %>%
+		       mutate(level_2a = as.character(level_2a)) %>%
+		       mutate(level_r1 = as.character(level_r1))
+
+ver_tidy = "../modified_v11/"
+s3_target = paste0(ver_tidy, "Resources/Bed_files/pan_v2_wo_decoy_wo_iSNP_wo_CNV_IMPACT_common_regions.merged.bed")		       
+bed = read_tsv(file=s3_target, col_names = c("chrom", "start", "end"), col_types = cols(.default = col_character())) %>%
+		       type_convert() %>%
+			   mutate(is_clean = TRUE)
+
+vuso = read_tsv(file=paste0(ver_tidy, "Resources/MSK_additional_data/Table_S7_vuso_biorad_ddpcr_annot.tsv"), col_types = cols(.default = col_character())) %>%
+		        type_convert()
+
+leftover = read_tsv(file=url_leftover_samples, col_types = cols(.default = col_character())) %>%
+		            type_convert()
+
+results = read_csv(file=url_ddpcr_results, col_types = cols(.default = col_character())) %>%
+		           type_convert()
+		           
+vuso_target = vuso %>%
+  			  filter(!is.na(FAM_Assay_ID)) %>%
+  			  mutate(chrom = paste0("chr", Chromosome)) %>%
+  			  dplyr::select(patient_id = Tumor_Sample_Barcode,
+  			  		 gene = Hugo_Symbol,
+  			  		 chrom,
+  			  		 position = Start_Position,
+  			  		 ref = Reference_Allele,
+  			  		 alt = Tumor_Seq_Allele2,
+  			  		 HGVSc,
+  			  		 HGVSp_Short,
+  			  		 UUID,
+  			  		 FAM_Assay_ID,
+  			  		 HEX_Assay_ID,
+  			  		 FAM_HEX_Assay_ID)
+  			  		 
+id_candidate = as.character(unique(vuso_target$patient_id))
+
+ddpcr_target = vuso_target %>%
+  			   dplyr::select(-patient_id) %>%
+  			   unique()
+  			   
+lib_op = data.frame(Library_preparation_performed_by = c("OP1", "OP2", "OP3", "OP4", "OP5"),
+                    Library_prep_operator = c("CT", "JN", "YP", "TL", "MG"))
+                    
+qc_short = qc %>%
+  		   filter(sample_type == "cfDNA") %>%
+  		   filter(Study == "TechVal" & tissue != "Healthy") %>%
+  		   left_join(lib_op) %>%
+  		   mutate(Library_yield_ng = ifelse(is.na(Library_yield_ng), Adapter_dimer_ng*(100-Percent_dimer)/Percent_dimer, Library_yield_ng)) %>%
+  		   dplyr::select(patient_id,
+  		   		  sample_id,
+  		   		  tube_id,
+  		   		  tissue,
+                  DNA_extraction_date,
+                  DNA_extraction_yield_ng,
+                  Library_preparation_start_date,
+                  Library_prep_operator,
+                  Library_yield_ng)
+                  
+leftover_samples = leftover %>%
+				   filter(cfDNA_evaluable) %>%
+				   dplyr::select(patient_id,
+				   		  tube_id,
+				   		  ddPCR_candidate_sample,
+				   		  striptube_label,
+				   		  striptube_position,
+				   		  leftover_cfDNA_volume_ul,
+				   		  leftover_undiluted_library_volume_ul,
+				   		  leftover_10xdiluted_library_volume_ul) %>%
+				   left_join(qc_short) %>%
+				   mutate(leftover_cfDNA_ng = DNA_extraction_yield_ng/60*leftover_cfDNA_volume_ul,
+         				  leftover_undiluted_library_ng = Library_yield_ng/20*leftover_undiluted_library_volume_ul,
+         				  leftover_10xdiluted_library_ng = Library_yield_ng/20/10*leftover_10xdiluted_library_volume_ul,
+         				  leftover_library_ng = pmax(leftover_undiluted_library_ng, leftover_10xdiluted_library_ng)) %>%
+  				   mutate(cfDNA_available = ifelse(leftover_cfDNA_ng > 100, TRUE, FALSE), library_available = ifelse(leftover_library_ng > 300, TRUE, FALSE)) %>%
+  				   filter(ddPCR_candidate_sample | library_available)
+
+id_leftover = as.character(unique(leftover_samples$patient_id))
+
+snv_short = snv %>%
+			mutate(start = position, end = position +1) %>%
+			genome_left_join(bed, by = c("chrom", "start", "end")) %>%
+			mutate(chrom = chrom.x) %>%
+			dplyr::select(-c(chrom.x, chrom.y, start.x, end.x, start.y, end.y)) %>%
+			filter(is_clean) %>%
+			filter(patient_id %in% id_leftover) %>%
+			mutate(ref = ifelse(is.na(ref), c_ref, ref),
+				   alt = ifelse(is.na(alt), c_alt, alt),
+				   gene = ifelse(is.na(gene), c_gene, gene),
+				   hgvsc = ifelse(is.na(hgvs_c), cdna_change, hgvs_c),
+				   hgvsp = ifelse(is.na(hgvs_p), cdna_change, hgvs_p),
+         		   hgvsp_short = ifelse(is.na(hgvsp_short), amino_acid_change, hgvsp_short)) %>%
+        	mutate(adnobaq = ifelse(is.na(adnobaq), 0, adnobaq), af_cfdna = ifelse(is.na(dpnobaq), 0, adnobaq/dpnobaq)) %>%
+        	dplyr::select(patient_id,
+        		   chrom,
+        		   position,
+        		   ref,
+        		   alt,
+                   gene,
+                   hgvsc,
+                   hgvsp,
+                   hgvsp_short, 
+                   MSK,
+                   grail,
+                   t_depth,
+                   t_ref_count,
+                   t_alt_count,
+                   adnobaq,
+                   dpnobaq,
+                   af_cfdna,
+                   filter) %>%
+  			full_join(ddpcr_target)
+
+df_merged = full_join(leftover_samples, snv_short)
+
+df_merged %>% filter(ddPCR_candidate_sample) %>%
+  			filter(MSK == 0) %>%
+  			filter(!is.na(FAM_HEX_Assay_ID)) %>%
+  			arrange(patient_id, -af_cfdna) %>%
+  			mutate(`cfDNA MAF (%)` = round(af_cfdna*100, 2)) %>%
+  			dplyr::select(patient_id, gene, HGVSp_Short, `cfDNA MAF (%)`, `ddPCR assay` = FAM_HEX_Assay_ID) %>%
+  			pandoc.table(caption = "Candidate VUSo for ddPCR Retest", split.table = Inf)
+  			
+df_leftover = df_merged %>%
+			  filter(ddPCR_candidate_sample) %>%
+			  filter(MSK == 0) %>%
+			  filter(!is.na(FAM_HEX_Assay_ID))
+
+agg_probes = aggregate(data = df_leftover, UUID ~ patient_id, toString) %>%
+			 mutate(ddPCR_assay = UUID) %>%
+			 dplyr::select(-UUID)
+
+df_leftover %>% arrange(-library_available, -cfDNA_available, patient_id) %>%
+				dplyr::select(patient_id, `cfDNA (ng)` = leftover_cfDNA_ng, `library (ng)` = leftover_library_ng) %>%
+				unique() %>%
+				full_join(agg_probes) %>%
+				pandoc.table(caption = "Estimated Leftover cfDNA and Library Amount", split.table = Inf, round = 0)
+
+retest = df_merged %>%
+		 filter(ddPCR_candidate_sample) %>%
+		 filter(filter == "PASS" | MSK == 1) %>%
+		 filter(library_available | cfDNA_available) %>%
+		 filter(af_cfdna < 0.1) %>%
+		 mutate(variant_name = paste0(gene, "_", hgvsp)) %>%
+		 group_by(patient_id) %>%
+		 mutate(select_ddPCR_assay = ifelse(af_cfdna == max(af_cfdna[!is.na(FAM_Assay_ID)]), TRUE, FALSE),
+         		max_af_cfdna = max(af_cfdna),
+         		max_af_matched = ifelse(max(af_cfdna[MSK == 1]) < 0, NA, max(af_cfdna[MSK == 1])),
+         		variant_max_af_cfdna = variant_name[af_cfdna == max_af_cfdna],
+         		variant_max_af_matched = ifelse(is.na(max_af_matched), NA, variant_name[af_cfdna == max_af_matched])) %>%
+         ungroup()
+
+retest %>% filter(select_ddPCR_assay) %>%
+		   arrange(patient_id) %>%
+		   mutate(af_cfdna = round(af_cfdna*100,2),
+         		  max_af_cfdna = round(max_af_cfdna*100,2),
+         		  max_af_matched = round(max_af_matched*100,2)) %>%
+           dplyr::select(patient_id, `ddPCR assay` = UUID, `MAF (%)` = af_cfdna, `Highest MAF SNV` = variant_max_af_cfdna, `Highest MAF (%)` = max_af_cfdna) %>%
+           pandoc.table(split.table = Inf, caption = "Selected Paient Samples for ddPCR Retest")
+
+n_cfDNA <- length(unique(retest$patient_id[retest$cfDNA_available]))
+n_library <- length(unique(retest$patient_id[retest$library_available]))
+n_ddPCR_assay <- length(unique(retest$UUID[retest$select_ddPCR_assay]))
+n_positive_runs <- 3*n_cfDNA + 3*n_library
+n_negative_runs <- 3*n_ddPCR_assay
+
+select_ddPCR = retest %>%
+			   filter(select_ddPCR_assay) %>%
+			   dplyr::select(UUID, chrom, position, ref, alt) %>%
+			   unique()
+
+id_blacklisted = df_merged %>%
+				 right_join(select_ddPCR) %>%
+				 dplyr::select(patient_id) %>%
+				 unique()
+
+id_neg = setdiff(id_leftover, id_blacklisted$patient_id)
+
+neg = df_merged %>%
+	  filter(library_available) %>%
+	  filter(patient_id %in% id_neg) %>%
+	  filter(filter == "PASS") %>%
+	  mutate(variant_name = paste0(gene, "_", hgvsp)) %>%
+	  group_by(patient_id) %>%
+	  mutate(max_af_cfdna = max(af_cfdna),
+	  		 variant_max_af_cfdna = variant_name[af_cfdna == max_af_cfdna],
+	  		 n_variants = n()) %>%
+	  mutate(max_af_cfdna = round(max_af_cfdna*100,2)) %>%
+	  ungroup()
+
+neg %>% arrange(tissue, max_af_cfdna) %>%
+		dplyr::select(patient_id, `library (ng)` = leftover_library_ng, `Highest cfDNA MAF (%)` = max_af_cfdna, `N cfDNA variants` = n_variants,  `ddPCR target` = UUID) %>%
+  		unique() %>%
+  		pandoc.table(split.table = Inf, caption = "Candidate Negative Patient Samples")
+
+ddpcr_results = results %>%
+				filter(!is.na(patient_id)) %>%
+				filter(Target != "WT") %>%
+				mutate(patient_id = gsub("_", "-", patient_id)) %>%
+				mutate(af_ddPCR = ifelse(is.na(`Fractional Abundance`), 0, `Fractional Abundance`/100)) %>%
+				dplyr::select(patient_id, input_type, rep, Sample, UUID = Target, af_ddPCR)
+
+ddpcr_results2 = df_merged %>%
+				 filter(filter == "PASS" | MSK == 1) %>%
+				 full_join(ddpcr_results, by = c("patient_id", "UUID")) %>%
+				 filter(!is.na(af_ddPCR)) %>%
+				 mutate(af_cfdna = ifelse(is.na(af_cfdna), 0, af_cfdna)) %>%
+				 group_by(patient_id) %>%
+				 mutate(ddPCR_retest = ifelse(n() == 1, "Negative", "Positive")) %>%
+				 ungroup()
+
+ddpcr_results_pos = ddpcr_results2 %>%
+					filter(ddPCR_retest == "Positive") %>%
+					group_by(patient_id, UUID, ddPCR_retest, input_type) %>%
+					summarise(af_ddPCR_mean = mean(af_ddPCR), af_ddPCR_sd = sd(af_ddPCR), af_cfdna = unique(af_cfdna))
+					
+ddpcr_results_neg = ddpcr_results2 %>%
+					filter(ddPCR_retest == "Negative") %>%
+					group_by(UUID, ddPCR_retest, input_type) %>%
+					summarise(patient_id = NA, af_ddPCR_mean = mean(af_ddPCR), af_ddPCR_sd = sd(af_ddPCR), af_cfdna = unique(af_cfdna))
+					
+					
+ddpcr_results_summary = rbind(ddpcr_results_pos, ddpcr_results_neg)
+
+ddpcr_results_summary %>% arrange(UUID, ddPCR_retest, patient_id) %>%
+						  dplyr::select(`ddPCR assay` = UUID,
+						  		 ddPCR_retest,
+						  		 patient_id,
+						  		 input_type, 
+						  		 `AF ddPCR, mean` = af_ddPCR_mean,
+						  		 `AF ddPCR, std` = af_ddPCR_sd,
+                				 `AF GRAIL` = af_cfdna) %>%
+  						  pandoc.table(split.table = Inf, caption = "ddPCR Tested Samples")
+  						  
+tmp = ddpcr_results_summary %>%
+	  dplyr::select(patient_id, UUID, ddPCR_retest, input_type, af_ddPCR_mean, af_ddPCR_sd, af_cfdna) %>%
+	  mutate(af_ddPCR_mean = ifelse(af_ddPCR_mean < 5e-5, 2e-4, af_ddPCR_mean)) %>%
+	  mutate(af_cfdna = ifelse(af_cfdna == 0, 2e-4, af_cfdna)) %>%
+	  mutate(af_ddPCR_mean = af_ddPCR_mean*100) %>%
+	  mutate(af_cfdna = af_cfdna*100) %>%
+	  mutate(facet = "VUSo") %>%
+	  mutate(input_type = factor(ifelse(input_type=="library", "Library", input_type))) %>%
+	  mutate(UID = gsub("_p.", " ", as.character(UUID), fixed=TRUE))
+
+fill = c("cfDNA"="#D7191C", "Library"="#2B83BA")
+shape = c("Positive"=24, "Negative"=21)
+
+pdf(file="../res/figure4/ddPCR_VUSo.pdf", width=8, height=8)
+par(mar = c(6.1, 6, 4.1, 1))
+plot(1,1, type="n", xlim=c(2e-2,10), ylim=c(2e-2,10), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
+points(x=c(0.02, 9), y=c(0.02,9), type="l", lty=1, lwd=2, col="goldenrod3")
+x = tmp$af_ddPCR_mean
+y = tmp$af_cfdna
+points(x, y, type="p", col="black", bg=fill[tmp$input_type], pch=shape[tmp$ddPCR_retest], lwd=.5, cex=1.55)
+axis(1, at = c(.02, .05, .10, .25, 1.0, 2.5, 5.0, 10.0), labels = c("ND", ".05", ".1", ".25", "1", "2.5", "5", "10"), cex.axis = 1.5, padj = 0.25, lwd=1.5, lwd.ticks=1.35)
+axis(2, at = c(.02, .05, .10, .25, 1.0, 2.5, 5.0, 10.0), labels = c("ND", ".05", ".1", ".25", "1", "2.5", "5", "10"), cex.axis = 1.5, las = 1, lwd=1.5, lwd.ticks=1.35)
+mtext(side = 1, text = "ddPCR (%)", line = 4, cex = 1.85)
+mtext(side = 2, text = "Targeted DNA assay (%)", line = 4, cex = 1.85)
+text(x=0.03, y=10.5, labels="Called in targeted\ncfDNA assay")
+legend(x=0.02, y=10, pch=shape, col="black", pt.bg="black", pt.cex=1.55, pt.lwd=.5, legend=paste0(" ", names(shape)), box.lwd=-1, cex=1.15)
+text(x=0.03, y=4.5, labels="Input type")
+legend(x=0.02, y=3.5, pch=21, col="black", pt.bg=fill, pt.cex=1.55, pt.lwd=.5, legend=paste0(" ", names(fill)), box.lwd=-1, cex=1.15)
+dev.off()
+
+export_x = ddpcr_results2 %>%
+		   dplyr::select(`patient_id` = patient_id,
+		   				 `tissue` = tissue,
+		   				 `uuid` = UUID,
+		   				 `input_type` = input_type,
+		   				 `expected` = ddPCR_retest,
+		   				 `af_cfdna` = af_cfdna,
+		   				 `af_ddpcr` = af_ddPCR) %>%
+		   mutate(tissue = case_when(
+		   		grepl("VB", patient_id) ~ "Breast",
+		   		grepl("VL", patient_id) ~ "Lung",
+		   		grepl("VP", patient_id) ~ "Prostate"))
+		   		
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4f.tsv", append=FALSE, col_names=TRUE)

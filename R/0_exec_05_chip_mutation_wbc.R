@@ -461,7 +461,7 @@ clinical = read_tsv(clinical_file, col_types = cols(.default = col_character()))
  			   
 valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
 
-qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+qc_metrics_cfdna = read.csv(file=url_qc.metrics, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	   filter(sample_type=="cfDNA")
 			 	   
@@ -470,7 +470,7 @@ tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", strin
 					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
 qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
 
-qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+qc_metrics_wbc = read.csv(file=url_qc.metrics, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	 filter(sample_type=="gDNA") %>%
 			 	 mutate(sample_type = "WBC")
@@ -522,6 +522,16 @@ mtext(side = 2, text = expression("Somatic variants / Mb"), line = 5, cex = 1.85
 mtext(side = 1, text = "Age (years)", line = 4, cex = 1.5)
 legend("topleft", legend=c("Cancer", "Control"), pch=21, col="#231F20", pt.bg=c("#EAA411", "#1F6784"), box.lwd=-1, pt.lwd=0, pt.cex=1.35, cex=1.15)
 dev.off()
+
+export_x = data %>%
+		   filter(!(patient_id %in% hypermutators$patient_id)) %>%
+		   filter(!(patient_id %in% msi_hypermutators$patient_id)) %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 n = num_called_wbc,
+		   				 age = age)
+		   				 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5b.tsv", append=FALSE, col_names=TRUE)
  
 #==================================================
 # bar plot of mutation burden for all individuals
@@ -716,7 +726,7 @@ for (i in 1:nrow(data_all)) {
 	}
 }
 plot(1,1, type="n", xlab="", ylab="", axes=FALSE, frame.plot=FALSE, xlim=c(0,220), ylim=c(100,0.05), log="y")
- for (i in 1:nrow(zzz)) {
+for (i in 1:nrow(zzz)) {
   	points(rep(zzz[i,1], 2), c(0.05, (max_vaf)[i]), type="l", col=cols[i], lwd=1.35)
 }
 to_plot = c("DNMT3A", "TP53", "TET2", "ASXL1", "PPM1D")
@@ -732,6 +742,51 @@ axis(2, at = c(0.05,0.1,0.5,1,5,10,50), labels = c("0.05","0.1","0.5","1.0","5.0
 mtext(side = 2, text = "VAF (%)", line = 3.75, cex = 1.35)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = data_ch %>%
+		   mutate(patient_id = rownames(data_ch)) %>%
+		   dplyr::select(-study, -num_called, -age)
+export_y = data_cfdna %>%
+		   mutate(patient_id = rownames(data_cfdna)) %>%
+		   dplyr::select(-study, -age) %>%
+		   dplyr::rename(cfdna = num_called)
+export_z = data_all %>%
+		   mutate(patient_id = rownames(data_all)) %>%
+		   dplyr::select(-study) %>%
+		   dplyr::rename(wbc = num_called)
+export_x = export_x %>%
+		   left_join(export_y, by = "patient_id") %>%
+		   left_join(export_z, by = "patient_id") %>%
+		   mutate(tissue = case_when(
+		   		grepl("W", patient_id) ~ "Control",
+		   		grepl("VB", patient_id) ~ "Breast",
+		   		grepl("VL", patient_id) ~ "Lung",
+		   		grepl("VP", patient_id) ~ "Prostate"
+		   )) %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = tissue,
+		   				 n_wbc = wbc,
+		   				 n_cfdna = cfdna,
+		   				 age = age,
+		   				 dnmt3a = DNMT3A,
+		   				 tet2 = TET2,
+		   				 asxl1 = ASXL1,
+		   				 ppm1d = PPM1D,
+		   				 tp53 = TP53,
+		   				 jak2 = JAK2,
+		   				 runx1 = RUNX1,
+		   				 sf3b1 = SF3B1,
+		   				 srsf2 = SRSF2,
+		   				 idh1 = IDH1,
+		   				 idh2 = IDH2,
+		   				 u2af1 = U2AF1,
+		   				 cbl = CBL,
+		   				 atm = ATM,
+		   				 chek2 = CHEK2) %>%
+			filter(!(patient_id %in% hypermutators$patient_id)) %>%
+			filter(!(patient_id %in% msi_hypermutators$patient_id))
+		   				 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # stacked barplot of dominant ch mutation
@@ -823,6 +878,54 @@ text(x=94, y=14, labels="**", cex=.5)
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = data_ch %>%
+		   mutate(patient_id = rownames(data_ch)) %>%
+		   mutate(tissue = case_when(
+		   	grepl("W", patient_id) ~ "Control",
+		   	grepl("VB", patient_id) ~ "Breast",
+		   	grepl("VL", patient_id) ~ "Lung",
+		   	grepl("VP", patient_id) ~ "Prostate",
+		   )) %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = tissue,
+		   				 dnmt3a = DNMT3A,
+		   				 tet2 = TET2,
+		   				 asxl1 = ASXL1,
+		   				 ppm1d = PPM1D,
+		   				 tp53 = TP53,
+		   				 jak2 = JAK2,
+		   				 runx1 = RUNX1,
+		   				 sf3b1 = SF3B1,
+		   				 srsf2 = SRSF2,
+		   				 idh1 = IDH1,
+		   				 idh2 = IDH2,
+		   				 u2af1 = U2AF1,
+		   				 cbl = CBL,
+		   				 atm = ATM,
+		   				 chek2 = CHEK2) %>%
+		   	mutate(dnmt3a =  ifelse(is.na(dnmt3a), 0, 1),
+		   		   tet2   =  ifelse(is.na(tet2), 0, 1),
+		   		   asxl1  =  ifelse(is.na(asxl1), 0, 1),
+		   		   ppm1d  =  ifelse(is.na(ppm1d), 0, 1),
+		   		   tp53   =  ifelse(is.na(tp53), 0, 1),
+		   		   jak2   =  ifelse(is.na(jak2), 0, 1),
+		   		   runx1  =  ifelse(is.na(runx1), 0, 1),
+		   		   sf3b1  =  ifelse(is.na(sf3b1), 0, 1),
+		   		   srsf2  =  ifelse(is.na(srsf2), 0, 1),
+		   		   idh1   =  ifelse(is.na(idh1), 0, 1),
+		   		   idh2   =  ifelse(is.na(idh2), 0, 1),
+		   		   u2af1  =  ifelse(is.na(u2af1), 0, 1),
+		   		   cbl    =  ifelse(is.na(cbl), 0, 1),
+		   		   atm    =  ifelse(is.na(atm), 0, 1),
+		   		   chek2  =  ifelse(is.na(chek2), 0, 1)) %>%
+			left_join(tx %>%
+					  mutate(patient_id = rownames(tx)), by="patient_id") %>%
+			filter(!(patient_id %in% hypermutators$patient_id)) %>%
+			filter(!(patient_id %in% msi_hypermutators$patient_id)) %>%
+			dplyr::arrange(patient_id, tissue)
+			
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5c.tsv", append=FALSE, col_names=TRUE)
+		   				 
 #==================================================
 # corr plot of ratio indels to snvs
 #==================================================
@@ -887,3 +990,22 @@ corr_plot(corr=m, corr2=m2, method="circle", is.corr=FALSE, addgrid.col=NA,
 		  col=colorRampPalette(c("#ffffff", rep("#c33764", 4), "#1d2671"))(100),
 		  cl.lim=c(-0.01,1.6), tl.cex=1.25, tl.col="black", cl.pos = "n")
 dev.off()
+
+export_x = as.data.frame(100*m) %>%
+		   mutate(arm = rownames(m),
+		   		  category = "% frequency")
+export_y = as.data.frame(m2) %>%
+		   mutate(arm = rownames(m2),
+		   		  category = "% truncating variant")
+		   		  
+export_x = bind_rows(export_x, export_y) %>%
+		   dplyr::select(arm = arm,
+		   				 category = category,
+		   				 dnmt3a = DNMT3A,
+		   				 tp53 = TP53,
+		   				 tet2 = TET2,
+		   				 asxl1 = ASXL1,
+		   				 ppm1d = PPM1D,
+		   				 other = `Other CH`)
+
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5d.tsv", append=FALSE, col_names=TRUE)

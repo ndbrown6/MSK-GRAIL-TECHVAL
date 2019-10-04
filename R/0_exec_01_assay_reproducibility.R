@@ -86,6 +86,31 @@ mtext(side = 1, text = "Variant allele frequency (%)", line = 4, cex = 1.5)
 mtext(side = 2, text = "Detection probability", line = 4, cex = 1.5)
 dev.off()
 
+export_x = show.data %>%
+		   filter(expected_af<1.2) %>%
+		   dplyr::select(`expected_af` = expected_af,
+		   				 `fitted_af` = yfit,
+		   				 `ci_low` = ymin,
+		   				 `ci_high` = ymax,
+		   				 `group` = group)
+export_y = sensitivity %>%
+		   filter(!isedge) %>%
+		   filter(filter=="PASS") %>%
+		   dplyr::select(`gdna_standard_id` = patient_id,
+		   				 `chromosome` = chrom,
+		   				 `position` = pos,
+		   				 `reference_allele` = ref,
+		   				 `alternate_allele` = alt,
+		   				 `stock_af` = stock_af,
+		   				 `nominal_af` = nominal_af,
+		   				 `expected_af` = expected_af,
+		   				 `dilution_factor` = dilution_factor,
+		   				 `group` = group,
+		   				 `call` = call)
+		   				 
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1b_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Fig_1/Fig_1b_2.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # scatter plot of replicates non-hypermutators
 #==================================================
@@ -304,6 +329,23 @@ z1 = as.character(df$MSK)
 points(x, y,  pch=shapes[z1], col="salmon", cex=.55)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = df3 %>%
+		   dplyr::select(`patient_id` = patient_id.1,
+		   				 `tissue` = subj_type.1,
+		   				 `gene_id` = gene_id,
+		   				 `chromosome` = loc.1,
+		   				 `position` = position,
+		   				 `reference_allele` = ref,
+		   				 `alternate_allele` = alt,
+		   				 `hgvs_c` = hgvs_c,
+		   				 `af_cfdna_replicate_1` = af_point_cfdna.1,
+		   				 `af_cfdna_replicate_2` = af_point_cfdna.2,
+		   				 `variant_category` = MSK,
+		   				 `biopsy_concordance` = cat_minus) %>%
+		   	mutate(chromosome = unlist(lapply(strsplit(df3$loc.1, ":", fixed=TRUE), function(x) {x[1]})))
+		   	
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1d.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # scatter plot of replicates hypermutator
@@ -526,6 +568,23 @@ points(x, y,  pch=shapes[z1], col="salmon", cex=.55)
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = df3 %>%
+		   dplyr::select(`patient_id` = patient_id.1,
+		   				 `tissue` = subj_type.1,
+		   				 `gene_id` = gene_id,
+		   				 `chromosome` = loc.1,
+		   				 `position` = position,
+		   				 `reference_allele` = ref,
+		   				 `alternate_allele` = alt,
+		   				 `hgvs_c` = hgvs_c,
+		   				 `af_cfdna_replicate_1` = af_point_cfdna.1,
+		   				 `af_cfdna_replicate_2` = af_point_cfdna.2,
+		   				 `variant_category` = MSK,
+		   				 `biopsy_concordance` = cat_minus) %>%
+		   	mutate(chromosome = unlist(lapply(strsplit(df3$loc.1, ":", fixed=TRUE), function(x) {x[1]})))
+		   	
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1e.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # scatter plot of replicates and ddpcr
 #==================================================
@@ -591,3 +650,19 @@ text(x=8.4, y=3.9, labels="KRAS G12C")
 text(x=7, y=23, labels="PIK3CA H1047R")
 text(x=12, y=35, labels="PIK3CA E542K")
 dev.off()
+
+export_x = combined %>%
+		   dplyr::select(`patient_id` = patient_id,
+		   				 `tissue` = sample_id,
+		   				 `gene_id` = gene,
+		   				 `hgvs_p` = hgvsp,
+		   				 `af_cfdna_targeted_dna_assay` = af_grail,
+		   				 `af_cfdna_ddpcr` = af_ddPCR,
+		   				 `protocol` = Protocol,
+		   				 `annotation` = probe) %>%
+		   	mutate(tissue = case_when(
+  			  			grepl("VB", patient_id) ~ "Breast",
+  			  			grepl("VP", patient_id) ~ "Prostate",
+  			  			grepl("VL", patient_id) ~ "Lung"))
+		   	
+write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1f.tsv", append=FALSE, col_names=TRUE)
