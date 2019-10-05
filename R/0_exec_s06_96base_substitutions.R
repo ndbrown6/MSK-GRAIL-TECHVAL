@@ -34,6 +34,9 @@ indel_vars = read_tsv(indel_file$scored, col_types = cols(.default = col_charact
 wbc_stack = read_tsv(wbc_variants$scored, col_types = cols(.default = col_character())) %>%
 			type_convert()
 			
+msk_anno = read_tsv(msk_anno_joined, col_types = cols(.default = col_character())) %>%
+  		   type_convert()
+			
 tracker_grail = read_csv(file=patient_tracker)
 
 tracker_impact = read_csv(file=impact_tracker)

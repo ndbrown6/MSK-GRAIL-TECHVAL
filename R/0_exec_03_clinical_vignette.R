@@ -173,7 +173,7 @@ summ_per_patient_cfdna = variants %>%
 				   filter(subj_type!="Control") %>%
 				   filter(bio_source %in% c("VUSo", "biopsy_matched")) %>%
  				   group_by(patient_id) %>%
- 				   summarize(num_called = n()) %>%
+ 				   dplyr::summarize(num_called = n()) %>%
  				   mutate(TMB = num_called/total_bed_Mb) %>%
  				   ungroup()
  
@@ -181,7 +181,7 @@ summ_per_patient_impact = variants %>%
 				   filter(subj_type!="Control") %>%
 				   filter(bio_source %in% c("biopsy_matched", "biopsy_only")) %>%
  				   group_by(patient_id) %>%
- 				   summarize(num_called = n()) %>%
+ 				   dplyr::summarize(num_called = n()) %>%
  				   mutate(TMB = num_called/total_bed_Mb) %>%
  				   ungroup()
  				   
@@ -283,7 +283,7 @@ dev.off()
 summ_per_patient_cfdna = variants_cfdna %>%
 				   filter(bio_source %in% c("VUSo", "biopsy_matched")) %>%
  				   group_by(patient_id) %>%
- 				   summarize(num_called = n()) %>%
+ 				   dplyr::summarize(num_called = n()) %>%
  				   mutate(TMB = num_called/total_bed_Mb) %>%
  				   ungroup()
 sig2extract = c(1:6,10,13,15,20,26)

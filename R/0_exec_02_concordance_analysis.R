@@ -127,13 +127,13 @@ variants = variants %>%
 # sum the number of times a gene occurs in a bio_source in each tissue type
 subj_num_smry = variants %>%
 				group_by(subj_type) %>%
-    			summarise(subj_num = length(unique(patient_id))) %>%
+    			dplyr::summarize(subj_num = length(unique(patient_id))) %>%
     			ungroup()
   
 gene_recurrences = variants %>%
 				   filter(!is.na(gene), bio_source %in% c("biopsy_matched", "biopsy_only") | (bio_source %in% c("IMPACT-BAM_matched", "VUSo") & is_nonsyn)) %>%
  				   group_by(bio_source, subj_type, gene) %>%
- 				   summarize(number = n(), num_patient = length(unique(patient_id))) %>%
+ 				   dplyr::summarize(number = n(), num_patient = length(unique(patient_id))) %>%
  				   ungroup %>%
  				   left_join(subj_num_smry) %>%
  				   mutate(percent_patient = round(num_patient / subj_num * 100, 0))
@@ -144,7 +144,7 @@ for (subj in subj_num_smry$subj_type[subj_num_smry$subj_type != "Control"]) {
 						  filter(subj_type == subj,
 						  bio_source %in% c("biopsy_matched", "biopsy_only")) %>%
  						  group_by(gene) %>%
- 						  summarise(all = sum(percent_patient)) %>%
+ 						  dplyr::summarize(all = sum(percent_patient)) %>%
  						  ungroup() %>%
  						  arrange(-all) %>%
  						  slice(1:15) %>%
@@ -156,7 +156,7 @@ gene_list = unique(gene_list)
 top_cancer_genes_ordered = gene_recurrences %>%
  						   filter(bio_source %in% c("biopsy_matched", "biopsy_only"), gene %in% gene_list) %>%
  						   group_by(gene) %>%
- 						   summarise(perc = sum(percent_patient)) %>%
+ 						   dplyr::summarize(perc = sum(percent_patient)) %>%
  						   ungroup() %>%
  						   arrange(-perc) %>%
  						   .[["gene"]]
@@ -375,7 +375,7 @@ for (i in 1:length(cancer_types)) {
  	per_pat_smry = cancer_vars_tissue_ref %>%
    				   filter(bio_source != "VUSo") %>%
    				   group_by(subj_type, patient_id, bio_source) %>%
-   				   summarise(num_variants = n()) %>%
+   				   dplyr::summarize(num_variants = n()) %>%
    				   ungroup()
   
  	subj_smry = per_pat_smry %>%
@@ -493,7 +493,7 @@ for (i in 1:length(cancer_types)) {
  	per_pat_smry = cancer_vars_tissue_ref %>%
    				   filter(bio_source != "VUSo") %>%
    				   group_by(subj_type, patient_id, bio_source) %>%
-   				   summarise(num_variants = n()) %>%
+   				   dplyr::summarize(num_variants = n()) %>%
    				   ungroup()
  
  	subj_smry = per_pat_smry %>%
@@ -893,6 +893,7 @@ tumor_vars = tumor_vars %>%
 cohort = c("Breast", "Lung", "Prostate")
 p = rep(NA, length(cohort))
 names(p) = cohort
+dfm = list()
 for (i in 1:length(cohort)) {
 	tmp_vars = tumor_vars %>%
 			   filter(tissue == cohort[i] & CALLED_IN %in% c("both","impact"))
@@ -907,27 +908,18 @@ for (i in 1:length(cohort)) {
 	ci = binconf(x=dr_sum, n=tt_sum)
 	p[i] = prop.trend.test(dr_sum, tt_sum)$p.value
 
-	sum(tumor_vars$`IM-T.clonality` %in% c("clonal","likely_clonal") & tumor_vars$CALLED_IN=="both")
-	sum(tumor_vars$`IM-T.clonality` %in% c("clonal","likely_clonal") & tumor_vars$`IM-T.clonality`!="")
-	sum(tumor_vars$`IM-T.clonality` %in% c("subclonal") & tumor_vars$CALLED_IN=="both")
-	sum(tumor_vars$`IM-T.clonality` %in% c("subclonal") & tumor_vars$`IM-T.clonality`!="")
+	x = c(sum(tumor_vars$`IM-T.clonality` %in% c("clonal","likely_clonal") & tumor_vars$CALLED_IN=="both"),
+		  sum(tumor_vars$`IM-T.clonality` %in% c("clonal","likely_clonal") & tumor_vars$`IM-T.clonality`!=""),
+		  sum(tumor_vars$`IM-T.clonality` %in% c("subclonal") & tumor_vars$CALLED_IN=="both"),
+		  sum(tumor_vars$`IM-T.clonality` %in% c("subclonal") & tumor_vars$`IM-T.clonality`!=""))
 
-	names = names(ttsum)
-	dfm = data.frame(names, dr=as.vector(dr), ll=as.vector(ci[,2]), uu=as.vector(ci[,3]))
-	pd = position_dodge(0.1)
-	ggplot(dfm, aes(x=names, y=dr)) + 
-  	geom_errorbar(aes(ymin=ll, ymax=uu), colour="black", width=.1, position=pd) +
-  	geom_point(position=pd, size=5) +
-  	geom_line(position=pd) +
-  	theme(axis.text.x=element_text(size=12),
-    	  axis.title.x=element_text(size=14),
-          axis.text.y=element_text(size=12),
-          axis.title.y=element_text(size=14),
-          legend.position="none") +
-    ylim(c(0,1)) +
-  	labs(x="Tumor mutation CCF", y="cfDNA detection rate")
-
+	dfm[[i]] = data.frame(intervals = names(tt_sum),
+					 	  dr = as.vector(dr),
+					 	  lci = as.vector(ci[,2]),
+					 	  uci = as.vector(ci[,3])) %>%
+		  				  mutate(tissue = cohort[i])
 }
+dfm = do.call(rbind, dfm)
 
 export_x = tumor_vars %>%
 		   dplyr::select(

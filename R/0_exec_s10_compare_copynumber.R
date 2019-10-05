@@ -242,6 +242,16 @@ pdf(file="../res/figureS10/Tumor_Purity_versus_Correlation_Coefficient_Log2.pdf"
 print(plot.0)
 dev.off()
 
+export_x = tmp.0 %>%
+		   dplyr::select(`patient_id` = `sample_id`,
+		   				 `tissue` = `tissue`,
+		   				 `corr_coeff` = `correlation_coefficient`,
+		   				 `tumor_purity` = `tumor_purity`,
+		   				 `ctdna_fraction` = `ctdna_fraction`,
+		   				 `ctdna_fraction_cat` = `ctdna_fraction_cat`,
+		   				 `ctdna_fraction_ne` = `ctdna_fraction_w_ne`,
+		   				 `ctdna_fraction_cat_ne` = `ctdna_fraction_cat_w_ne`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9f.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # log2 ratio plots grail cfdna tumor samples
@@ -343,38 +353,104 @@ key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_charact
 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi) %>%
 		   filter(GRAIL_ID %in% c("MSK-VB-0008", "MSK-VL-0056", "MSK-VP-0004"))
 
-res = foreach (i=1:nrow(key_file)) %dopar% {
-	cat(key_file$GRAIL_ID[i], "\n")
-	load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[i], ".RData"))
-	tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
-	colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
-	tmp = list()
-	for (ii in 1:23) {
-		if (ii==13) {
-			tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-			colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-		} else {
-			tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-			colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-		}
+cat(key_file$GRAIL_ID[1], "\n")
+load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[1], ".RData"))
+tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp = list()
+for (ii in 1:23) {
+	if (ii==13) {
+		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	} else {
+		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
 	}
-	tmp = do.call(rbind, tmp)
-	tmp = undo_(tmp, n=9)
-	pdf(file=paste0("../res/figureS10/", key_file$GRAIL_ID[i], "_Tumor.pdf"), width=9.25, height=4)
-	plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
-	dev.off()
+}
+tmp = do.call(rbind, tmp)
+tmp = undo_(tmp, n=9)
+pdf(file=paste0("../res/figureS10/", key_file$GRAIL_ID[1], "_Tumor.pdf"), width=9.25, height=4)
+plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
+dev.off()
 
-	export_x = tmp2 %>%
-			   dplyr::select(chromosome = `Chromosome`,
-			   				 position = `Position`,
-			   				 log2ratio = `Log2Ratio`)
-	export_y = tmp %>%
-			   dplyr::select(chromosome = `Chromosome`,
-			   				 arm = `Arm`,
-			   				 start = `Start`,
-			   				 end = `End`,
-			   				 n = `N`,
-			   				 log2ratio = `Log2Ratio`)
-	write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_3.tsv", append=FALSE, col_names=TRUE)
-	write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_4.tsv", append=FALSE, col_names=TRUE)
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9c_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9c_2.tsv", append=FALSE, col_names=TRUE)
 
+cat(key_file$GRAIL_ID[2], "\n")
+load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[2], ".RData"))
+tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp = list()
+for (ii in 1:23) {
+	if (ii==13) {
+		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	} else {
+		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	}
+}
+tmp = do.call(rbind, tmp)
+tmp = undo_(tmp, n=9)
+pdf(file=paste0("../res/figureS10/", key_file$GRAIL_ID[2], "_Tumor.pdf"), width=9.25, height=4)
+plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
+dev.off()
+
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_2.tsv", append=FALSE, col_names=TRUE)
+
+cat(key_file$GRAIL_ID[3], "\n")
+load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[3], ".RData"))
+tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp = list()
+for (ii in 1:23) {
+	if (ii==13) {
+		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	} else {
+		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+	}
+}
+tmp = do.call(rbind, tmp)
+tmp = undo_(tmp, n=9)
+pdf(file=paste0("../res/figureS10/", key_file$GRAIL_ID[3], "_Tumor.pdf"), width=9.25, height=4)
+plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
+dev.off()
+
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_2.tsv", append=FALSE, col_names=TRUE)
