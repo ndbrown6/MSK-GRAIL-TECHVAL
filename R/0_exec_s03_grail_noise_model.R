@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS3")) {
 	dir.create("../res/figureS3")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_3")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_3")
+}
+
 approx_posterior <- read_tsv(file="../modified_v11/Resources/Grail_noise_model/inputs/approx_posterior_by_alt.dispersion.tsv",
 					col_types = cols(.default = col_character())) %>%
 					type_convert()
@@ -93,7 +97,7 @@ cfdna_pileups_noise_params <- cfdna_pileups_long %>%
 
 obs_error_rates <- cfdna_pileups_noise_params %>%
                    group_by(CHROM, POS, REF, ALT, mu, size) %>%
-                   dplyr::summarise(tot_ad = sum(AD),
+                   dplyr::summarize(tot_ad = sum(AD),
                                     tot_depth = sum(DEPTH),
                                     obs_mu = sum(AD)/sum(DEPTH),
                                     max_obs_mu = max(AD/DEPTH)) %>%
@@ -127,15 +131,24 @@ text(x=1e-7, y=.8, labels="Alternate\nallele count", pos=4, font=2)
 text(x=1e-1, y=.8, labels="y = x", pos=4, col="goldenrod3", cex=1.25)
 dev.off()
 
+export_x = obs_error_rates %>%
+		   dplyr::select(chromosome = `CHROM`,
+		   				 position = `POS`,
+		   				 reference_allele = `REF`,
+		   				 alternate_allele = `ALT`,
+		   				 mean_posterior_lambda_p = `mu`,
+		   				 observed_lambda_p = `obs_mu`,
+		   				 ad_range = `tot_ad_range`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_3/Extended_Data_Fig_3e.tsv", append=FALSE, col_names=TRUE)
+
+#==================================================
+# posterior estimate by type of substitution
+#==================================================
 sites <- distinct(approx_posterior, CHROM, POS)
-
 kRefGenomePath <- "../modified_v11/Resources/Grail_noise_model/inputs/genome.fa"
-
 ref_genome <- Biostrings::readDNAStringSet(filepath=kRefGenomePath)
-
 sites <- sites %>%
 		 mutate(trinucleotide_context = as.character(Biostrings::subseq(ref_genome[CHROM], POS - 1, POS + 1)))
-
 annotated <- approx_posterior %>%
 			 left_join(sites) %>%
 			 mutate(substitution_type = paste0("\n", REF, ">", ALT)) %>%
@@ -143,10 +156,7 @@ annotated <- approx_posterior %>%
 			 mutate(REF = factor(REF)) %>%
 			 mutate(ALT = factor(ALT)) %>%
 			 mutate(facet = "Allele Frequency")
-
-#==================================================
-# posterior estimate by type of substitution
-#==================================================			 
+			 
 pdf(file="../res/figureS3/Posterior_Mu_by_Substitution_Type.pdf", width=6.5, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 shapes = 21
@@ -212,6 +222,16 @@ plot(1, 1, type="n", xlab="", ylab="", main="", axes=FALSE, frame.plot=FALSE, xl
 mtext(side = 2, text = expression("Mean posterior"~lambda[p]~"("~mu[p] %.% 10^5~")"), line = 4, cex = 1.5)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = annotated %>%
+		   dplyr::select(chromosome = `CHROM`,
+		   				 position = `POS`,
+		   				 reference_allele = `REF`,
+		   				 alternate_allele = `ALT`,
+		   				 substitution_type = `substitution_type`,
+		   				 trinucleotide_context = `trinucleotide_context`,
+		   				 mean_posterior_lambda_p = `mu`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_3/Extended_Data_Fig_3c_d.tsv", append=FALSE, col_names=TRUE)
 
 
 scored_test_data <- read_tsv(file="../modified_v11/Resources/Grail_noise_model/inputs/scored_merged_snvs.tsv",
@@ -304,6 +324,11 @@ points(x, y, type="l", col="black", lwd=1.5)
 text(x=55, y=69, labels="y = x", pos=4, col="goldenrod3", cex=1.25)
 dev.off()
 
+export_x = calibration %>%
+		   dplyr::select(phred_scale_nominal_score = `Nominal`,
+		   				 phred_scale_observed_prob = `Observed`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_3/Extended_Data_Fig_3f.tsv", append=FALSE, col_names=TRUE)
+
 all_snvs <- stacked_vcfs %>%
 			dplyr::select(study, patient_id, chrom, position, ref, alt, gene, qualnobaq, isedge,
 			is_snv, is_nonsyn, pgtkxgdna, MSK, grail, subj_type,
@@ -334,11 +359,11 @@ roc_qual <- foreach(i = 1:length(qualnobaq_cutoffs),
                         				  mutate(qual_edge_pass = (isedge != TRUE) & qualnobaq >= qualnobaq_min,
                         				  		 called = grail & !is_germline & qual_edge_pass & (pgtkxgdna >= fixed_p),
                         				  		 is_tp = called & MSK) %>%
-                        				  summarize(total_pos = sum(MSK, na.rm = TRUE),
-                        				  			total_called = sum(called, na.rm = TRUE),
-                        				  			tp = sum(is_tp, na.rm = TRUE),
-                        				  			recall = tp / total_pos,
-                        				  			precision = tp / total_called) %>%
+                        				  dplyr::summarize(total_pos = sum(MSK, na.rm = TRUE),
+                        				  				   total_called = sum(called, na.rm = TRUE),
+                        				  				   tp = sum(is_tp, na.rm = TRUE),
+                        				  				   recall = tp / total_pos,
+                        				  				   precision = tp / total_called) %>%
                         				  mutate(qualnobaq_min = qualnobaq_min)}
 
 highlight_q60 <- roc_qual %>%
@@ -354,11 +379,11 @@ roc_joint <- foreach(i = 1:length(joint_cutoffs),
                      					  mutate(qual_edge_pass = (isedge != TRUE) & qualnobaq >= fixed_qualnobaq,
 												 called = grail & !is_germline & qual_edge_pass & (pgtkxgdna >= joint_min),
 												 is_tp = called & MSK) %>%
-										  summarize(total_pos = sum(MSK, na.rm = TRUE),
-										  			total_called = sum(called, na.rm = TRUE),
-										  			tp = sum(is_tp, na.rm = TRUE),
-										  			recall = tp / total_pos,
-										  			precision = tp / total_called) %>%
+										  dplyr::summarize(total_pos = sum(MSK, na.rm = TRUE),
+										  				   total_called = sum(called, na.rm = TRUE),
+										  				   tp = sum(is_tp, na.rm = TRUE),
+										  				   recall = tp / total_pos,
+										  				   precision = tp / total_called) %>%
 										  mutate(joint_min = joint_min)}
 										  
 highlight_p <- roc_joint %>%
@@ -378,7 +403,7 @@ roc_noncancer_qual <- foreach(i = 1:length(qualnobaq_cutoffs),
                                 	  filter(panel_overlap, !patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id)) %>%
                                 	  mutate(qual_edge_pass = (isedge != TRUE) & qualnobaq >= qualnobaq_min,
                                 	  		 called = grail & !is_germline & qual_edge_pass & (pgtkxgdna >= fixed_p)) %>%
-                                	  summarize(sample_mean = sum(called, na.rm = TRUE) / n_noncancer) %>%
+                                	  dplyr::summarize(sample_mean = sum(called, na.rm = TRUE) / n_noncancer) %>%
                                 	  mutate(qualnobaq_min = qualnobaq_min)}
                                
 noncancer_snvs <- all_snvs %>%
@@ -392,7 +417,7 @@ roc_noncancer_joint <- foreach(i = 1:length(joint_cutoffs),
                                  		  filter(panel_overlap, !patient_id %in% c(hypermutators$patient_id, msi_hypermutators$patient_id)) %>%
                                  		  mutate(qual_edge_pass = (isedge != TRUE) & qualnobaq >= fixed_qualnobaq,
                                           		 called = grail & !is_germline & qual_edge_pass & (pgtkxgdna >= joint_min)) %>%
-                                          		 summarize(sample_mean = sum(called, na.rm = TRUE) / n_noncancer) %>%
+                                          		 dplyr::summarize(sample_mean = sum(called, na.rm = TRUE) / n_noncancer) %>%
                                           		 mutate(joint_min = joint_min)}
 
 recall_FP_qual <- roc_qual %>%
@@ -430,6 +455,12 @@ for (i in rev(c("Breast", "Lung", "Prostate"))) {
 legend(x=4.75, y=0.15, lwd=2, pch=21, col=cohort_cols[2:4], legend=names(cohort_cols)[2:4], box.lwd=-1, cex=.95, pt.bg="white", pt.cex=1.15)
 dev.off()
 
+export_x = recall_FP_qual %>%
+		   dplyr::select(tissue = `subj_type`,
+		   				 mean_snv_sample = `sample_mean`,
+		   		  		 recall_rate = `recall`) %>%
+		   dplyr::arrange(tissue, recall_rate, mean_snv_sample)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_3/Extended_Data_Fig_3g.tsv", append=FALSE, col_names=TRUE)
 
 recall_FP_joint <- roc_joint %>%
 				   inner_join(roc_noncancer_joint, by = "joint_min")
@@ -467,3 +498,10 @@ for (i in rev(c("Breast", "Lung", "Prostate"))) {
 }
 legend(x=4.75, y=0.15, lwd=2, pch=21, col=cohort_cols[2:4], legend=names(cohort_cols)[2:4], box.lwd=-1, cex=.95, pt.bg="white", pt.cex=1.15)
 dev.off()
+
+export_x = recall_FP_joint %>%
+		   dplyr::select(tissue = `subj_type`,
+		   				 mean_snv_sample = `sample_mean`,
+		   				 recall_rate = `recall`) %>%
+		   dplyr::arrange(tissue, recall_rate, mean_snv_sample)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_3/Extended_Data_Fig_3h.tsv", append=FALSE, col_names=TRUE)

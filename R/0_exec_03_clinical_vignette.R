@@ -9,6 +9,10 @@ if (!dir.exists("../res/figure3")) {
 	dir.create("../res/figure3")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Fig_3")) {
+	dir.create("../res/etc/Source_Data_Fig_3")
+}
+
 all_msi_df = read_tsv(file=url_msi_processed_data)
 
 alias_df = read_tsv(file=url_subject_alias)
@@ -60,7 +64,6 @@ export_x = useful_msi_df %>%
 		   		  		 `tissue` = subject_type,
 		   		 		 `msi_score` = fixed_msi,
 		   		  		 `sample_type` = sample)
-		   		  		 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3d.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -227,7 +230,6 @@ export_x = data_frame(`patient_id` = valid_patient_ids,
 		   		grepl("VB", tissue) ~ "Breast",
 		   		grepl("VL", tissue) ~ "Lung",
 		   		grepl("VP", tissue) ~ "Prostate"))
-		   		
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -311,7 +313,6 @@ export_x = data.frame(patient_id = colnames(fsigs),
 		   				 `smoking` = Smoking,
 		   				 `pole` = POLE,
 		   				 `other`= Other)
-		   				 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3c.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -467,7 +468,6 @@ export_x[,"variant_category"] = c("VUSo non-hypermutated",
 								  "VUSo non-hypermutated & VUSo hypermutated & Biopsy-only hypermutated",
 								  "Biopsy-only non-hypermutated & VUSo hypermutated & Biopsy-only hypermutated",
 								  "VUSo non-hypermutated & Biopsy-only non-hypermutated & VUSo hypermutated & Biopsy-only hypermutated")
-
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3b.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================

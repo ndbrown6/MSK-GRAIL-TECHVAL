@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS15")) {
 	dir.create("../res/figureS15")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_7")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_7")
+}
+
 'plot_log3_' <- function(x, y, axis = TRUE, ylim=c(-2.5, 2.5))
 {
    	par(mar=c(6.1, 9.5, 4.1, 1.1))
@@ -419,6 +423,19 @@ log10_axis(side=1, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 log10_axis(side=2, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 dev.off()
 
+export_x = tmp_vars %>%
+		   mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
+									 grepl("VL", patient_id) ~ "Lung",
+			   				 		 grepl("VP", patient_id) ~ "Prostate")) %>%
+		   dplyr::select(patient_id = patient_id,
+			   			 tissue = tissue,
+			   			 af_rep_0 = afnobaq.x,
+			   			 af_rep_1 = afnobaq.y,
+			   			 variant_category = fill,
+			   			 biopsy_concordance = shape) %>%
+			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7g.tsv", append=FALSE, col_names=TRUE)
+
 all_vars = full_join(vars_rep0 %>% mutate(replicate = 1),
 					 vars_rep2 %>% mutate(replicate = 3), by=c("study", "subj_type", "patient_id", "chrom", "position_orig", "ref_orig", "alt_orig")) %>%
 		   dplyr::select(patient_id, adnobaq.x, adnobaq.y, dpnobaq.x, dpnobaq.y, bio_source.x, bio_source.y) %>%
@@ -505,6 +522,19 @@ log10_axis(side=1, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 log10_axis(side=2, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 dev.off()
 
+export_x = tmp_vars %>%
+		   mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
+									 grepl("VL", patient_id) ~ "Lung",
+			   				 		 grepl("VP", patient_id) ~ "Prostate")) %>%
+		   dplyr::select(patient_id = patient_id,
+			   			 tissue = tissue,
+			   			 af_rep_0 = afnobaq.x,
+			   			 af_rep_1 = afnobaq.y,
+			   			 variant_category = fill,
+			   			 biopsy_concordance = shape) %>%
+			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7h.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # log2 ratio plots grail cfdna tumor samples
 #==================================================
@@ -516,6 +546,21 @@ pdf(file="../res/figureS15/MSK-VB-0023_cfDNA.pdf", width=8, height=4)
 plot_log3_(x=tmp2, y=tmp, axis=TRUE, ylim=c(-3.25,3.25))
 dev.off()
 
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7e_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7e_2.tsv", append=FALSE, col_names=TRUE)
+
+
 #==================================================
 # log2 ratio plots msk-impact tumor samples
 #==================================================
@@ -524,15 +569,26 @@ key_file = read_tsv(file=url_master_key, col_types = cols(.default = col_charact
 		   dplyr::select(PATIENT_ID, GRAIL_ID, DMP_ID, TUMOR_ID, NORMAL_ID, GRAIL_alpha, GRAIL_psi, IMPACT_alpha, IMPACT_psi) %>%
 		   filter(GRAIL_ID == "MSK-VB-0023")
 
-res = foreach (i=1:nrow(key_file)) %dopar% {
-	cat(key_file$GRAIL_ID[i], "\n")
-	load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID[i], ".RData"))
-	tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
-	colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
-	tmp = pcf(data=tmp2, kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-	colnames(tmp) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	tmp = undo_(tmp, n=3)
-	pdf(file=paste0("../res/figureS15/", key_file$GRAIL_ID[i], "_Tumor.pdf"), width=8, height=4)
-	plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-3.25,3.25))
-	dev.off()
-}
+load(paste0("../res/rebuttal/msk_impact/cnvkit/totalcopy/", key_file$TUMOR_ID, ".RData"))
+tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
+colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
+tmp = pcf(data=tmp2, kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+colnames(tmp) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
+tmp = undo_(tmp, n=3)
+pdf(file=paste0("../res/figureS15/", key_file$GRAIL_ID, "_Tumor.pdf"), width=8, height=4)
+plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-3.25,3.25))
+dev.off()
+
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7f_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7f_2.tsv", append=FALSE, col_names=TRUE)

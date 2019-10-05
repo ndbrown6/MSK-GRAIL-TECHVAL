@@ -9,6 +9,10 @@ if (!dir.exists("../res/figure2")) {
 	dir.create("../res/figure2")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Fig_2")) {
+	dir.create("../res/etc/Source_Data_Fig_2")
+}
+
 #==================================================
 # barplot of recurrent genes including
 # hypermutators
@@ -208,7 +212,6 @@ export_x = top_cancer_genes_table %>%
 		   				 `gene_id` = gene,
 		   				 `percent_patient` = percent_patient,
 		   				 `bio_source` = bio_source)
-		   				 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2b.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -593,8 +596,6 @@ export_x = cfdna_frac %>%
 		   			tissue == 1 ~ "Breast",
 		   			tissue == 2 ~ "Lung",
 		   			tissue == 3 ~ "Prostate"))
-		   			
-		   			
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2f.tsv", append=FALSE, col_names=TRUE)
  
 #==================================================
@@ -758,7 +759,6 @@ export_x = tmp.1 %>%
 		   				 `tissue` = Tissue,
 		   				 `ctdna_fraction` = ctdna_frac,
 		   				 `tertiles_disease_volume` = cat)
-		   			
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2g.tsv", append=FALSE, col_names=TRUE)
 
 
@@ -940,5 +940,4 @@ export_x = tumor_vars %>%
 		   		t_ccf = `IM-T.ccf`,
 		   		t_clonality = `IM-T.clonality`) %>%
 		   filter(called_in %in% c("both", "impact"))
-
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_2/Fig_2e.tsv", append=FALSE, col_names=TRUE)

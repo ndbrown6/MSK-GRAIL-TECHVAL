@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS2")) {
 	dir.create("../res/figureS2")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_2")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_2")
+}
+
 #==================================================
 # qc metrics table
 #==================================================
@@ -26,7 +30,7 @@ clinical = read_tsv(clinical_file, col_types = cols(.default = col_character()))
  			   
 valid_patient_ids = intersect(valid_patient_ids, clinical$patient_id)
 
-qc_metrics_cfdna = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+qc_metrics_cfdna = read.csv(file=url_qc.metrics, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 			 	   dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	   filter(sample_type=="cfDNA")
 tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", stringsAsFactors=FALSE) %>%
@@ -34,7 +38,7 @@ tracker_grail_cfdna = read.csv(file=patient_tracker, header=TRUE, sep=",", strin
 					  rename(msk_id = patient_id, sample_id = cfdna_sample_id)
 qc_metrics_cfdna = left_join(qc_metrics_cfdna, tracker_grail_cfdna, by="sample_id")
 
-qc_metrics_wbc = read.csv(file=url_qc_metrics_cfdna, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
+qc_metrics_wbc = read.csv(file=url_qc.metrics, header=TRUE, sep="\t", stringsAsFactors=FALSE) %>%
 			 	 dplyr::select(sample_id, patient_id, sample_type, tissue, volume_of_blood_mL, volume_of_DNA_source_mL, DNA_extraction_yield_ng, DNA_input_concentration_ng_uL, Library_preparation_input_ng, raw.MEAN_BAIT_COVERAGE, collapsed.MEAN_BAIT_COVERAGE, collapsed_fragment.MEAN_BAIT_COVERAGE, readErrorRate, readSubstErrorRate, Study) %>%
 			 	 filter(sample_type=="gDNA") %>%
 			 	 mutate(sample_type = "WBC")
@@ -60,6 +64,10 @@ qc_metrics = rbind(qc_metrics_cfdna, qc_metrics_wbc) %>%
 			mutate(Assay_Version = ifelse(Assay_Version=="TechVal", "V1", "V2")) %>%
 			arrange(Patient_ID, Sample_Type) %>%
 			mutate(Library_preparation_input_ng = ifelse(Library_preparation_input_ng>75, 75, Library_preparation_input_ng))
+			
+export_x = qc_metrics
+colnames(export_x) = tolower(colnames(export_x))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_2/Extended_Data_Fig_2.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # comparison of sequencing depth cfDNA and gDNA

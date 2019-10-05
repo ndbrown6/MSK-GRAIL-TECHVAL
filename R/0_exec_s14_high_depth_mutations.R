@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS14")) {
 	dir.create("../res/figureS14")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_7")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_7")
+}
+
 #==================================================
 # mutations detected at high depth
 #==================================================
@@ -183,6 +187,13 @@ mtext(side=2, text="Number of mutations", line=4, cex=1.5)
 legend("topright", pch=22, legend=names(cols), col="black", box.lwd=-1, pt.bg=cols, cex=1, pt.cex=1.65)
 dev.off()
 
+export_x = tmp.1 %>%
+		   dplyr::select(patient_id = `patient_id`,
+		   				 variant_category = `Variant category`,
+		   				 n_category = n,
+		   				 n_total = N)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7a.tsv", append=FALSE, col_names=TRUE)
+
 tmp = variants %>%
 	  filter(bio_source %in% c("biopsy_matched", "WBC_matched", "IMPACT-BAM_matched", "VUSo")) %>%
 	  mutate(facets = "Collapsed variant level coverage")
@@ -295,6 +306,23 @@ mtext(side=2, text="Collapsed variant depth in cfDNA", line=3, cex=1.5)
 close.screen(all.screens=TRUE)
 dev.off()
 
+export_x = tmp %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 chromosome = chrom,
+		   				 position = position,
+		   				 reference_allele = ref_orig,
+		   				 alternate_allele = alt_orig,
+		   				 collapsed_mean_coverage = Collapsed_Mean_Coverage,
+		   				 collapsed_variant_total_depth = dpnobaq,
+		   				 bio_source = bio_source) %>%
+		   mutate(bio_source = case_when(
+		   			bio_source == "WBC_matched" ~ "wbc_matched",
+		   			bio_source == "VUSo" ~ "vuso",
+		   			bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   			bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7c.tsv", append=FALSE, col_names=TRUE)
+
 tmp = tmp %>%
 	  mutate(bio_source = ifelse(bio_source %in% c("biopsy_matched","IMPACT-BAM_matched"), "tumor_matched", bio_source)) %>%
 	  mutate(cat_1 = case_when(
@@ -329,6 +357,23 @@ plot.0 = ggplot(tmp, aes(y = dpnobaq, x = cat_2, fill = bio_source)) +
 pdf(file="../res/figureS14/High_Depth_Mutations_by_input_DNA.pdf", width=10, height=6)
 print(plot.0)
 dev.off()
+
+export_x = tmp %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 chromosome = chrom,
+		   				 position = position,
+		   				 reference_allele = ref_orig,
+		   				 alternate_allele = alt_orig,
+		   				 library_preparation_input_ng = Library_preparation_input_ng,
+		   				 collapsed_variant_total_depth = dpnobaq,
+		   				 bio_source = bio_source) %>%
+		   mutate(bio_source = case_when(
+		   			bio_source == "WBC_matched" ~ "wbc_matched",
+		   			bio_source == "VUSo" ~ "vuso",
+		   			bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   			bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7b.tsv", append=FALSE, col_names=TRUE)
 
 tmp = variants %>%
 	  filter(bio_source %in% c("biopsy_matched", "WBC_matched", "IMPACT-BAM_matched", "VUSo")) %>%
@@ -391,3 +436,21 @@ log10_axis(side=2, at=c(100, 1000, 10000, 100000), lwd=0, lwd.ticks=1)
 title(main="\nWBC matched")
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = tmp %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 chromosome = chrom,
+		   				 position = position,
+		   				 reference_allele = ref_orig,
+		   				 alternate_allele = alt_orig,
+		   				 variant_allele_fraction = af_nobaq,
+		   				 collapsed_variant_total_depth = dpnobaq,
+		   				 bio_source = bio_source) %>%
+		   mutate(bio_source = case_when(
+		   			bio_source == "WBC_matched" ~ "wbc_matched",
+		   			bio_source == "VUSo" ~ "vuso",
+		   			bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   			bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7d.tsv", append=FALSE, col_names=TRUE)
+

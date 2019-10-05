@@ -9,6 +9,10 @@ if (!dir.exists("../res/figure5")) {
 	dir.create("../res/figure5")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Fig_5")) {
+	dir.create("../res/etc/Source_Data_Fig_5")
+}
+
 #==================================================
 # ch-derived mutations in cfdna
 #==================================================
@@ -125,7 +129,7 @@ clinical = read_tsv(file=clinical_file, col_types = cols(.default = col_characte
 burden_healthy = variants %>%
  		  		 filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched"), is_nonsyn) %>%
  		  		 group_by(subj_type, patient_id, bio_source) %>%
- 		  		 summarize(num_called = n()) %>%
+ 		  		 dplyr::summarize(num_called = n()) %>%
  		  		 ungroup() %>%
  		  		 left_join(clinical) %>%
  		  		 mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
@@ -133,7 +137,7 @@ burden_healthy = variants %>%
 burden_cancer = variants %>%
  		  		filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched", "IMPACT-BAM_matched"), is_nonsyn) %>%
  		  		group_by(subj_type, patient_id, bio_source) %>%
- 		  		summarize(num_called = n()) %>%
+ 		  		dplyr::summarize(num_called = n()) %>%
  		  		ungroup() %>%
  		  		left_join(clinical) %>%
  		  		mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
@@ -424,13 +428,13 @@ all_vars = all_vars %>%
 burden_healthy = all_vars %>%
   		   		 filter(subj_type=="Control") %>%
   		   		 group_by(patient_id) %>%
-   		   		 summarize(num_called = n()) %>%
+   		   		 dplyr::summarize(num_called = n()) %>%
   		   		 ungroup()
   		   		 
 burden_cancer = all_vars %>%
   		   		filter(subj_type!="Control") %>%
  		   		group_by(patient_id) %>%
-   	 	   		summarize(num_called = n()) %>%
+   	 	   		dplyr::summarize(num_called = n()) %>%
    	 	   		ungroup()
    	 	   		
 burden_wbc = bind_rows(burden_healthy, burden_cancer)
@@ -530,7 +534,6 @@ export_x = data %>%
 		   				 tissue = subj_type,
 		   				 n = num_called_wbc,
 		   				 age = age)
-		   				 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5b.tsv", append=FALSE, col_names=TRUE)
  
 #==================================================
@@ -548,7 +551,7 @@ all_vars = all_vars %>%
 burden_healthy = all_vars %>%
   		   		 filter(subj_type=="Control") %>%
   		   		 group_by(patient_id) %>%
-  	 	   		 summarize(num_called = n()) %>%
+  	 	   		 dplyr::summarize(num_called = n()) %>%
   	 	   		 ungroup() %>%
   	 	   		 left_join(clinical)
 patient_ids = save_vars %>%
@@ -565,7 +568,7 @@ burden_healthy_incfdna = all_vars %>%
   		   		 filter(subj_type=="Control") %>%
   		   		 filter(is_cfdna_matched) %>%
   		   		 group_by(patient_id) %>%
-  	 	   		 summarize(num_called = n()) %>%
+  	 	   		 dplyr::summarize(num_called = n()) %>%
   	 	   		 ungroup() %>%
   	 	   		 left_join(clinical)
 index = (burden_healthy$patient_id %in% burden_healthy_incfdna$patient_id)
@@ -576,7 +579,7 @@ burden_healthy_ch = all_vars %>%
 				    filter(SYMBOL %in% chip_genes) %>%
   		   		    filter(subj_type=="Control") %>%
   		   		    group_by(patient_id) %>%
-  	 	   		    summarize(num_called = n()) %>%
+  	 	   		    dplyr::summarize(num_called = n()) %>%
   	 	   		    ungroup() %>%
   	 	   		    left_join(clinical)
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_healthy_ch$patient_id)  
@@ -586,7 +589,7 @@ burden_healthy_ch = rbind(burden_healthy_ch, tmp[,colnames(burden_healthy_ch)])
 burden_cancer = all_vars %>%
   		   		filter(subj_type!="Control") %>%
   		   		group_by(patient_id) %>%
-  	 	   		summarize(num_called = n()) %>%
+  	 	   		dplyr::summarize(num_called = n()) %>%
   	 	   		ungroup() %>%
   	 	   		left_join(clinical)
 patient_ids = save_vars %>%
@@ -603,7 +606,7 @@ burden_cancer_incfdna = all_vars %>%
   		   		 filter(subj_type!="Control") %>%
   		   		 filter(is_cfdna_matched) %>%
   		   		 group_by(patient_id) %>%
-  	 	   		 summarize(num_called = n()) %>%
+  	 	   		 dplyr::summarize(num_called = n()) %>%
   	 	   		 ungroup() %>%
   	 	   		 left_join(clinical)
 index = (burden_cancer$patient_id %in% burden_cancer_incfdna$patient_id)
@@ -614,7 +617,7 @@ burden_cancer_ch = all_vars %>%
 				   filter(SYMBOL %in% chip_genes) %>%
   		   		   filter(subj_type!="Control") %>%
   		   		   group_by(patient_id) %>%
-  	 	   		   summarize(num_called = n()) %>%
+  	 	   		   dplyr::summarize(num_called = n()) %>%
   	 	   		   ungroup() %>%
   	 	   		   left_join(clinical)
 index = (clinical$patient_id %in% patient_ids) & !(clinical$patient_id %in% burden_cancer_ch$patient_id)
@@ -785,7 +788,6 @@ export_x = export_x %>%
 		   				 chek2 = CHEK2) %>%
 			filter(!(patient_id %in% hypermutators$patient_id)) %>%
 			filter(!(patient_id %in% msi_hypermutators$patient_id))
-		   				 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -889,20 +891,20 @@ export_x = data_ch %>%
 		   dplyr::select(patient_id = patient_id,
 		   				 tissue = tissue,
 		   				 dnmt3a = DNMT3A,
-		   				 tet2 = TET2,
-		   				 asxl1 = ASXL1,
-		   				 ppm1d = PPM1D,
-		   				 tp53 = TP53,
-		   				 jak2 = JAK2,
-		   				 runx1 = RUNX1,
-		   				 sf3b1 = SF3B1,
-		   				 srsf2 = SRSF2,
-		   				 idh1 = IDH1,
-		   				 idh2 = IDH2,
-		   				 u2af1 = U2AF1,
-		   				 cbl = CBL,
-		   				 atm = ATM,
-		   				 chek2 = CHEK2) %>%
+		   				 tet2   = TET2,
+		   				 asxl1  = ASXL1,
+		   				 ppm1d  = PPM1D,
+		   				 tp53   = TP53,
+		   				 jak2   = JAK2,
+		   				 runx1  = RUNX1,
+		   				 sf3b1  = SF3B1,
+		   				 srsf2  = SRSF2,
+		   				 idh1   = IDH1,
+		   				 idh2   = IDH2,
+		   				 u2af1  = U2AF1,
+		   				 cbl    = CBL,
+		   				 atm    = ATM,
+		   				 chek2  = CHEK2) %>%
 		   	mutate(dnmt3a =  ifelse(is.na(dnmt3a), 0, 1),
 		   		   tet2   =  ifelse(is.na(tet2), 0, 1),
 		   		   asxl1  =  ifelse(is.na(asxl1), 0, 1),
@@ -923,7 +925,6 @@ export_x = data_ch %>%
 			filter(!(patient_id %in% hypermutators$patient_id)) %>%
 			filter(!(patient_id %in% msi_hypermutators$patient_id)) %>%
 			dplyr::arrange(patient_id, tissue)
-			
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5c.tsv", append=FALSE, col_names=TRUE)
 		   				 
 #==================================================
@@ -997,7 +998,6 @@ export_x = as.data.frame(100*m) %>%
 export_y = as.data.frame(m2) %>%
 		   mutate(arm = rownames(m2),
 		   		  category = "% truncating variant")
-		   		  
 export_x = bind_rows(export_x, export_y) %>%
 		   dplyr::select(arm = arm,
 		   				 category = category,
@@ -1007,5 +1007,4 @@ export_x = bind_rows(export_x, export_y) %>%
 		   				 asxl1 = ASXL1,
 		   				 ppm1d = PPM1D,
 		   				 other = `Other CH`)
-
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_5/Fig_5d.tsv", append=FALSE, col_names=TRUE)

@@ -2,11 +2,17 @@
 # David Brown
 # brownd7@mskcc.org
 #==================================================
+rm(list=ls(all=TRUE))
 source('config.R')
 
 if (!dir.exists("../res/figureS6")) {
 	dir.create("../res/figureS6")
 }
+
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_5")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_5")
+}
+
 
 #==================================================
 # bar plot of mutational signatures
@@ -127,3 +133,21 @@ res = foreach (i=1:length(patient_ids)) %dopar% {
 	plot_96_spectrum(vcf, sample.col = "Sample",  file = paste0("../res/figureS6/", patient_ids[i], ".pdf"))
 	return(1)
 }
+
+export_x = vcf %>%
+		   filter(`Type`=="SNV") %>%
+		   mutate(tissue = case_when(grepl("VB", Sample) ~ "Breast",
+			   				 		 grepl("VL", Sample) ~ "Lung",
+			   				 		 grepl("VP", Sample) ~ "Prostate")) %>%
+		   dplyr::select(`patient_id` = `Sample`,
+		   				 `tissue`,
+		   				 `chromosome` = `CHROM`,
+		   				 `position` = `POS`,
+		   				 `reference_allele` = `REF`,
+		   				 `alternate_allele` = `ALT`,
+		   				 `context3`,
+		   				 `mutcat3`,
+		   				 `context5`,
+		   				 `mutcat5`) %>%
+		   filter(nchar(reference_allele)==1 & nchar(alternate_allele)==1)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_5/Extended_Data_Fig_5f.tsv", append=FALSE, col_names=TRUE)

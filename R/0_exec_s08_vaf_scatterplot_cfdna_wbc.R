@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS8")) {
 	dir.create("../res/figureS8")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_6")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_6")
+}
+
 #==================================================
 # barplot of mutation burden and sources of mutation
 # per patient and cohort including hypermutators
@@ -116,13 +120,13 @@ variants = variants %>%
 per_pat_smry = variants %>%
 			   filter(!(bio_source %in% c("noise","germline","other")), is_nonsyn) %>%
 			   group_by(subj_type, patient_id, bio_source) %>%
-			   summarise(num = n()) %>%
+			   dplyr::summarize(num = n()) %>%
 			   ungroup
   
 per_pat_smry_all = variants %>%
 				   filter(!(bio_source %in% c("noise","germline","other")), is_nonsyn) %>%
 				   group_by(subj_type, patient_id) %>%
-				   summarise(all = n()) %>%
+				   dplyr::summarize(all = n()) %>%
 				   ungroup
 
 per_pat_smry = left_join(per_pat_smry, per_pat_smry_all)
@@ -142,9 +146,10 @@ per_pat_smry = per_pat_smry %>%
 			   mutate(orig_num = num, num = round(num / total_bed_Mb, 0))
 cohort_stats = per_pat_smry %>%
 			   group_by(subj_type, bio_source) %>%
-			   summarise(cohort_size = n(), positive_scored = sum(num > 0), percent_of_samples = 100 * sum(num > 0) / n()) %>%
+			   dplyr::summarize(cohort_size = n(), positive_scored = sum(num > 0), percent_of_samples = 100 * sum(num > 0) / n()) %>%
 			   ungroup()
 
+export_x = NULL
 pdf(file="../res/figureS8/barplot_bio_sources_hyper.pdf", width=12, height=9)
 par(mar = c(6.1, 6, 4.1, 1))
 zz = split.screen(figs=matrix(c(0.05,.55,.43,.93, .46,.96,.43,.93, 0.05,.55,0.09,.59, .46,.96,0.09,.59, 0,1,0,1), nrow=5, ncol=4, byrow=TRUE))
@@ -188,6 +193,12 @@ for (i in 1:length(subj)) {
   	biopsy_matched = biopsy_matched[index,,drop=FALSE]
   	biopsy_subthreshold = biopsy_subthreshold[index,,drop=FALSE]
   	
+  	export_x = rbind(export_x,
+  					 wbc_matched,
+  					 vuso,
+  					 biopsy_matched,
+  					 biopsy_subthreshold)
+  	
   	zzz = barplot(wbc_matched[,"num"]-.9, col=variant_cols["WBC_matched"], border="black", space=.16, axes=FALSE, ylim=c(-30,150), lwd=.01)
   	abline(h=0, col="white", lwd=4)
   	barplot(ifelse((vuso[,"num"]+biopsy_matched[,"num"]+biopsy_subthreshold[,"num"])<110, (vuso[,"num"]+biopsy_matched[,"num"]+biopsy_subthreshold[,"num"]), 120), col=variant_cols["VUSo"], border="black", space=.16, add=TRUE, axes=FALSE, lwd=.01)
@@ -212,6 +223,19 @@ plot(0,0, type="n", xlim=c(0,10), ylim=c(-1,1), xlab="", ylab="", axes=FALSE, fr
 mtext(side = 2, text = expression("Somatic cfDNA variants / Mb"), line = 1.5, cex = 1.4)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = export_x %>%
+		   dplyr::select(`patient_id` = patient_id,
+		   				 `tissue` = subj_type,
+		   				 `bio_source` = bio_source,
+		   				 `n` = num) %>%
+		   mutate(n = abs(n)) %>%
+		   mutate(bio_source = case_when(
+		   		  bio_source == "WBC_matched" ~ "wbc_matched",
+		   		  bio_source == "VUSo" ~ "vuso",
+		   		  bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   		  bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_6/Extended_Data_Fig_6a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # heatmap of wbc-matched mutations with hypermutators
@@ -335,16 +359,22 @@ corrplot(corr=n[1:40,,drop=FALSE], method="color", type="full", add=FALSE,
  		 addCoef.col = "black", number.font = 1, number.cex = 1.15, tl.cex = 1.5, tl.col = "black", tl.offset = 0.5)
 dev.off()
 
+export_x = as.data.frame(n) %>%
+		   mutate(gene_id = rownames(n)) %>%
+		   dplyr::select(gene_id, `control` = Control, `breast` = Breast, `lung` = Lung, `prostate` = Prostate)
+export_x = export_x[1:40,,drop=FALSE]
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_6/Extended_Data_Fig_6b.tsv", append=FALSE, col_names=TRUE)
+
 subj_num_smry = variants %>%
 				group_by(subj_type) %>%
-				summarise(subj_num = length(unique(patient_id))) %>%
+				dplyr::summarize(subj_num = length(unique(patient_id))) %>%
 				ungroup() %>%
 				mutate(subj_type_num = paste0(subj_type, "(", subj_num, ")"))
 
 gene_recurrences = variants %>%
  				   filter(!is.na(gene)) %>%
 				   group_by(bio_source, subj_type, gene, is_nonsyn) %>%
- 				   summarize(number = n(), num_patient = length(unique(patient_id))) %>%
+ 				   dplyr::summarize(number = n(), num_patient = length(unique(patient_id))) %>%
  				   ungroup %>%
  				   left_join(subj_num_smry) %>%
  				   mutate(percent_patient = round(num_patient / subj_num * 100, 0))
@@ -356,7 +386,7 @@ for (subj in subj_num_smry$subj_type) {
    top_wbc_gene_ids = gene_recurrences %>%
   					  filter(subj_type == subj, bio_source == "WBC_matched", is_nonsyn) %>%
    					  group_by(gene) %>%
-    				  summarise(all = sum(percent_patient)) %>%
+    				  dplyr::summarize(all = sum(percent_patient)) %>%
    					  ungroup() %>%
    					  arrange(-all) %>%
    					  dplyr::slice(1:20) %>%
@@ -584,7 +614,7 @@ mtext(side = 1, text = "VAF in cfDNA (%)", line = 4, cex = 1.85)
 mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
 legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
 dev.off()
-			 
+
 plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq, y = afgdna_nobaq, fill = bio_source)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
 			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
@@ -628,6 +658,24 @@ mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
 legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
 dev.off()
 
+export_x = cfdna_vs_gdna_vaf_plot %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 gene_id = gene_id,
+		   				 chromosome = chrom,
+		   				 position = position,
+		   				 reference_allele = ref_orig,
+		   				 alternate_allele = alt_orig,
+		   				 cfdna_af = afcfdna_nobaq,
+		   				 wbc_af = afgdna_nobaq,
+		   				 bio_source = bio_source) %>%
+		   mutate(bio_source = case_when(
+		   		  bio_source == "WBC_matched" ~ "wbc_matched",
+		   		  bio_source == "VUSo" ~ "vuso",
+		   		  bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   		  bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_6/Extended_Data_Fig_6c.tsv", append=FALSE, col_names=TRUE)
+
 plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq_nos, y = afgdna_nobaq_nos, fill = bio_source)) +
 			 geom_abline(linetype = 1, color = "goldenrod3") +
 			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
@@ -670,3 +718,21 @@ mtext(side = 1, text = "VAF in cfDNA (%)", line = 4, cex = 1.85)
 mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
 legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
 dev.off()
+
+export_x = cfdna_vs_gdna_vaf_plot %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subj_type,
+		   				 gene_id = gene_id,
+		   				 chromosome = chrom,
+		   				 position = position,
+		   				 reference_allele = ref_orig,
+		   				 alternate_allele = alt_orig,
+		   				 cfdna_af = afcfdna_nobaq_nos,
+		   				 wbc_af = afgdna_nobaq_nos,
+		   				 bio_source = bio_source) %>%
+		   mutate(bio_source = case_when(
+		   		  bio_source == "WBC_matched" ~ "wbc_matched",
+		   		  bio_source == "VUSo" ~ "vuso",
+		   		  bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   		  bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_6/Extended_Data_Fig_6d.tsv", append=FALSE, col_names=TRUE)

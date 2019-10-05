@@ -9,6 +9,10 @@ if (!dir.exists("../res/figure1")) {
 	dir.create("../res/figure1")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Fig_1")) {
+	dir.create("../res/etc/Source_Data_Fig_1")
+}
+
 #==================================================
 # scatter plot of analytical performance
 #==================================================
@@ -107,7 +111,6 @@ export_y = sensitivity %>%
 		   				 `dilution_factor` = dilution_factor,
 		   				 `group` = group,
 		   				 `call` = call)
-		   				 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1b_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Fig_1/Fig_1b_2.tsv", append=FALSE, col_names=TRUE)
 
@@ -344,7 +347,6 @@ export_x = df3 %>%
 		   				 `variant_category` = MSK,
 		   				 `biopsy_concordance` = cat_minus) %>%
 		   	mutate(chromosome = unlist(lapply(strsplit(df3$loc.1, ":", fixed=TRUE), function(x) {x[1]})))
-		   	
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1d.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -582,7 +584,6 @@ export_x = df3 %>%
 		   				 `variant_category` = MSK,
 		   				 `biopsy_concordance` = cat_minus) %>%
 		   	mutate(chromosome = unlist(lapply(strsplit(df3$loc.1, ":", fixed=TRUE), function(x) {x[1]})))
-		   	
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1e.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -664,5 +665,4 @@ export_x = combined %>%
   			  			grepl("VB", patient_id) ~ "Breast",
   			  			grepl("VP", patient_id) ~ "Prostate",
   			  			grepl("VL", patient_id) ~ "Lung"))
-		   	
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1f.tsv", append=FALSE, col_names=TRUE)

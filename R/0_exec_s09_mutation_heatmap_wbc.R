@@ -9,21 +9,20 @@ if (!dir.exists("../res/figureS9")) {
 	dir.create("../res/figureS9")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_8")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_8")
+}
+
 #==================================================
 # heatmap of ch-related variants in wbc
 #==================================================
-if (!file.exists("../res/tables/Table_S8_ch_sorted_maftools.maf")) {
-	maf = read_csv(file="../res/tables/Table_S8.tsv", col_types = cols(.default = col_character())) %>%
-		  type_convert() %>%
-		  dplyr::arrange(Variant_Classification,
-	  				 	 Hugo_Symbol,
-	  				 	 Tumor_Sample_Barcode,
-	  				 	 Chromosome,
-	  				 	 Start_Position)
-
-	write_tsv(x=maf, path="../res/tables/Table_S8_ch_sorted_maftools.maf", append=FALSE, col_names=TRUE)
-}
-variants = read.maf(maf="../res/tables/Table_S8_ch_sorted_maftools.maf", clinicalData="../res/tables/clinical.tsv")
+clinical = read_tsv(file="../res/tables/clinical.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert() %>%
+		   filter(!(Tumor_Sample_Barcode %in% hypermutators$patient_id)) %>%
+		   filter(!(Tumor_Sample_Barcode %in% msi_hypermutators$patient_id))
+write_tsv(clinical, path="../res/tables/clinical_04102019.tsv", append=FALSE, col_names=TRUE)
+		   
+variants = read.maf(maf="../res/tables/Table_S8_ch_sorted_maftools.maf", clinicalData="../res/tables/clinical_04102019.tsv")
 
 pdf(file="../res/figureS9/onco_plot_wbc.pdf", width=12)
 oncoplot(maf = variants, genes = chip_genes,
@@ -83,3 +82,10 @@ dev.off()
 pdf(file="../res/figureS9/lol_dnmt3a.pdf", height=4, width=12)
 lollipopPlot(maf=variants, gene="DNMT3A", pointSize=2.5)
 dev.off()
+
+export_x = read_tsv(file="../res/tables/Table_S8_ch_sorted_maftools.maf", col_types = cols(.default = col_character())) %>%
+		   type_convert()
+export_y = read_tsv(file="../res/tables/clinical_04102019.tsv", col_types = cols(.default = col_character())) %>%
+		   type_convert()
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_8/Extended_Data_Fig_8a_d_1.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_8/Extended_Data_Fig_8a_d_2.tsv", append=FALSE, col_names=TRUE)

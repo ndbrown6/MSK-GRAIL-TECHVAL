@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS12")) {
 	dir.create("../res/figureS12")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_9")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_9")
+}
+
 'undo_' <- function(x, n=10)
 {
 	cnm = matrix(NA, nrow=nrow(x), ncol=nrow(x))
@@ -57,6 +61,20 @@ mtext(side = 1, text = expression("Female (n = 24)"), at = -3000, line = -9.25, 
 mtext(side = 2, text = expression(Log[2]~"Ratio"), line = 3, cex = 1.15, las=1)
 dev.off()
 
+export_x = NULL
+sample_names = NULL
+for (i in 1:length(res)) {
+	if (res[[i]][[1]]=="F") {
+		export_x = cbind(export_x, res[[i]][[2]]$y)
+		sample_names = c(sample_names, gsub(pattern="../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", replacement="", x=gsub(pattern="-T.RData", replacement="", x=fileNames[i])))
+	}
+}
+colnames(export_x) = sample_names
+load(fileNames[1])
+colnames(CN)[1:2] = c("chromosome", "position")
+export_x = cbind(CN[,1:2,drop=FALSE], export_x)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9a.tsv", append=FALSE, col_names=TRUE)
+
 #==================================================
 # genome-wide log2 ratios grail cfdna male controls
 #==================================================
@@ -88,6 +106,20 @@ for (i in 1:23) {
 axis(side=1, at=ix, labels=rep("", length(ix)), tcl=.5)
 axis(side=1, at=iy, labels=c(1:22, "X"), tcl=-.5, lwd=0, lwd.ticks=1, tcl=-.25)
 dev.off()
+
+export_x = NULL
+sample_names = NULL
+for (i in 1:length(res)) {
+	if (res[[i]][[1]]=="M") {
+		export_x = cbind(export_x, res[[i]][[2]]$y)
+		sample_names = c(sample_names, gsub(pattern="../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/", replacement="", x=gsub(pattern="-T.RData", replacement="", x=fileNames[i])))
+	}
+}
+colnames(export_x) = sample_names
+load(fileNames[1])
+colnames(CN)[1:2] = c("chromosome", "position")
+export_x = cbind(CN[,1:2,drop=FALSE], export_x)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9b.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # histogram of log2 ratios grail cfdna controls

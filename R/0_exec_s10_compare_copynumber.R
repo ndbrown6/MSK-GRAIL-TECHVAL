@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS10")) {
 	dir.create("../res/figureS10")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_9")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_9")
+}
+
 'absolute_' <- function(rho, psi, gamma=1, x) {
 	rho = ifelse(is.na(rho), 1, rho)
 	psi = ifelse(is.na(psi), 2, psi)
@@ -262,6 +266,20 @@ pdf(file="../res/figureS10/MSK-VB-0008_cfDNA.pdf", width=9.25, height=4)
 plot_log3_(x=tmp2, y=tmp, axis=TRUE)
 dev.off()
 
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9c_3.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9c_4.tsv", append=FALSE, col_names=TRUE)
+
 load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VL-0056-T.RData")
 tmp2 = winsorize(CN, method="mad", tau=3.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
@@ -269,6 +287,20 @@ tmp = undo_(tmp, n=2)
 pdf(file="../res/figureS10/MSK-VL-0056_cfDNA.pdf", width=9.25, height=4)
 plot_log3_(x=tmp2, y=tmp, axis=TRUE)
 dev.off()
+
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_3.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_4.tsv", append=FALSE, col_names=TRUE)
 
 load("../res/rebuttal/uncollapsed_bam/cnvkit/totalcopy/MSK-VP-0004-T.RData")
 tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
@@ -288,6 +320,20 @@ tmp = undo_(tmp, n=9)
 pdf(file="../res/figureS10/MSK-VP-0004_cfDNA.pdf", width=9.25, height=4)
 plot_log3_(x=tmp2, y=tmp, axis=TRUE)
 dev.off()
+
+export_x = tmp2 %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 position = `Position`,
+		   				 log2ratio = `Log2Ratio`)
+export_y = tmp %>%
+		   dplyr::select(chromosome = `Chromosome`,
+		   				 arm = `Arm`,
+		   				 start = `Start`,
+		   				 end = `End`,
+		   				 n = `N`,
+		   				 log2ratio = `Log2Ratio`)
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_3.tsv", append=FALSE, col_names=TRUE)
+write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_4.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # log2 ratio plots msk-impact tumor samples
@@ -317,4 +363,18 @@ res = foreach (i=1:nrow(key_file)) %dopar% {
 	pdf(file=paste0("../res/figureS10/", key_file$GRAIL_ID[i], "_Tumor.pdf"), width=9.25, height=4)
 	plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
 	dev.off()
-}
+
+	export_x = tmp2 %>%
+			   dplyr::select(chromosome = `Chromosome`,
+			   				 position = `Position`,
+			   				 log2ratio = `Log2Ratio`)
+	export_y = tmp %>%
+			   dplyr::select(chromosome = `Chromosome`,
+			   				 arm = `Arm`,
+			   				 start = `Start`,
+			   				 end = `End`,
+			   				 n = `N`,
+			   				 log2ratio = `Log2Ratio`)
+	write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_3.tsv", append=FALSE, col_names=TRUE)
+	write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_4.tsv", append=FALSE, col_names=TRUE)
+

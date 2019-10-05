@@ -9,6 +9,10 @@ if (!dir.exists("../res/figureS4")) {
 	dir.create("../res/figureS4")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_4")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_4")
+}
+
 #==================================================
 # 2-by-2 scatterplots of technical replicates
 #==================================================
@@ -122,7 +126,7 @@ variants = variants %>%
 patient_ids = c("MSK-VB-0050", "MSK-VB-0041", "MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023", "MSK-VL-0038")
 vars_rep0 = variants %>%
 			filter(patient_id %in% patient_ids)
-
+			
 gdna_params = data_frame(
 				subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
 				min_p = c(0.8, 0.79, 0.82, 0.79))
@@ -297,7 +301,8 @@ cols = c("Not detected in one replicate"="#D7191C",
 		 "Not called in one replicate due\nto low quality"="#FDAE61",
 		 "Incorrect assignment between replicates"="#ABDDA4",
 		 "Called in both replicates"="#2B83BA")
-		 
+
+export_x = NULL
 for (i in 1:length(patient_ids)) {
 	print(patient_ids[i])
 	tmp_vars = all_vars %>% filter(patient_id == patient_ids[i])
@@ -346,6 +351,20 @@ for (i in 1:length(patient_ids)) {
 	log10_axis(side=2, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 	dev.off()
 	
+	export_x = bind_rows(export_x,
+						 tmp_vars %>%
+			   			 mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
+			   					 	 			   grepl("VL", patient_id) ~ "Lung",
+			   				 			 		   grepl("VP", patient_id) ~ "Prostate")) %>%
+			   		  	 mutate(afnobaq.z = NA) %>% 
+			   			 dplyr::select(patient_id = patient_id,
+			   						   tissue = tissue,
+			   				 		   af_rep_0 = afnobaq.x,
+			   				 		   af_rep_1 = afnobaq.y,
+			   				 		   af_rep_2 = afnobaq.z,
+			   				 		   variant_category = fill,
+			   				 		   biopsy_concordance = shape) %>%
+			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category)))
 }
 
 patient_ids = c("MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023")			
@@ -415,6 +434,20 @@ for (i in 1:length(patient_ids)) {
 	log10_axis(side=2, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 	dev.off()
 	
+	export_x = bind_rows(export_x,
+						 tmp_vars %>%
+			   			 mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
+			   				 			 		   grepl("VL", patient_id) ~ "Lung",
+			   				 			 		   grepl("VP", patient_id) ~ "Prostate")) %>%
+			   			 mutate(afnobaq.z = NA) %>% 
+			   			 dplyr::select(patient_id = patient_id,
+			   				 		   tissue = tissue,
+			   				 		   af_rep_0 = afnobaq.x,
+			   				 		   af_rep_1 = afnobaq.z,
+			   				 		   af_rep_2 = afnobaq.y,
+			   				 		   variant_category = fill,
+			   				 		   biopsy_concordance = shape) %>%
+			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category)))
 }
 
 patient_ids = c("MSK-VL-0028", "MSK-VL-0042", "MSK-VB-0023")			
@@ -484,7 +517,23 @@ for (i in 1:length(patient_ids)) {
 	log10_axis(side=2, at=c(0.01, 0.1, 1, 10, 100), lwd=0, lwd.ticks=1)
 	dev.off()
 	
+	export_x = bind_rows(export_x,
+						 tmp_vars %>%
+			   			 mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
+			   				 			 		   grepl("VL", patient_id) ~ "Lung",
+			   				 			 		   grepl("VP", patient_id) ~ "Prostate")) %>%
+			   			 mutate(afnobaq.z = NA) %>% 
+			   			 dplyr::select(patient_id = patient_id,
+			   				 		   tissue = tissue,
+			   				 		   af_rep_0 = afnobaq.z,
+			   				 		   af_rep_1 = afnobaq.x,
+			   				 		   af_rep_2 = afnobaq.y,
+			   				 		   variant_category = fill,
+			   				 		   biopsy_concordance = shape) %>%
+			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category)))
 }
+
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_4/Extended_Data_Fig_4.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # tabulate %ppa for 6 patients used to test

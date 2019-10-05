@@ -9,6 +9,10 @@ if (!dir.exists("../res/figure4")) {
 	dir.create("../res/figure4")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Fig_4")) {
+	dir.create("../res/etc/Source_Data_Fig_4")
+}
+
 #==================================================
 # pie-charts of the number of variants classified
 # by source across control, cancer non-hypermutators
@@ -187,7 +191,6 @@ export_x = as.data.frame(Mx) %>%
 		   		cohort == "Breast" ~ "non_hypermutated",
 		   		cohort == "Lung" ~ "non_hypermutated",
 		   		cohort == "Prostate" ~ "non_hypermutated"))
-		   		
 export_y = as.data.frame(My) %>%
 		   mutate(cohort = rownames(My)) %>%
 		   dplyr::select(`cohort` = cohort,
@@ -218,7 +221,6 @@ export_x = bind_rows(export_x,
 		   				 biopsy_subthreshold,
 		   				 wbc_matched,
 		   				 vuso)
-		   				 
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -332,13 +334,13 @@ variants = variants %>%
 per_pat_smry = variants %>%
 			   filter(!(bio_source %in% c("noise","germline","other")), is_nonsyn) %>%
 			   group_by(subj_type, patient_id, bio_source) %>%
-			   summarise(num = n()) %>%
+			   dplyr::summarize(num = n()) %>%
 			   ungroup
   
 per_pat_smry_all = variants %>%
 				   filter(!(bio_source %in% c("noise","germline","other")), is_nonsyn) %>%
 				   group_by(subj_type, patient_id) %>%
-				   summarise(all = n()) %>%
+				   dplyr::summarize(all = n()) %>%
 				   ungroup
 
 per_pat_smry = left_join(per_pat_smry, per_pat_smry_all)
@@ -358,7 +360,7 @@ per_pat_smry = per_pat_smry %>%
 			   mutate(orig_num = num, num = round(num / total_bed_Mb, 0))
 cohort_stats = per_pat_smry %>%
 			   group_by(subj_type, bio_source) %>%
-			   summarise(cohort_size = n(), positive_scored = sum(num > 0), percent_of_samples = 100 * sum(num > 0) / n()) %>%
+			   dplyr::summarize(cohort_size = n(), positive_scored = sum(num > 0), percent_of_samples = 100 * sum(num > 0) / n()) %>%
 			   ungroup()
 
 export_x = NULL
@@ -436,11 +438,12 @@ export_x = export_x %>%
 		   				 `n` = num) %>%
 		   mutate(n = abs(n)) %>%
 		   mutate(bio_source = case_when(
-		   		bio_source == "WBC_matched" ~ "wbc_matched",
-		   		bio_source == "VUSo" ~ "vuso",
-		   		bio_source == "biopsy_matched" ~ "biopsy_matched",
-		   		bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
-
+		   		  bio_source == "WBC_matched" ~ "wbc_matched",
+		   		  bio_source == "VUSo" ~ "vuso",
+		   		  bio_source == "biopsy_matched" ~ "biopsy_matched",
+		   		  bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold")) %>%
+		  filter(!(patient_id %in% hypermutators$patient_id)) %>%
+		  filter(!(patient_id %in% msi_hypermutators$patient_id))
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4b.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -450,7 +453,7 @@ write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4b.tsv", append=FALSE
 burden_healthy = variants %>%
  		  		 filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched"), is_nonsyn) %>%
  		  		 group_by(subj_type, patient_id, bio_source) %>%
- 		  		 summarize(num_called = n()) %>%
+ 		  		 dplyr::summarize(num_called = n()) %>%
  		  		 ungroup() %>%
  		  		 left_join(clinical) %>%
  		  		 mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
@@ -458,7 +461,7 @@ burden_healthy = variants %>%
 burden_cancer = variants %>%
  		  		filter(bio_source %in% c("WBC_matched", "VUSo", "biopsy_matched", "IMPACT-BAM_matched"), is_nonsyn) %>%
  		  		group_by(subj_type, patient_id, bio_source) %>%
- 		  		summarize(num_called = n()) %>%
+ 		  		dplyr::summarize(num_called = n()) %>%
  		  		ungroup() %>%
  		  		left_join(clinical) %>%
  		  		mutate(group = case_when(grepl("Control", subj_type) ~ "Control", TRUE ~ "Cancer"), group = factor(group, levels = c("Control", "Cancer"))) %>%
@@ -634,7 +637,6 @@ export_x = export_x %>%
 		   		bio_source == "VUSo" ~ "vuso",
 		   		bio_source == "biopsy_matched" ~ "biopsy_matched",
 		   		bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
-
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4c.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -668,7 +670,6 @@ export_x = as.data.frame(ny) %>%
 		   mutate(gene_id = rownames(ny)) %>%
 		   dplyr::select(gene_id, `control` = Control, `breast` = Breast, `lung` = Lung, `prostate` = Prostate)
 export_x = export_x[1:30,,drop=FALSE]
-
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4d.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -680,14 +681,14 @@ variants_nohyper = variants %>%
  				   filter(bio_source=="WBC_matched", is_nonsyn)
 subj_num_smry = variants_nohyper %>%
 				group_by(subj_type) %>%
-				summarise(subj_num = length(unique(patient_id))) %>%
+				dplyr::summarize(subj_num = length(unique(patient_id))) %>%
 				ungroup() %>%
 				mutate(subj_type_num = paste0(subj_type, "(", subj_num, ")"))
 
 gene_recurrences = variants_nohyper %>%
  				   filter(!is.na(gene)) %>%
 				   group_by(bio_source, subj_type, gene, is_nonsyn) %>%
- 				   summarize(number = n(), num_patient = length(unique(patient_id))) %>%
+ 				   dplyr::summarize(number = n(), num_patient = length(unique(patient_id))) %>%
  				   ungroup %>%
  				   left_join(subj_num_smry) %>%
  				   mutate(percent_patient = round(num_patient / subj_num * 100, 0))
@@ -699,7 +700,7 @@ for (subj in subj_num_smry$subj_type) {
    top_wbc_gene_ids = gene_recurrences %>%
   					  filter(subj_type == subj, bio_source == "WBC_matched", is_nonsyn) %>%
    					  group_by(gene) %>%
-    				  summarise(all = sum(percent_patient)) %>%
+    				  dplyr::summarize(all = sum(percent_patient)) %>%
    					  ungroup() %>%
    					  arrange(-all) %>%
    					  dplyr::slice(1:20) %>%
@@ -789,7 +790,6 @@ export_x = cfdna_vs_gdna_vaf_plot %>%
 		   			bio_source == "VUSo" ~ "vuso",
 		   			bio_source == "biopsy_matched" ~ "biopsy_matched",
 		   			bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
-
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4e.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -1017,12 +1017,12 @@ ddpcr_results2 = df_merged %>%
 ddpcr_results_pos = ddpcr_results2 %>%
 					filter(ddPCR_retest == "Positive") %>%
 					group_by(patient_id, UUID, ddPCR_retest, input_type) %>%
-					summarise(af_ddPCR_mean = mean(af_ddPCR), af_ddPCR_sd = sd(af_ddPCR), af_cfdna = unique(af_cfdna))
+					dplyr::summarize(af_ddPCR_mean = mean(af_ddPCR), af_ddPCR_sd = sd(af_ddPCR), af_cfdna = unique(af_cfdna))
 					
 ddpcr_results_neg = ddpcr_results2 %>%
 					filter(ddPCR_retest == "Negative") %>%
 					group_by(UUID, ddPCR_retest, input_type) %>%
-					summarise(patient_id = NA, af_ddPCR_mean = mean(af_ddPCR), af_ddPCR_sd = sd(af_ddPCR), af_cfdna = unique(af_cfdna))
+					dplyr::summarize(patient_id = NA, af_ddPCR_mean = mean(af_ddPCR), af_ddPCR_sd = sd(af_ddPCR), af_cfdna = unique(af_cfdna))
 					
 					
 ddpcr_results_summary = rbind(ddpcr_results_pos, ddpcr_results_neg)
@@ -1079,5 +1079,4 @@ export_x = ddpcr_results2 %>%
 		   		grepl("VB", patient_id) ~ "Breast",
 		   		grepl("VL", patient_id) ~ "Lung",
 		   		grepl("VP", patient_id) ~ "Prostate"))
-		   		
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4f.tsv", append=FALSE, col_names=TRUE)

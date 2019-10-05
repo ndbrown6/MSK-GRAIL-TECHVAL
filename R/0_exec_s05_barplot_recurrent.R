@@ -2,11 +2,17 @@
 # David Brown
 # brownd7@mskcc.org
 #==================================================
+rm(list=ls(all=TRUE))
 source('config.R')
 
 if (!dir.exists("../res/figureS5")) {
 	dir.create("../res/figureS5")
 }
+
+if (!dir.exists("../res/etc/Source_Data_Extended_Data_Fig_5")) {
+	dir.create("../res/etc/Source_Data_Extended_Data_Fig_5")
+}
+
 
 #==================================================
 # barplot of recurrent genes
@@ -114,13 +120,13 @@ variants = variants %>%
 # sum the number of times a gene occurs in a bio_source in each tissue type
 subj_num_smry = variants %>%
 				group_by(subj_type) %>%
-    			summarise(subj_num = length(unique(patient_id))) %>%
+    			dplyr::summarize(subj_num = length(unique(patient_id))) %>%
     			ungroup()
   
 gene_recurrences = variants %>%
 				   filter(!is.na(gene), bio_source %in% c("biopsy_matched", "biopsy_only") | (bio_source %in% c("IMPACT-BAM_matched", "VUSo") & is_nonsyn)) %>%
  				   group_by(bio_source, subj_type, gene) %>%
- 				   summarize(number = n(), num_patient = length(unique(patient_id))) %>%
+ 				   dplyr::summarize(number = n(), num_patient = length(unique(patient_id))) %>%
  				   ungroup %>%
  				   left_join(subj_num_smry) %>%
  				   mutate(percent_patient = round(num_patient / subj_num * 100, 0))
@@ -132,7 +138,7 @@ for (subj in subj_num_smry$subj_type[subj_num_smry$subj_type != "Control"]) {
 						  filter(subj_type == subj,
 						  bio_source %in% c("biopsy_matched", "biopsy_only")) %>%
  						  group_by(gene) %>%
- 						  summarise(all = sum(percent_patient)) %>%
+ 						  dplyr::summarize(all = sum(percent_patient)) %>%
  						  ungroup() %>%
  						  arrange(-all) %>%
  						  slice(1:45) %>%
@@ -141,13 +147,13 @@ for (subj in subj_num_smry$subj_type[subj_num_smry$subj_type != "Control"]) {
 }
 gene_list = unique(gene_list)
 
-top_cancer_genes_ordered = gene_recurrences %>%
- 						   filter(bio_source %in% c("biopsy_matched", "biopsy_only"), gene %in% gene_list) %>%
- 						   group_by(gene) %>%
- 						   summarise(perc = sum(percent_patient)) %>%
- 						   ungroup() %>%
- 						   arrange(-perc) %>%
- 						   .[["gene"]][1:100]
+top_cancer_genes_ordered = (gene_recurrences %>%
+ 						    filter(bio_source %in% c("biopsy_matched", "biopsy_only"), gene %in% gene_list) %>%
+ 						    group_by(gene) %>%
+ 						    dplyr::summarize(perc = sum(percent_patient)) %>%
+ 						    ungroup() %>%
+ 						    arrange(-perc) %>%
+ 						    .[["gene"]])[1:100]
    
 top_cancer_genes_table = gene_recurrences %>%
  						 filter(bio_source %in% c("biopsy_matched", "IMPACT-BAM_matched", "VUSo"), gene %in% gene_list) %>%
@@ -172,11 +178,14 @@ cancer_types = c("Control", "Breast", "Lung", "Prostate")
 for (i in 1:length(cancer_types)) {
 	screen(zz[i])
 	x.1 = top_cancer_genes_table %>%
-		  filter(subj_type==cancer_types[i], bio_source=="biopsy_matched")
+		  filter(subj_type==cancer_types[i], bio_source=="biopsy_matched") %>%
+		  filter(!is.na(gene))
 	x.2 = top_cancer_genes_table %>%
-		  filter(subj_type==cancer_types[i], bio_source=="IMPACT-BAM_matched")
+		  filter(subj_type==cancer_types[i], bio_source=="IMPACT-BAM_matched") %>%
+		  filter(!is.na(gene))
 	x.3 = top_cancer_genes_table %>%
-		  filter(subj_type==cancer_types[i], bio_source=="VUSo")
+		  filter(subj_type==cancer_types[i], bio_source=="VUSo") %>%
+		  filter(!is.na(gene))
 	x = matrix(0, nrow=length(top_cancer_genes_ordered), ncol=3)
  	rownames(x) = top_cancer_genes_ordered
  	colnames(x) = c("biopsy_matched","IMPACT-BAM_matched","VUSo")
@@ -201,6 +210,15 @@ plot(0, 0, type="n", xlim=c(0,10), ylim=c(0,10), xlab="", ylab="", axes=FALSE, f
 mtext(side = 2, text = "% of patients", line = 3, cex = 1.15)
 close.screen(all.screens=TRUE)
 dev.off()
+
+export_x = top_cancer_genes_table %>%
+		   dplyr::select(tissue = subj_type,
+		   				 gene_id = gene,
+		   				 percent_patient = percent_patient,
+		   				 bio_source = bio_source) %>%
+		   filter(!is.na(gene_id)) %>%
+		   filter(!is.na(bio_source))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_5/Extended_Data_Fig_5a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
 # number of VUSo per gene versus gene length
@@ -478,3 +496,12 @@ text(x=tmp.0$x[index], y=tmp.0$y_1[index], labels=tmp.0$z_0[index], font=3, col=
 
 dev.off()
 
+export_x = tmp.0 %>%
+		   dplyr::select(gene_id = z_0,
+		   				 target_ex_length = x,
+		   				 n = y_0,
+		   				 f = y_1,
+		   				 category = z_1) %>%
+		   mutate(target_ex_length = round(target_ex_length),
+		   		  category = ifelse(category=="+", "hypermutated", "non-hypermuytated"))
+write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_5/Extended_Data_Fig_5b.tsv", append=FALSE, col_names=TRUE)
