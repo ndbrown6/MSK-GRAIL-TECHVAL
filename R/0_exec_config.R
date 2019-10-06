@@ -558,7 +558,7 @@ variant_cols <- c(
     
     recurrence <- small_vars_plasma %>%
     group_by(loc) %>%
-    summarize(n_recur = length(ref_orig),
+    dplyr::summarize(n_recur = length(ref_orig),
               g_recur = sum(grepl("GDNA", filter) , na.rm = TRUE),
               q_germ = delta_germ(adgdna / (dpgdna + 0.5)),
               m_recur = mean(adgdna / dpgdna, na.rm=TRUE),
@@ -630,7 +630,7 @@ variant_cols <- c(
 				data_frame(i = edge, filter = edge_string))
 	filters = filters %>%
 			  group_by(i) %>%
-			  summarize(filter = str_c(filter, collapse = sep)) %>%
+			  dplyr::summarize(filter = str_c(filter, collapse = sep)) %>%
 			  ungroup() %>%
 			  full_join(ids) %>%
 			  arrange(i)

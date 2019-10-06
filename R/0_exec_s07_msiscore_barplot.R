@@ -8,6 +8,10 @@ if (!dir.exists("../res/figureS7")) {
 	dir.create("../res/figureS7")
 }
 
+if (!dir.exists("../res/etc/Source_Data_Supplementary_Fig_1")) {
+	dir.create("../res/etc/Source_Data_Supplementary_Fig_1")
+}
+
 #==================================================
 # bar plot of msi scores
 #==================================================
@@ -136,3 +140,13 @@ axis(side=2, at=apply(x, 2, mean), labels=rep("", ncol(x)), line=0.35, tcl=-.25,
 title(main="\n\nProstate", cex.main=1.15)
 close.screen(all.screens=TRUE)
 dev.off()
+
+
+export_x = msi_df %>%
+		   dplyr::select(patient_id = patient_id,
+		   				 tissue = subject_type,
+		   				 assay = sample,
+		   				 msi_original = original_msi,
+		   				 msi_fixed = fixed_msi)
+write_tsv(export_x, path="../res/etc/Source_Data_Supplementary_Fig_1/Supplementary_Fig_1.tsv", append=FALSE, col_names=TRUE)
+
