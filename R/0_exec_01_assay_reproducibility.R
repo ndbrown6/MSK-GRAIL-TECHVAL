@@ -19,7 +19,7 @@ if (!dir.exists("../res/etc/Source_Data_Fig_1")) {
 cell_line = read_tsv(url_cell.line, col_types = NULL) %>%
 		   	type_convert()
 hd753_joint = cell_line %>%
-			   filter(startsWith(patient_id, "HD753") | startsWith(patient_id, "NA12878"))
+			  filter(startsWith(patient_id, "HD753") | startsWith(patient_id, "NA12878"))
 hd753_truth = read_tsv(url_HD753.truth, col_types = NULL) %>%
 		   	  type_convert()
 hd753_truth_join = hd753_truth %>%
@@ -92,25 +92,25 @@ dev.off()
 
 export_x = show.data %>%
 		   filter(expected_af<1.2) %>%
-		   dplyr::select(`expected_af` = expected_af,
-		   				 `fitted_af` = yfit,
-		   				 `ci_low` = ymin,
-		   				 `ci_high` = ymax,
-		   				 `group` = group)
+		   dplyr::select(`expected_af` = `expected_af`,
+		   				 `fitted_af` = `yfit`,
+		   				 `ci_low` = `ymin`,
+		   				 `ci_high` = `ymax`,
+		   				 `group` = `group`)
 export_y = sensitivity %>%
 		   filter(!isedge) %>%
 		   filter(filter=="PASS") %>%
-		   dplyr::select(`gdna_standard_id` = patient_id,
-		   				 `chromosome` = chrom,
-		   				 `position` = pos,
-		   				 `reference_allele` = ref,
-		   				 `alternate_allele` = alt,
-		   				 `stock_af` = stock_af,
-		   				 `nominal_af` = nominal_af,
-		   				 `expected_af` = expected_af,
-		   				 `dilution_factor` = dilution_factor,
-		   				 `group` = group,
-		   				 `call` = call)
+		   dplyr::select(`gdna_standard_id` = `patient_id`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `pos`,
+		   				 `reference_allele` = `ref`,
+		   				 `alternate_allele` = `alt`,
+		   				 `stock_af` = `stock_af`,
+		   				 `nominal_af` = `nominal_af`,
+		   				 `expected_af` = `expected_af`,
+		   				 `dilution_factor` = `dilution_factor`,
+		   				 `group` = `group`,
+		   				 `call` = `call`)
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1b_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Fig_1/Fig_1b_2.tsv", append=FALSE, col_names=TRUE)
 
@@ -126,8 +126,8 @@ clean_target_region = read_tsv(url_target.bed, col_names = c("chrom", "start", "
 clean_target_region$in_target = TRUE
 
 gdna_params = data_frame(
-		subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
-		min_p = c(0.8, 0.79, 0.82, 0.79))
+				subj_type = c("Healthy", "Breast", "Lung", "Prostate"),
+				min_p = c(0.8, 0.79, 0.82, 0.79))
 
 replicate2_id = techval_repeats %>%
 				dplyr::select(patient_id) %>%
@@ -334,18 +334,18 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = df3 %>%
-		   dplyr::select(`patient_id` = patient_id.1,
-		   				 `tissue` = subj_type.1,
-		   				 `gene_id` = gene_id,
-		   				 `chromosome` = loc.1,
-		   				 `position` = position,
-		   				 `reference_allele` = ref,
-		   				 `alternate_allele` = alt,
-		   				 `hgvs_c` = hgvs_c,
-		   				 `af_cfdna_replicate_1` = af_point_cfdna.1,
-		   				 `af_cfdna_replicate_2` = af_point_cfdna.2,
-		   				 `variant_category` = MSK,
-		   				 `biopsy_concordance` = cat_minus) %>%
+		   dplyr::select(`patient_id` = `patient_id.1`,
+		   				 `tissue` = `subj_type.1`,
+		   				 `gene_id` = `gene_id`,
+		   				 `chromosome` = `loc.1`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref`,
+		   				 `alternate_allele` = `alt`,
+		   				 `hgvs_c` = `hgvs_c`,
+		   				 `af_cfdna_replicate_1` = `af_point_cfdna.1`,
+		   				 `af_cfdna_replicate_2` = `af_point_cfdna.2`,
+		   				 `variant_category` = `MSK`,
+		   				 `biopsy_concordance` = `cat_minus`) %>%
 		   	mutate(chromosome = unlist(lapply(strsplit(df3$loc.1, ":", fixed=TRUE), function(x) {x[1]})))
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1d.tsv", append=FALSE, col_names=TRUE)
 
@@ -571,18 +571,18 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = df3 %>%
-		   dplyr::select(`patient_id` = patient_id.1,
-		   				 `tissue` = subj_type.1,
-		   				 `gene_id` = gene_id,
-		   				 `chromosome` = loc.1,
-		   				 `position` = position,
-		   				 `reference_allele` = ref,
-		   				 `alternate_allele` = alt,
-		   				 `hgvs_c` = hgvs_c,
-		   				 `af_cfdna_replicate_1` = af_point_cfdna.1,
-		   				 `af_cfdna_replicate_2` = af_point_cfdna.2,
-		   				 `variant_category` = MSK,
-		   				 `biopsy_concordance` = cat_minus) %>%
+		   dplyr::select(`patient_id` = `patient_id.1`,
+		   				 `tissue` = `subj_type.1`,
+		   				 `gene_id` = `gene_id`,
+		   				 `chromosome` = `loc.1`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref`,
+		   				 `alternate_allele` = `alt`,
+		   				 `hgvs_c` = `hgvs_c`,
+		   				 `af_cfdna_replicate_1` = `af_point_cfdna.1`,
+		   				 `af_cfdna_replicate_2` = `af_point_cfdna.2`,
+		   				 `variant_category` = `MSK`,
+		   				 `biopsy_concordance` = `cat_minus`) %>%
 		   	mutate(chromosome = unlist(lapply(strsplit(df3$loc.1, ":", fixed=TRUE), function(x) {x[1]})))
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_1/Fig_1e.tsv", append=FALSE, col_names=TRUE)
 
@@ -653,14 +653,14 @@ text(x=12, y=35, labels="PIK3CA E542K")
 dev.off()
 
 export_x = combined %>%
-		   dplyr::select(`patient_id` = patient_id,
-		   				 `tissue` = sample_id,
-		   				 `gene_id` = gene,
-		   				 `hgvs_p` = hgvsp,
-		   				 `af_cfdna_targeted_dna_assay` = af_grail,
-		   				 `af_cfdna_ddpcr` = af_ddPCR,
-		   				 `protocol` = Protocol,
-		   				 `annotation` = probe) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `sample_id`,
+		   				 `gene_id` = `gene`,
+		   				 `hgvs_p` = `hgvsp`,
+		   				 `af_cfdna_targeted_dna_assay` = `af_grail`,
+		   				 `af_cfdna_ddpcr` = `af_ddPCR`,
+		   				 `protocol` = `Protocol`,
+		   				 `annotation` = `probe`) %>%
 		   	mutate(tissue = case_when(
   			  			grepl("VB", patient_id) ~ "Breast",
   			  			grepl("VP", patient_id) ~ "Prostate",

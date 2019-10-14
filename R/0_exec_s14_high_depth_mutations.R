@@ -157,14 +157,6 @@ cols = c("Tumor-matched" = as.character(variant_cols["biopsy_matched"]),
 		 "WBC-matched"	 = as.character(variant_cols["WBC_matched"]),
 		 "VUSo"			 = as.character(variant_cols["VUSo"]))
 
-plot.0 = ggplot(tmp.1, aes(x=reorder(patient_id, -N), y=n)) +
-  		 geom_bar(stat="identity", aes(fill=`Variant category`)) +
-  		 theme(axis.text.x=element_text(angle=90)) +
-  		 scale_fill_manual(values = cols) +
-  		 coord_cartesian(ylim = c(-.1, 120)) +
-  		 labs(x="", y="Number of mutations > 10,000X\n") +
-  		 guides(fill=guide_legend(title=c("Variant category")))
-
 pdf(file="../res/figureS14/Number_High_Depth_Mutations_by_Patient.pdf", width=10, height=7)
 par(mar=c(6.1, 6.5, 4.1, 1.1))
 h = as.matrix(table(tmp.1$patient_id, tmp.1$`Variant category`))
@@ -188,10 +180,10 @@ legend("topright", pch=22, legend=names(cols), col="black", box.lwd=-1, pt.bg=co
 dev.off()
 
 export_x = tmp.1 %>%
-		   dplyr::select(patient_id = `patient_id`,
-		   				 variant_category = `Variant category`,
-		   				 n_category = n,
-		   				 n_total = N)
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `variant_category` = `Variant category`,
+		   				 `n_category` = n,
+		   				 `n_total` = N)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7a.tsv", append=FALSE, col_names=TRUE)
 
 tmp = variants %>%
@@ -252,18 +244,6 @@ tmp = left_join(tmp,
 				rename(patient_id = Patient_ID),
 				by = "patient_id")
 				
-plot.0 = ggplot(tmp, aes(y = dpnobaq, x = Collapsed_Mean_Coverage)) +
-		 geom_point(alpha=1, size=2, pch = 21, colour = "black", aes(fill=bio_source)) +
-		 #scale_fill_manual(values = cols) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.25, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(y="Depth in cfDNA\n", x="\nMean collapsed coverage\n") +
-		 scale_y_log10(
- 		 ) + 
-		 annotation_logticks() +
-		 guides(fill=FALSE) +
-		 facet_wrap(~bio_source)
-
 pdf(file="../res/figureS14/High_Depth_Mutations_by_Mean_Coverage.pdf", width=11, height=11)
 par(mar=c(6.1, 6.5, 4.1, 1.1))
 z = split.screen(figs=matrix(c(0+.05,.5,.5+.05,1,
@@ -307,15 +287,15 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = tmp %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subj_type,
-		   				 chromosome = chrom,
-		   				 position = position,
-		   				 reference_allele = ref_orig,
-		   				 alternate_allele = alt_orig,
-		   				 collapsed_mean_coverage = Collapsed_Mean_Coverage,
-		   				 collapsed_variant_total_depth = dpnobaq,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref_orig`,
+		   				 `alternate_allele` = `alt_orig`,
+		   				 `collapsed_mean_coverage` = `Collapsed_Mean_Coverage`,
+		   				 `collapsed_variant_total_depth` = `dpnobaq`,
+		   				 `bio_source` = `bio_source`) %>%
 		   mutate(bio_source = case_when(
 		   			bio_source == "WBC_matched" ~ "wbc_matched",
 		   			bio_source == "VUSo" ~ "vuso",
@@ -359,15 +339,15 @@ print(plot.0)
 dev.off()
 
 export_x = tmp %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subj_type,
-		   				 chromosome = chrom,
-		   				 position = position,
-		   				 reference_allele = ref_orig,
-		   				 alternate_allele = alt_orig,
-		   				 library_preparation_input_ng = Library_preparation_input_ng,
-		   				 collapsed_variant_total_depth = dpnobaq,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref_orig`,
+		   				 `alternate_allele` = `alt_orig`,
+		   				 `library_preparation_input_ng` = `Library_preparation_input_ng`,
+		   				 `collapsed_variant_total_depth` = `dpnobaq`,
+		   				 `bio_source` = `bio_source`) %>%
 		   mutate(bio_source = case_when(
 		   			bio_source == "WBC_matched" ~ "wbc_matched",
 		   			bio_source == "VUSo" ~ "vuso",
@@ -438,15 +418,15 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = tmp %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subj_type,
-		   				 chromosome = chrom,
-		   				 position = position,
-		   				 reference_allele = ref_orig,
-		   				 alternate_allele = alt_orig,
-		   				 variant_allele_fraction = af_nobaq,
-		   				 collapsed_variant_total_depth = dpnobaq,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref_orig`,
+		   				 `alternate_allele` = `alt_orig`,
+		   				 `variant_allele_fraction` = `af_nobaq`,
+		   				 `collapsed_variant_total_depth` = `dpnobaq`,
+		   				 `bio_source` = `bio_source`) %>%
 		   mutate(bio_source = case_when(
 		   			bio_source == "WBC_matched" ~ "wbc_matched",
 		   			bio_source == "VUSo" ~ "vuso",

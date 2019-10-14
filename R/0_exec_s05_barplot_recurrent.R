@@ -212,10 +212,10 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = top_cancer_genes_table %>%
-		   dplyr::select(tissue = subj_type,
-		   				 gene_id = gene,
-		   				 percent_patient = percent_patient,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`tissue` = `subj_type`,
+		   				 `gene_id` = `gene`,
+		   				 `percent_patient` = `percent_patient`,
+		   				 `bio_source` = `bio_source`) %>%
 		   filter(!is.na(gene_id)) %>%
 		   filter(!is.na(bio_source))
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_5/Extended_Data_Fig_5a.tsv", append=FALSE, col_names=TRUE)
@@ -410,14 +410,6 @@ tmp.y = data_frame(x = target_lengths,
 				   
 tmp.0 = bind_rows(tmp.x, tmp.y)
 
-plot.0 = ggplot(tmp.0, aes(x=x/10e3, y=y_1, fill=z_1)) +
-		 geom_point(alpha=1, size=2.5, shape=21) +
-		 geom_smooth(method="lm", se=TRUE, level=0.95) +
-		 labs(x="\nCoding target length (Kb)\n", y="Number of variants / patient\n") +
-		 theme_classic(base_size=15) +
-		 scale_x_log10() +
-		 ylim(0, 2.5)
-
 pdf(file="../res/figureS5/VUSo_target_lengths_hyper.pdf", width=7, height=7)
 par(mar = c(6.1, 7, 4.1, 1))
 shapes = 1
@@ -497,11 +489,11 @@ text(x=tmp.0$x[index], y=tmp.0$y_1[index], labels=tmp.0$z_0[index], font=3, col=
 dev.off()
 
 export_x = tmp.0 %>%
-		   dplyr::select(gene_id = z_0,
-		   				 target_ex_length = x,
-		   				 n = y_0,
-		   				 f = y_1,
-		   				 category = z_1) %>%
+		   dplyr::select(`gene_id` = `z_0`,
+		   				 `target_ex_length` = `x`,
+		   				 `n` = `y_0`,
+		   				 `f` = `y_1`,
+		   				 `category` = `z_1`) %>%
 		   mutate(target_ex_length = round(target_ex_length),
 		   		  category = ifelse(category=="+", "hypermutated", "non-hypermuytated"))
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_5/Extended_Data_Fig_5b.tsv", append=FALSE, col_names=TRUE)

@@ -60,10 +60,10 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = useful_msi_df %>%
-		   dplyr::select(`patient_id` = patient_id,
-		   		  		 `tissue` = subject_type,
-		   		 		 `msi_score` = fixed_msi,
-		   		  		 `sample_type` = sample)
+		   dplyr::select(`patient_id` = `patient_id`,
+		   		  		 `tissue` = `subject_type`,
+		   		 		 `msi_score` = `fixed_msi`,
+		   		  		 `sample_type` = `sample`)
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3d.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -222,8 +222,8 @@ axis(2, at = c(550,600), labels=c(550,600), cex.axis = 1.5, las = 1)
 close.screen(all.screens=TRUE)
 dev.off()
 
-export_x = data_frame(`patient_id` = valid_patient_ids,
-					  `tissue` = valid_patient_ids,
+export_x = data_frame(`patient_id` = `valid_patient_ids`,
+					  `tissue` = `valid_patient_ids`,
 					  `tumor_tmb`= x[valid_patient_ids],
 					  `cfdna_tmb` = y[valid_patient_ids]) %>%
 		   mutate(tissue = case_when(
@@ -306,13 +306,13 @@ dev.off()
 export_x = data.frame(patient_id = colnames(fsigs),
 					  t(fsigs)) %>%
 		   mutate(cor_coeff = rho[colnames(fsigs)]) %>%
-		   dplyr::rename(`ageing` = Aging,
-		   				 `apobec` = APOBEC,
-		   				 `hrd` = HRD,
-		   				 `mmr` = MMR,
-		   				 `smoking` = Smoking,
-		   				 `pole` = POLE,
-		   				 `other`= Other)
+		   dplyr::rename(`ageing` = `Aging`,
+		   				 `apobec` = `APOBEC`,
+		   				 `hrd` = `HRD`,
+		   				 `mmr` = `MMR`,
+		   				 `smoking` = `Smoking`,
+		   				 `pole` = `POLE`,
+		   				 `other`= `Other`)
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_3/Fig_3c.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================

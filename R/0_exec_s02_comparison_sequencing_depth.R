@@ -50,17 +50,17 @@ qc_metrics_wbc = left_join(qc_metrics_wbc, tracker_grail_wbc, by="sample_id")
 qc_metrics = rbind(qc_metrics_cfdna, qc_metrics_wbc) %>%
 			 filter(msk_id %in% valid_patient_ids) %>%
 			 dplyr::select(-sample_id, -msk_id) %>%
-			 rename(Patient_ID = patient_id,
-			 		Sample_Type = sample_type,
-			 		Tissue = tissue,
-			 		Volume_of_blood_mL = volume_of_blood_mL,
-			 		Volume_of_DNA_source_mL = volume_of_DNA_source_mL,
-			 		Uncollapsed_Mean_Coverage = raw.MEAN_BAIT_COVERAGE,
-				   	Collapsed_Mean_Coverage = collapsed.MEAN_BAIT_COVERAGE,
-				   	Collapsed_Fragment_Mean_Coverage = collapsed_fragment.MEAN_BAIT_COVERAGE,
-				   	Indel_and_Substitution_Error_Rate = readErrorRate,
-				   	Substitution_Error_Rate = readSubstErrorRate,
-				   	Assay_Version = Study) %>%
+			 rename(`Patient_ID` = `patient_id`,
+			 		`Sample_Type` = `sample_type`,
+			 		`Tissue` = `tissue`,
+			 		`Volume_of_blood_mL` = `volume_of_blood_mL`,
+			 		`Volume_of_DNA_source_mL` = `volume_of_DNA_source_mL`,
+			 		`Uncollapsed_Mean_Coverage` = `raw.MEAN_BAIT_COVERAGE`,
+				   	`Collapsed_Mean_Coverage` = `collapsed.MEAN_BAIT_COVERAGE`,
+				   	`Collapsed_Fragment_Mean_Coverage` = `collapsed_fragment.MEAN_BAIT_COVERAGE`,
+				   	`Indel_and_Substitution_Error_Rate` = `readErrorRate`,
+				   	`Substitution_Error_Rate` = `readSubstErrorRate`,
+				   	`Assay_Version` = `Study`) %>%
 			mutate(Assay_Version = ifelse(Assay_Version=="TechVal", "V1", "V2")) %>%
 			arrange(Patient_ID, Sample_Type) %>%
 			mutate(Library_preparation_input_ng = ifelse(Library_preparation_input_ng>75, 75, Library_preparation_input_ng))

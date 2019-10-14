@@ -357,13 +357,13 @@ for (i in 1:length(patient_ids)) {
 			   					 	 			   grepl("VL", patient_id) ~ "Lung",
 			   				 			 		   grepl("VP", patient_id) ~ "Prostate")) %>%
 			   		  	 mutate(afnobaq.z = NA) %>% 
-			   			 dplyr::select(patient_id = patient_id,
-			   						   tissue = tissue,
-			   				 		   af_rep_0 = afnobaq.x,
-			   				 		   af_rep_1 = afnobaq.y,
-			   				 		   af_rep_2 = afnobaq.z,
-			   				 		   variant_category = fill,
-			   				 		   biopsy_concordance = shape) %>%
+			   			 dplyr::select(`patient_id` = `patient_id`,
+			   						   `tissue` = `tissue`,
+			   				 		   `af_rep_0` = `afnobaq.x`,
+			   				 		   `af_rep_1` = `afnobaq.y`,
+			   				 		   `af_rep_2` = `afnobaq.z`,
+			   				 		   `variant_category` = `fill`,
+			   				 		   `biopsy_concordance` = `shape`) %>%
 			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category)))
 }
 
@@ -440,13 +440,13 @@ for (i in 1:length(patient_ids)) {
 			   				 			 		   grepl("VL", patient_id) ~ "Lung",
 			   				 			 		   grepl("VP", patient_id) ~ "Prostate")) %>%
 			   			 mutate(afnobaq.z = NA) %>% 
-			   			 dplyr::select(patient_id = patient_id,
-			   				 		   tissue = tissue,
-			   				 		   af_rep_0 = afnobaq.x,
-			   				 		   af_rep_1 = afnobaq.z,
-			   				 		   af_rep_2 = afnobaq.y,
-			   				 		   variant_category = fill,
-			   				 		   biopsy_concordance = shape) %>%
+			   			 dplyr::select(`patient_id` = `patient_id`,
+			   				 		   `tissue` = `tissue`,
+			   				 		   `af_rep_0` = `afnobaq.x`,
+			   				 		   `af_rep_1` = `afnobaq.z`,
+			   				 		   `af_rep_2` = `afnobaq.y`,
+			   				 		   `variant_category` = `fill`,
+			   				 		   `biopsy_concordance` = `shape`) %>%
 			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category)))
 }
 
@@ -523,13 +523,13 @@ for (i in 1:length(patient_ids)) {
 			   				 			 		   grepl("VL", patient_id) ~ "Lung",
 			   				 			 		   grepl("VP", patient_id) ~ "Prostate")) %>%
 			   			 mutate(afnobaq.z = NA) %>% 
-			   			 dplyr::select(patient_id = patient_id,
-			   				 		   tissue = tissue,
-			   				 		   af_rep_0 = afnobaq.z,
-			   				 		   af_rep_1 = afnobaq.x,
-			   				 		   af_rep_2 = afnobaq.y,
-			   				 		   variant_category = fill,
-			   				 		   biopsy_concordance = shape) %>%
+			   			 dplyr::select(`patient_id` = `patient_id`,
+			   				 		   `tissue` = `tissue`,
+			   				 		   `af_rep_0` = `afnobaq.z`,
+			   				 		   `af_rep_1` = `afnobaq.x`,
+			   				 		   `af_rep_2` = `afnobaq.y`,
+			   				 		   `variant_category` = `fill`,
+			   				 		   `biopsy_concordance` = `shape`) %>%
 			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category)))
 }
 

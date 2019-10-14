@@ -43,24 +43,6 @@ msi_tumor = bind_cols(msi_tumor, "level" = factor(msi_tumor$patient_id, levels=m
 msi_cfdna = bind_cols(msi_cfdna, "level" = factor(msi_cfdna$patient_id, levels=msi_cfdna$patient_id, ordered=TRUE))
 msi_df = bind_rows(msi_tumor, msi_cfdna)
 		 
-plot.0 = msi_df %>%
-		 mutate(sample = ifelse(sample=="cfdna", "cfDNA", "Tumor")) %>%
-		 ggplot(aes(x=level, y=original_msi+.001, group=sample, fill=sample)) +
-		 geom_bar(stat="identity", position=position_dodge(), color="black", width=.8) +
-		 facet_wrap(~subject_type, scales = "free_y") +
-		 theme_classic(base_size=15) +
-		 coord_flip() +
-		 labs(y="\nMSI score\n", x="\n") +
-		 scale_fill_manual(values = cols) +
-		 guides(fill=guide_legend(title=c("Sample type"))) +
-		 theme(legend.title=element_text(size=14)) +
-		 ylim(0, 0.3) +
-		 theme(
-		 	axis.title.x = element_text(size = 16),
-		 	axis.text.x = element_text(size = 16),
-		 	strip.background = element_rect(colour = "white", fill = "white"),
-		 	strip.text.x = element_text(size = 16))
-
 pdf(file="../res/figureS7/msi_score_original.pdf", height=12, width=16)
 h = matrix(NA, nrow=length(unique(msi_df %>% .[["patient_id"]])), ncol=3, dimnames=list(unique(msi_df %>% .[["patient_id"]]), c("Tumor", "cfDNA", "subj_type")))
 h[,"Tumor"] = msi_df %>%
@@ -92,24 +74,6 @@ legend(x=0.2, y=70, pch=22, col="black", legend=c("Tumor", "cfDNA"), box.lwd=-1,
 close.screen(all.screens=TRUE)
 dev.off()
 
-
-plot.0 = msi_df %>%
-		 mutate(sample = ifelse(sample=="cfdna", "cfDNA", "Tumor")) %>%
-		 ggplot(aes(x=level, y=fixed_msi+.001, group=sample, fill=sample)) +
-		 geom_bar(stat="identity", position=position_dodge(), , color="black", width=.8) +
-		 facet_wrap(~subject_type, scales = "free_y") +
-		 theme_classic(base_size=15) +
-		 coord_flip() +
-		 labs(y="\nMSI score\n", x="\n") +
-		 scale_fill_manual(values = cols) +
-		 guides(fill=guide_legend(title=c("Sample type"))) +
-		 theme(legend.title=element_text(size=14)) +
-		 ylim(0, 0.3) +
-		 theme(
-		 	axis.title.x = element_text(size = 16),
-		 	axis.text.x = element_text(size = 16),
-		 	strip.background = element_rect(colour = "white", fill = "white"),
-		 	strip.text.x = element_text(size = 16))
 
 pdf(file="../res/figureS7/msi_score_fixed.pdf", height=12, width=16)
 h = matrix(NA, nrow=length(unique(msi_df %>% .[["patient_id"]])), ncol=3, dimnames=list(unique(msi_df %>% .[["patient_id"]]), c("Tumor", "cfDNA", "subj_type")))
@@ -143,10 +107,10 @@ dev.off()
 
 
 export_x = msi_df %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subject_type,
-		   				 assay = sample,
-		   				 msi_original = original_msi,
-		   				 msi_fixed = fixed_msi)
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subject_type`,
+		   				 `assay` = `sample`,
+		   				 `msi_original` = `original_msi`,
+		   				 `msi_fixed` = `fixed_msi`)
 write_tsv(export_x, path="../res/etc/Source_Data_Supplementary_Fig_1/Supplementary_Fig_1.tsv", append=FALSE, col_names=TRUE)
 

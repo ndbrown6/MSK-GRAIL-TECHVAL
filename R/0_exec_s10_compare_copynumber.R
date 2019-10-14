@@ -299,16 +299,16 @@ plot_log3_(x=tmp2, y=tmp, axis=TRUE)
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_3.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_4.tsv", append=FALSE, col_names=TRUE)
 
@@ -332,16 +332,16 @@ plot_log3_(x=tmp2, y=tmp, axis=TRUE)
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_3.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_4.tsv", append=FALSE, col_names=TRUE)
 
@@ -374,16 +374,16 @@ plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9c_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9c_2.tsv", append=FALSE, col_names=TRUE)
 
@@ -408,16 +408,16 @@ plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9d_2.tsv", append=FALSE, col_names=TRUE)
 
@@ -442,15 +442,15 @@ plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-4,4))
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_9/Extended_Data_Fig_9e_2.tsv", append=FALSE, col_names=TRUE)

@@ -376,29 +376,6 @@ tmp_vars = tmp_vars %>%
 		   filter(dpnobaq.x>10000) %>%
 		   filter(bio_source.x!="noise")
 		   
-
-plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
-		 geom_abline(linetype = 1, color = "goldenrod3") +
-		 geom_point(alpha=1, size=3.5) +
-		 scale_fill_manual(values = cols) +
-		 scale_shape_manual(values = c(24, 21)) +
-		 facet_wrap(~patient_id) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(x="\nReplicate 1 (%)\n", y="Replicate 2 (%)\n") +
-		 scale_x_log10(
-			breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-			labels = function(x) { c("0", "0.1", "1", "10", "100") }
-		 ) + 
-		 scale_y_log10(
-			breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-			labels = function(x) { c("0", "0.1", "1", "10", "100") }
-		 ) +
-		 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
-		 annotation_logticks() +
-		 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Variant category")))
-		 
 pdf(file=paste0("../res/figureS15/", patient_ids, "_R1_R2_High_Depth.pdf"), width=6.5, height=6.5)
 par(mar = c(6.1, 6, 4.1, 1))
 epsilon = 0
@@ -427,12 +404,12 @@ export_x = tmp_vars %>%
 		   mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
 									 grepl("VL", patient_id) ~ "Lung",
 			   				 		 grepl("VP", patient_id) ~ "Prostate")) %>%
-		   dplyr::select(patient_id = patient_id,
-			   			 tissue = tissue,
-			   			 af_rep_0 = afnobaq.x,
-			   			 af_rep_1 = afnobaq.y,
-			   			 variant_category = fill,
-			   			 biopsy_concordance = shape) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+			   			 `tissue` = `tissue`,
+			   			 `af_rep_0` = `afnobaq.x`,
+			   			 `af_rep_1` = `afnobaq.y`,
+			   			 `variant_category` = `fill`,
+			   			 `biopsy_concordance` = `shape`) %>%
 			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category))
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7g.tsv", append=FALSE, col_names=TRUE)
 
@@ -476,28 +453,6 @@ tmp_vars = tmp_vars %>%
 		   filter(dpnobaq.x>10000) %>%
 		   filter(bio_source.x!="noise")
 			   	
-plot.0 = ggplot(tmp_vars, aes(x = afnobaq.x, y = afnobaq.y, shape = shape, fill = fill)) +
-		 geom_abline(linetype = 1, color = "goldenrod3") +
-		 geom_point(alpha=1, size=3.5) +
-		 scale_fill_manual(values = cols) +
-		 scale_shape_manual(values = c(24, 21)) +
-		 facet_wrap(~patient_id) +
-		 theme_bw(base_size=15) +
-		 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
-		 labs(x="\nReplicate 1 (%)\n", y="Replicate 3 (%)\n") +
-		 scale_x_log10(
-		 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-		 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
-		 ) + 
-		 scale_y_log10(
-		 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-		 	labels = function(x) { c("0", "0.1", "1", "10", "100") }
-		 ) +
-		 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
-		 annotation_logticks() +
-		 guides(shape=guide_legend(title=c("Biopsy concordance"), override.aes=list(fill="black"))) +
-		 guides(fill=guide_legend(title=c("Variant category")))
-	 
 pdf(file=paste0("../res/figureS15/", patient_ids, "_R1_R3_High_Depth.pdf"), width=6.5, height=6.5)
 par(mar = c(6.1, 6, 4.1, 1))
 epsilon = 0
@@ -526,12 +481,12 @@ export_x = tmp_vars %>%
 		   mutate(tissue = case_when(grepl("VB", patient_id) ~ "Breast",
 									 grepl("VL", patient_id) ~ "Lung",
 			   				 		 grepl("VP", patient_id) ~ "Prostate")) %>%
-		   dplyr::select(patient_id = patient_id,
-			   			 tissue = tissue,
-			   			 af_rep_0 = afnobaq.x,
-			   			 af_rep_1 = afnobaq.y,
-			   			 variant_category = fill,
-			   			 biopsy_concordance = shape) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+			   			 `tissue` = `tissue`,
+			   			 `af_rep_0` = `afnobaq.x`,
+			   			 `af_rep_1` = `afnobaq.y`,
+			   			 `variant_category` = `fill`,
+			   			 `biopsy_concordance` = `shape`) %>%
 			   			 mutate(variant_category = ifelse(variant_category == "Not called in one replicate due\nto low quality", "Not called in one replicate due to low quality", variant_category))
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7h.tsv", append=FALSE, col_names=TRUE)
 
@@ -547,16 +502,16 @@ plot_log3_(x=tmp2, y=tmp, axis=TRUE, ylim=c(-3.25,3.25))
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7e_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7e_2.tsv", append=FALSE, col_names=TRUE)
 
@@ -580,15 +535,15 @@ plot_log3_(x=tmp2, y=tmp, axis=FALSE, ylim=c(-3.25,3.25))
 dev.off()
 
 export_x = tmp2 %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 position = `Position`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `position` = `Position`,
+		   				 `log2ratio` = `Log2Ratio`)
 export_y = tmp %>%
-		   dplyr::select(chromosome = `Chromosome`,
-		   				 arm = `Arm`,
-		   				 start = `Start`,
-		   				 end = `End`,
-		   				 n = `N`,
-		   				 log2ratio = `Log2Ratio`)
+		   dplyr::select(`chromosome` = `Chromosome`,
+		   				 `arm` = `Arm`,
+		   				 `start` = `Start`,
+		   				 `end` = `End`,
+		   				 `n` = `N`,
+		   				 `log2ratio` = `Log2Ratio`)
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7f_1.tsv", append=FALSE, col_names=TRUE)
 write_tsv(export_y, path="../res/etc/Source_Data_Extended_Data_Fig_7/Extended_Data_Fig_7f_2.tsv", append=FALSE, col_names=TRUE)

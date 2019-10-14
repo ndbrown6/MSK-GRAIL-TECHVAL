@@ -214,13 +214,13 @@ export_y = as.data.frame(My) %>%
 		   filter(cohort!="Control")
 export_x = bind_rows(export_x,
 					 export_y) %>%
-		   dplyr::select(cohort = tissue,
-		   				 category,
-		   				 biopsy_only,
-		   				 biopsy_matched,
-		   				 biopsy_subthreshold,
-		   				 wbc_matched,
-		   				 vuso)
+		   dplyr::select(`cohort` = `tissue`,
+		   				 `category`,
+		   				 `biopsy_only`,
+		   				 `biopsy_matched`,
+		   				 `biopsy_subthreshold`,
+		   				 `wbc_matched`,
+		   				 `vuso`)
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4a.tsv", append=FALSE, col_names=TRUE)
 
 #==================================================
@@ -432,10 +432,10 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = export_x %>%
-		   dplyr::select(`patient_id` = patient_id,
-		   				 `tissue` = subj_type,
-		   				 `bio_source` = bio_source,
-		   				 `n` = num) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `bio_source` = `bio_source`,
+		   				 `n` = `num`) %>%
 		   mutate(n = abs(n)) %>%
 		   mutate(bio_source = case_when(
 		   		  bio_source == "WBC_matched" ~ "wbc_matched",
@@ -627,11 +627,11 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = export_x %>%
-		   dplyr::select(`patient_id` = patient_id,
-		   				 `tissue` = subj_type,
-		   				 `bio_source` = bio_source,
-		   				 `n` = num_called,
-		   				 `age` = age) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `bio_source` = `bio_source`,
+		   				 `n` = `num_called`,
+		   				 `age` = `age`) %>%
 		   mutate(bio_source = case_when(
 		   		bio_source == "WBC_matched" ~ "wbc_matched",
 		   		bio_source == "VUSo" ~ "vuso",
@@ -667,8 +667,12 @@ corrplot(corr=ny[1:30,,drop=FALSE], method="color", type="full", add=FALSE,
 dev.off()
 
 export_x = as.data.frame(ny) %>%
-		   mutate(gene_id = rownames(ny)) %>%
-		   dplyr::select(gene_id, `control` = Control, `breast` = Breast, `lung` = Lung, `prostate` = Prostate)
+		   mutate(`gene_id` = rownames(ny)) %>%
+		   dplyr::select(`gene_id`,
+		   				 `control` = `Control`,
+		   				 `breast` = Breast,
+		   				 `lung` = Lung,
+		   				 `prostate` = Prostate)
 export_x = export_x[1:30,,drop=FALSE]
 write_tsv(export_x, path="../res/etc/Source_Data_Fig_4/Fig_4d.tsv", append=FALSE, col_names=TRUE)
 
@@ -775,16 +779,16 @@ legend(x=0.01, y=19, pch=21, col="black", pt.bg=variant_cols[c("biopsy_matched",
 dev.off()
 
 export_x = cfdna_vs_gdna_vaf_plot %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subj_type,
-		   				 gene_id = gene_id,
-		   				 chromosome = chrom,
-		   				 position = position,
-		   				 reference_allele = ref_orig,
-		   				 alternate_allele = alt_orig,
-		   				 cfdna_af = afmeancfdna,
-		   				 wbc_af = afmeangdna,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `gene_id` = `gene_id`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref_orig`,
+		   				 `alternate_allele` = `alt_orig`,
+		   				 `cfdna_af` = `afmeancfdna`,
+		   				 `wbc_af` = `afmeangdna`,
+		   				 `bio_source` = `bio_source`) %>%
 		   	mutate(bio_source = case_when(
 		   			bio_source == "WBC_matched" ~ "wbc_matched",
 		   			bio_source == "VUSo" ~ "vuso",
@@ -1068,13 +1072,13 @@ legend(x=0.02, y=3.5, pch=21, col="black", pt.bg=fill, pt.cex=1.55, pt.lwd=.5, l
 dev.off()
 
 export_x = ddpcr_results2 %>%
-		   dplyr::select(`patient_id` = patient_id,
-		   				 `tissue` = tissue,
-		   				 `uuid` = UUID,
-		   				 `input_type` = input_type,
-		   				 `expected` = ddPCR_retest,
-		   				 `af_cfdna` = af_cfdna,
-		   				 `af_ddpcr` = af_ddPCR) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `tissue`,
+		   				 `uuid` = `UUID`,
+		   				 `input_type` = `input_type`,
+		   				 `expected` = `ddPCR_retest`,
+		   				 `af_cfdna` = `af_cfdna`,
+		   				 `af_ddpcr` = `af_ddPCR`) %>%
 		   mutate(tissue = case_when(
 		   		grepl("VB", patient_id) ~ "Breast",
 		   		grepl("VL", patient_id) ~ "Lung",

@@ -225,10 +225,10 @@ close.screen(all.screens=TRUE)
 dev.off()
 
 export_x = export_x %>%
-		   dplyr::select(`patient_id` = patient_id,
-		   				 `tissue` = subj_type,
-		   				 `bio_source` = bio_source,
-		   				 `n` = num) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `bio_source` = `bio_source`,
+		   				 `n` = `num`) %>%
 		   mutate(n = abs(n)) %>%
 		   mutate(bio_source = case_when(
 		   		  bio_source == "WBC_matched" ~ "wbc_matched",
@@ -572,26 +572,6 @@ cfdna_vs_gdna_vaf_plot = variants_nohyper %>%
 cols = variant_cols
 names(cols) = c("VUSo", "Biopsy matched", "Biopsy subthreshold", "WBC matched", "Biopsy only")
          
-plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afmeancfdna, y = afmeangdna, fill = bio_source)) +
-			 geom_abline(linetype = 1, color = "goldenrod3") +
-			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
- 			 scale_fill_manual(values = cols) +
- 			 facet_wrap(~facets_1) +
- 			 theme_bw(base_size=15) +
- 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
- 			 labs(x="\nVAF in cfDNA (%)\n", y="VAF in WBC (%)\n") +
- 			 scale_x_log10(
-  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
-  			 ) + 
-  			 scale_y_log10(
-  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
-  			 ) +
- 			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
- 			 annotation_logticks() +
-			 guides(fill=guide_legend(title=c("Variant category")))
-			 
 pdf(file="../res/figureS8/VAF_VAF_posterior_mean.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
@@ -615,26 +595,6 @@ mtext(side = 2, text = "VAF in WBC (%)", line = 4, cex = 1.85)
 legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, legend=c("Biopsy matched", "Biopsy subthreshold", "VUSo", "WBC matched"), box.lwd=-1, cex=1.15)
 dev.off()
 
-plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq, y = afgdna_nobaq, fill = bio_source)) +
-			 geom_abline(linetype = 1, color = "goldenrod3") +
-			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
- 			 scale_fill_manual(values = cols) +
- 			 facet_wrap(~facets_2) +
- 			 theme_bw(base_size=15) +
- 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
- 			 labs(x="\nVAF in cfDNA (%)\n", y="VAF in WBC (%)\n") +
- 			 scale_x_log10(
-  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
-  			 ) + 
-  			 scale_y_log10(
-  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
-  			 ) +
- 			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
- 			 annotation_logticks() +
-			 guides(fill=guide_legend(title=c("Variant category")))
-		 
 pdf(file="../res/figureS8/VAF_VAF_pseudo_no_BAQ.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
@@ -659,16 +619,16 @@ legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, l
 dev.off()
 
 export_x = cfdna_vs_gdna_vaf_plot %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subj_type,
-		   				 gene_id = gene_id,
-		   				 chromosome = chrom,
-		   				 position = position,
-		   				 reference_allele = ref_orig,
-		   				 alternate_allele = alt_orig,
-		   				 cfdna_af = afcfdna_nobaq,
-		   				 wbc_af = afgdna_nobaq,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `gene_id` = `gene_id`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref_orig`,
+		   				 `alternate_allele` = `alt_orig`,
+		   				 `cfdna_af` = `afcfdna_nobaq`,
+		   				 `wbc_af` = `afgdna_nobaq`,
+		   				 `bio_source` = `bio_source`) %>%
 		   mutate(bio_source = case_when(
 		   		  bio_source == "WBC_matched" ~ "wbc_matched",
 		   		  bio_source == "VUSo" ~ "vuso",
@@ -676,26 +636,6 @@ export_x = cfdna_vs_gdna_vaf_plot %>%
 		   		  bio_source == "IMPACT-BAM_matched" ~ "biopsy_subthreshold"))
 write_tsv(export_x, path="../res/etc/Source_Data_Extended_Data_Fig_6/Extended_Data_Fig_6c.tsv", append=FALSE, col_names=TRUE)
 
-plot.0 = ggplot(cfdna_vs_gdna_vaf_plot, aes(x = afcfdna_nobaq_nos, y = afgdna_nobaq_nos, fill = bio_source)) +
-			 geom_abline(linetype = 1, color = "goldenrod3") +
-			 geom_point(alpha=1, size=2.5, shape=21, color = "black") +
- 			 scale_fill_manual(values = cols) +
- 			 facet_wrap(~facets_3) +
- 			 theme_bw(base_size=15) +
- 			 theme(axis.text.y = element_text(size=15), axis.text.x = element_text(size=15), legend.text=element_text(size=9), legend.title=element_text(size=10), legend.position = c(0.3, 0.8), legend.background = element_blank(), legend.key.size = unit(1, 'lines')) +
- 			 labs(x="\nVAF in cfDNA (%)\n", y="VAF in WBC (%)\n") +
- 			 scale_x_log10(
-  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
-  			 ) + 
-  			 scale_y_log10(
-  			 	breaks = function(x) { c(0.01, 0.1, 1, 10, 100) },
-  			 	labels = function(x) { c("0.01", "0.1", "1", "10", "100") }
-  			 ) +
- 			 coord_cartesian(xlim = c(0.01, 100), ylim = c(0.01,100)) +
- 			 annotation_logticks() +
-			 guides(fill=guide_legend(title=c("Variant category")))
-		 
 pdf(file="../res/figureS8/VAF_VAF_nopsedo_no_BAQ.pdf", width=7, height=7)
 par(mar = c(6.1, 6, 4.1, 1))
 plot(1,1, type="n", xlim=c(0.01,15), ylim=c(0.01,15), xlab="", ylab="", axes=FALSE, frame.plot=FALSE, log="xy")
@@ -720,16 +660,16 @@ legend(x=0.009, y=19, pch=21, col="black", pt.bg=cols, pt.cex=1.55, pt.lwd=.5, l
 dev.off()
 
 export_x = cfdna_vs_gdna_vaf_plot %>%
-		   dplyr::select(patient_id = patient_id,
-		   				 tissue = subj_type,
-		   				 gene_id = gene_id,
-		   				 chromosome = chrom,
-		   				 position = position,
-		   				 reference_allele = ref_orig,
-		   				 alternate_allele = alt_orig,
-		   				 cfdna_af = afcfdna_nobaq_nos,
-		   				 wbc_af = afgdna_nobaq_nos,
-		   				 bio_source = bio_source) %>%
+		   dplyr::select(`patient_id` = `patient_id`,
+		   				 `tissue` = `subj_type`,
+		   				 `gene_id` = `gene_id`,
+		   				 `chromosome` = `chrom`,
+		   				 `position` = `position`,
+		   				 `reference_allele` = `ref_orig`,
+		   				 `alternate_allele` = `alt_orig`,
+		   				 `cfdna_af` = `afcfdna_nobaq_nos`,
+		   				 `wbc_af` = `afgdna_nobaq_nos`,
+		   				 `bio_source` = `bio_source`) %>%
 		   mutate(bio_source = case_when(
 		   		  bio_source == "WBC_matched" ~ "wbc_matched",
 		   		  bio_source == "VUSo" ~ "vuso",
