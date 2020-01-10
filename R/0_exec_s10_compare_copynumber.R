@@ -262,13 +262,8 @@ colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
 tmp2[tmp2[,"Chromosome"]==11,"Log2Ratio"] = CN[CN[,"Chromosome"]==11,"Log2Ratio"]
 tmp = list()
 for (i in 1:23) {
-	if (i==11) {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=50, gamma=50, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=100, gamma=150, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
+	tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+	colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
 }
 tmp = do.call(rbind, tmp)
 tmp = undo_(tmp, n=5)
@@ -317,13 +312,8 @@ tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
 tmp = list()
 for (i in 1:23) {
-	if (i==13) {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=50, gamma=50, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
+	tmp[[i]] = pcf(data=tmp2[tmp2$Chromosome==i,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+	colnames(tmp[[i]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
 }
 tmp = do.call(rbind, tmp)
 tmp = undo_(tmp, n=9)
@@ -359,13 +349,8 @@ tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
 tmp = list()
 for (ii in 1:23) {
-	if (ii==13) {
-		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
+	tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+	colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
 }
 tmp = do.call(rbind, tmp)
 tmp = undo_(tmp, n=9)
@@ -393,13 +378,8 @@ tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
 tmp = list()
 for (ii in 1:23) {
-	if (ii==13) {
-		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
+	tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+	colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
 }
 tmp = do.call(rbind, tmp)
 tmp = undo_(tmp, n=9)
@@ -427,13 +407,8 @@ tmp2 = winsorize(CN, method="mad", tau=4.5, verbose=FALSE)
 colnames(tmp2) = c("Chromosome","Position","Log2Ratio")
 tmp = list()
 for (ii in 1:23) {
-	if (ii==13) {
-		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	} else {
-		tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
-		colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
-	}
+	tmp[[ii]] = pcf(data=tmp2[tmp2$Chromosome==ii,,drop=FALSE], kmin=10, gamma=40, verbose=FALSE)[,2:7,drop=FALSE]
+	colnames(tmp[[ii]]) = c("Chromosome", "Arm", "Start", "End", "N", "Log2Ratio")
 }
 tmp = do.call(rbind, tmp)
 tmp = undo_(tmp, n=9)
